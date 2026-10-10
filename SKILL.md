@@ -69,7 +69,7 @@ bash $SK/scripts/make_intro.sh --out $W/seg_intro.mp4 --total 5.0 \
   --title "第 3 课 · <em>事物的特征</em>"
 #     片尾：$SK/assets/intro_outro/endcard.png + 告别词（与正片同倍速 atempo）
 #     拼接：三段统一 30fps / -video_track_timescale 15360 / -ar 48000 -ac 2 → concat -c copy
-#           → 全片 loudnorm -16 + faststart（采样率不一致的坑见 HANDOFF 六·1）
+#           → 全片 loudnorm -16 + faststart（采样率不一致的坑见 references/known_pitfalls.md §6）
 
 # 5) 配套封面 →  $H/视频课/封面/
 
@@ -280,7 +280,7 @@ bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3
 *确认 gate*：出片后抽 4 帧 + 完整听一遍。**片头定稿后再开正片渲染**——换音色/改文案会改时轴，画面得重渲（L3 一次 9664 帧 ≈ 12–15 分钟）。
 
 > 片尾仍用 `assets/intro_outro/endcard.png`（静态卡 + 告别词，告别词按正片同倍速 atempo）；  
-> 三段拼接（片头 / 正片 / 片尾）的采样率坑见 `HANDOFF.md` 六·1。
+> 三段拼接（片头 / 正片 / 片尾）的采样率坑见 `references/known_pitfalls.md` §6。
 
 ### 阶段 5 · 配套封面【确认 gate】
 
