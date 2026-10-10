@@ -40,6 +40,17 @@ const sched = JSON.parse(fs.readFileSync(path.join(DIR, 'schedule.json'), 'utf-8
 const shotsDir = path.join(DIR, 'shots');
 fs.mkdirSync(shotsDir, { recursive: true });
 
+// 从 standalone 的 <meta name="hf-size"> 读取舞台尺寸（竖版 1080×1440 / 横版 1920×1080），缺省回退横版
+function readSize(file) {
+  try {
+    const h = fs.readFileSync(file, 'utf-8');
+    const m = h.match(/name="hf-size"\s+content="(\d+)x(\d+)"/);
+    if (m) return { width: +m[1], height: +m[2] };
+  } catch (e) {}
+  return { width: 1920, height: 1080 };
+}
+const SIZE = readSize(path.join(DIR, 'standalone.html'));
+
 (async () => {
   const browser = await puppeteer.launch({
     executablePath: CHROME,
@@ -48,7 +59,7 @@ fs.mkdirSync(shotsDir, { recursive: true });
            '--hide-scrollbars', '--disable-dev-shm-usage'],
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
+  await page.setViewport({ width: SIZE.width, height: SIZE.height, deviceScaleFactor: 1 });
   await page.goto('file://' + path.join(DIR, 'standalone.html'),
                   { waitUntil: 'networkidle0', timeout: 90000 });
   await page.evaluate(() => document.fonts && document.fonts.ready);

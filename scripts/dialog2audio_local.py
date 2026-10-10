@@ -38,6 +38,9 @@ MIN_UNIT = 12
 HARD_MAX = 28
 ACTION_WORDS = ("哭脸", "笑脸")
 
+# 老师显示名（可配置：环境变量 TEACHER_NAME，默认「小贤老师」；声音仍按平台后端）。
+TEACHER_NAME = os.environ.get("TEACHER_NAME", "小贤老师")
+
 
 def clean(s):
     s = re.sub(r"[（(][^）)]*[)）]", "", s)
@@ -50,22 +53,25 @@ def clean(s):
 
 
 def parse_line(line):
-    """返回 (speaker, text, pause, pre) 或 None（非对白行）。"""
-    for prefix, sp in (("小贤老师：", "teacher"), ("学生：", "student")):
-        if line.startswith(prefix):
-            content = line[len(prefix):].strip().strip('"').strip()
-            pre, pause, text_parts, pos = 0.0, 0.0, [], 0
-            for m in PAUSE_RE.finditer(content):
-                mid = content[pos:m.start()]
-                text_parts.append(mid)
-                if mid.strip():
-                    pause = float(m.group(1))
-                else:
-                    pre += float(m.group(1))
-                pos = m.end()
-            text_parts.append(content[pos:])
-            text = "".join(text_parts).strip()
-            return sp, text, pause, pre
+    """返回 (speaker, text, pause, pre) 或 None（非对白行）。
+    老师名读环境变量 TEACHER_NAME（默认「小贤老师」），兼容全角/半角冒号；学生固定「学生」。"""
+    for name, sp in ((TEACHER_NAME, "teacher"), ("学生", "student")):
+        m = re.match(rf'^\s*{re.escape(name)}\s*[:：]\s*(.*)$', line)
+        if not m:
+            continue
+        content = m.group(1).strip().strip('"').strip()
+        pre, pause, text_parts, pos = 0.0, 0.0, [], 0
+        for mm in PAUSE_RE.finditer(content):
+            mid = content[pos:mm.start()]
+            text_parts.append(mid)
+            if mid.strip():
+                pause = float(mm.group(1))
+            else:
+                pre += float(mm.group(1))
+            pos = mm.end()
+        text_parts.append(content[pos:])
+        text = "".join(text_parts).strip()
+        return sp, text, pause, pre
     return None
 
 

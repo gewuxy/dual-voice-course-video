@@ -11,11 +11,18 @@
 """
 import os, re, sys
 
+# 老师显示名（可配置：环境变量 TEACHER_NAME，默认「小贤老师」；须与 TTS 脚本一致）
+TEACHER_NAME = os.environ.get("TEACHER_NAME", "小贤老师")
+
 H = sys.argv[1] if len(sys.argv) > 1 else "."
 SCRIPT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(H, "视频课", "script_v2_dialog.txt")
 HTML = sys.argv[3] if len(sys.argv) > 3 else os.path.join(H, "视频课", "index_present.html")
 
-ROLE_RE = re.compile(r'^(小贤老师|学生)\s*[:：]\s*(?:\[\[(\d+\.?\d*)\]\])?\s*["“]([^"”]+)["”]\s*(?:\[\[(\d+\.?\d*)\]\])?\s*$')
+# 角色行：老师（可配置名）或学生；兼容全角/半角冒号
+ROLE_RE = re.compile(
+    r'^(?:' + re.escape(TEACHER_NAME) + r'|学生)\s*[:：]\s*'
+    r'(?:\[\[(\d+\.?\d*)\]\])?\s*["“]([^"”]+)["”]\s*'
+    r'(?:\[\[(\d+\.?\d*)\]\])?\s*$')
 FRAME_RE = re.compile(r'^【第\s*(\d+)\s*帧】')
 
 frames, cur = [], None

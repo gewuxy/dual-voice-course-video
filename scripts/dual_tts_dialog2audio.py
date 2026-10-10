@@ -39,6 +39,10 @@ MIN_UNIT = 12
 HARD_MAX = 28
 ACTION_WORDS = ("哭脸", "笑脸")
 
+# 老师显示名（可配置：环境变量 TEACHER_NAME，默认「小贤老师」；音色仍固定 xiaoxian）。
+# 设了 TEACHER_NAME，剧本里老师角色行就用该名（兼容全角/半角冒号）。
+TEACHER_NAME = os.environ.get("TEACHER_NAME", "小贤老师")
+
 # 两个说话人各自的模型 / 参考音
 EXPS = {
     "teacher": {"exp": "xiaoxian",
@@ -71,16 +75,26 @@ def clean(s):
 
 
 def parse_line(line):
-    """返回 (speaker, text, pause) 或 None（非对白行）。"""
-    for prefix, sp in (("小贤老师：", "teacher"), ("学生：", "student")):
-        if line.startswith(prefix):
-            content = line[len(prefix):].strip().strip('"').strip()
-            m = PAUSE_RE.search(content)
-            if m:
-                text, pause = content[:m.start()].strip(), float(m.group(1))
-            else:
-                text, pause = content, 0.0
-            return sp, text, pause
+    """返回 (speaker, text, pause) 或 None（非对白行）。
+    老师名读环境变量 TEACHER_NAME（默认「小贤老师」），兼容全角/半角冒号；学生固定「学生」。"""
+    m = re.match(rf'^\s*{re.escape(TEACHER_NAME)}\s*[:：]\s*(.*)$', line)
+    if m:
+        content = m.group(1).strip().strip('"').strip()
+        mm = PAUSE_RE.search(content)
+        if mm:
+            text, pause = content[:mm.start()].strip(), float(mm.group(1))
+        else:
+            text, pause = content, 0.0
+        return "teacher", text, pause
+    m = re.match(r'^\s*学生\s*[:：]\s*(.*)$', line)
+    if m:
+        content = m.group(1).strip().strip('"').strip()
+        mm = PAUSE_RE.search(content)
+        if mm:
+            text, pause = content[:mm.start()].strip(), float(mm.group(1))
+        else:
+            text, pause = content, 0.0
+        return "student", text, pause
     return None
 
 

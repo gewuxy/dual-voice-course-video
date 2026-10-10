@@ -39,7 +39,14 @@ const puppeteer = loadP();
            '--disable-gpu', '--font-render-hinting=none']
   });
   const p = await b.newPage();
-  await p.setViewport({ width: 1920, height: 1080 });
+  // 从 standalone 的 <meta name="hf-size"> 读取舞台尺寸（竖版 1080×1440 / 横版 1920×1080），缺省回退横版
+  let SIZE = { width: 1920, height: 1080 };
+  try {
+    const h = fs.readFileSync(html, 'utf-8');
+    const m = h.match(/name="hf-size"\s+content="(\d+)x(\d+)"/);
+    if (m) SIZE = { width: +m[1], height: +m[2] };
+  } catch (e) {}
+  await p.setViewport({ width: SIZE.width, height: SIZE.height });
   await p.goto('file://' + html, { waitUntil: 'networkidle0' });
   await p.evaluate(async () => {
     document.fonts && await document.fonts.ready;

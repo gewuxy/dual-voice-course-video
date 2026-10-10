@@ -6,7 +6,8 @@
 //   node qc_frames.js ./index_present.html /tmp/qc l1rhyme 2
 //
 // 输出：<输出目录>/f01.png ... ；逐 step 图 <输出目录>/step_<帧>_<k>.png
-// 检测：每帧全展开后元素底部相对 1080 画布的位置，>1000 视为被页脚裁切（需修布局）
+// 检测：每帧全展开后元素底部相对舞台画布的位置，超出「画布高-80px」视为被页脚裁切（需修布局）。
+//       舞台尺寸自动从 #stageWrap 读取（竖版 1080×1440 / 横版 1920×1080）。
 //
 // ⚠️ 关键坑：截「逐步」图前必须先移除**所有**帧的 .active，否则上一帧内容会残影叠加。
 const fs = require('fs');
@@ -41,7 +42,15 @@ fs.mkdirSync(OUT, { recursive: true });
            '--disable-dev-shm-usage', '--autoplay-policy=no-user-gesture-required'],
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
+  // 舞台尺寸自动从源 #stageWrap 读取（竖版 1080×1440 / 横版 1920×1080），缺省回退横版
+  let STAGE = { width: 1920, height: 1080 };
+  try {
+    const h = fs.readFileSync(path.resolve(SRC), 'utf-8');
+    let m = h.match(/id="stageWrap"[^>]*style="[^"]*?width:\s*(\d+)px[^"]*?height:\s*(\d+)px/);
+    if (!m) m = h.match(/#stageWrap\s*\{[^}]*?width:\s*(\d+)px[^}]*?height:\s*(\d+)px/);
+    if (m) STAGE = { width: +m[1], height: +m[2] };
+  } catch (e) {}
+  await page.setViewport({ width: STAGE.width, height: STAGE.height, deviceScaleFactor: 1 });
   await page.goto('file://' + path.resolve(SRC), { waitUntil: 'networkidle0', timeout: 90000 });
   await page.evaluate(() => document.fonts && document.fonts.ready);
   await page.evaluate(() => {
@@ -71,12 +80,14 @@ fs.mkdirSync(OUT, { recursive: true });
       const f = frames[idx - 1]; f.classList.add('active');
       f.querySelectorAll('.step').forEach(s => { s.classList.add('on'); s.classList.remove('gone'); });
       let maxBottom = 0; const over = [];
-      const root = document.getElementById('root').getBoundingClientRect();
+      const root = (document.getElementById('root') || document.getElementById('stageWrap'));
+      const rootRect = root.getBoundingClientRect();
+      const refH = rootRect.height || 1080;   // 实际画布高（竖版 1440 / 横版 1080）
       f.querySelectorAll('.sticker,.card,.ask,.reply,.say,.vis, div[style*="background"]').forEach(el => {
         const r = el.getBoundingClientRect();
-        const bottomRel = (r.bottom - root.top) / (root.height / 1080);
+        const bottomRel = (r.bottom - rootRect.top) / (rootRect.height / refH);
         if (bottomRel > maxBottom) maxBottom = bottomRel;
-        if (bottomRel > 1000) over.push(Math.round(bottomRel));
+        if (bottomRel > refH - 80) over.push(Math.round(bottomRel));
       });
       return { maxBottom: Math.round(maxBottom), over };
     }, i);

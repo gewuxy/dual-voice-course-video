@@ -25,6 +25,7 @@ bash $SK/scripts/preflight.sh "$H"
 
 # 1) 演讲稿  →  $H/视频课/script_v2_dialog.txt         （人工确认 gate）
 # 2) 放映版  →  $H/视频课/index_present.html           （人工确认 gate）
+#    取向含竖版时另产 $H/视频课/index_present_portrait.html（1080×1440，详见「取向确认」）
 python3 $SK/scripts/verify_steps.py "$H"        # 铁律校验：每帧 .step 数 == 该帧台词句数
 
 # 3) 双音色音频 —— 两条路由二选一（preflight 自动判定，见阶段 3）
@@ -92,9 +93,10 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 | `$H/视频课` | 本节全部产物                    | script / index_present.html / 素材 / 成片 / 封面                                             |
 | `$W`     | 临时工作目录                    | `/tmp/<课名>`（音频、standalone、shots、成片）                                                    |
 | 模板       | 蜡笔手绘风视觉基准（封面/课件统一）        | `$SK/assets/templates/crayon/preview.html`              |
+| 竖版课件模板   | 竖屏课件视觉基准（1080×1440 单栏大字号）    | `$SK/assets/templates/crayon/preview_portrait.html`     |
 | 竖版封面模板   | 视频号封面固定模板（1080×1260 对决版式） | `$SK/assets/templates/crayon/封面模板_竖版视频号_1080x1260.html` |
 
-环境变量可覆盖：`VOICE_CLONE` / `CHROME_BIN` / `FFMPEG` / `SYS_PY`（带 PIL 的系统 python，默认 `/opt/homebrew/bin/python3`，托管版 python 没装 PIL）。
+环境变量可覆盖：`VOICE_CLONE` / `CHROME_BIN` / `FFMPEG` / `SYS_PY`（带 PIL 的系统 python，默认 `/opt/homebrew/bin/python3`，托管版 python 没装 PIL）/ `TEACHER_NAME`（老师显示名，默认 `小贤老师`；改后须同步改课件气泡署名与剧本角色行）。
 
 ## 脚本清单（全部参数化，可直接跑）
 
@@ -125,6 +127,28 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 
 **无人值守场景（另一个 agent 代跑，且用户已明确授权连跑）**：才把确认 gate 换成「产物落盘 + 自检脚本通过 + 记录到工作日志」连续推进阶段 1→4；但**阶段 5 封面取向、以及成片视听验收必须留给人**。未获明确授权时，一律逐 gate 停下等人。
 
+### 取向确认 · 横版 / 竖版【确认 gate】
+
+用户创建课程时**先问取向，再开工**。取向决定阶段 2 用哪个模板、阶段 4 按什么尺寸渲染、阶段 5 封面要不要补竖版。
+
+> ⛔ **取向门禁（硬停止）**：开工前**停下**，用 `AskUserQuestion` 问用户本节课要「横版 / 竖版 / 横竖都要」，并把选择记进本课（例如 `$H/视频课/取向.txt` 写 `landscape` / `portrait` / `both`）。用户没回前不得写剧本以外的任何产物。
+
+- **横版**（默认）：1920×1080，课堂投影 / 横版视频号封面，阶段 2 用 `preview.html`，产出 `index_present.html`
+- **竖版**：1080×1440，视频号/抖音/Shorts 原生竖视频，阶段 2 用 `preview_portrait.html`（单栏大字号版式），产出 `index_present_portrait.html`
+- **横竖都要**：同一内容两套，阶段 2 出 `index_present.html` + `index_present_portrait.html`；阶段 3 音频**只合成一次**；阶段 4 两套各按尺寸渲染、复用同一份音频；阶段 5 封面横竖都出
+- 尺寸全自动：`make_standalone.py` 从源 `#stageWrap` 读尺寸（1920×1080 / 1080×1440），`capture*.js` / `qc_frames.js` 跟着源尺寸走，不用手填宽高；竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致
+
+### 老师显示名可配置（TEACHER_NAME，方案 A）
+
+老师**显示名**支持自定义，音色仍固定 `xiaoxian`（默认）。设置后，剧本角色行、课件气泡署名、声音路由三处须一致：
+
+- 剧本 `script_v2_dialog.txt`：老师行前缀改成 `你设的名：`（如 `TEACHER_NAME=林老师` → 写 `林老师：…`）；全/半角冒号都兼容
+- 课件 HTML 气泡署名：把模板里的「小贤老师」文字换成该名（横版 `preview.html` / 竖版 `preview_portrait.html` 老师气泡处已加注释提示）
+- 声音路由：`verify_steps.py` 与两个 TTS 脚本均读 `TEACHER_NAME`（默认 `小贤老师`），自动把该前缀识别为 `teacher` 角色 → 复用 `xiaoxian` 音色
+- 不设置则全程 `小贤老师`，与旧行为完全一致
+
+> 仅改显示名、不改音色，是方案 A 的范围；若以后要"名 + 克隆音色映射都可配"，再扩到方案 B（`SAY_TEACHER` 已预留路由位）。
+
 ### 阶段 1 · 演讲稿【确认 gate】
 
 产出 `$H/视频课/script_v2_dialog.txt`（驱动 HTML 帧结构与 TTS 的唯一真相源）。
@@ -137,7 +161,7 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 学生："红色！"[[0.8]]
 ```
 
-- 帧头 `【第 N 帧】`；角色行只能是 `小贤老师：` / `学生：`，台词用中文引号包裹
+- 帧头 `【第 N 帧】`；角色行老师默认 `小贤老师：`（可用环境变量 `TEACHER_NAME` 改显示名，见下方「老师显示名可配置」），学生 `学生：`，台词用中文引号包裹
 - `[[n]]` = 该句之后的静音秒数（学生思考/做动作的时间）
 - 学生行含「哭脸/笑脸」→ 不念词，只留静音（做表情）
 - **一帧内的角色行数 = 该帧 HTML 的 `.step` 数**（后续 1:1 对齐的唯一依据）
@@ -152,6 +176,8 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 ### 阶段 2 · HTML 放映版【确认 gate】
 
 基于确认稿做 `$H/视频课/index_present.html`：每帧一个 `.stage-frame`（`id="f01"…`），帧内 `.step` 块数 = 该帧台词句数，可选 `data-hide-at="N"`（到第 N 步淡出）。
+
+- **取向分支**：取向为「横版」→ 基于 `$SK/assets/templates/crayon/preview.html` 做 `index_present.html`；「竖版」→ 基于 `preview_portrait.html`（1080×1440 单栏大字号版式）做 `index_present_portrait.html`；「横竖都要」→ 两套都做（同一剧本，版式各自适配）。竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致；竖版用 `mo.css` 的 `anim-fade-rise`/`anim-pop` 等 class 与横版同一套动效判断逻辑（见下方「动效」）。
 
 - 视觉**必须**沿用蜡笔手绘风模板：手绘抖动笔触（SVG `feTurbulence`+`feDisplacementMap`）、纸纹噪点、蜡笔 blob、贴纸卡、圆体-简/娃娃体-简；固定品牌要素（左上徽章「AI 启蒙 · 第 X 课」+ 适合年级；底部「小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力」）
 - 图标优先纯 SVG 简笔画；**用户给了真照片时**，做成「拍立得贴纸」：`<div class="sticker" style="padding:8px;transform:rotate(±2.5deg);position:relative"><img …118px…><span class="tape"></span></div>` + 下方 28px 标签。照片规格：方裁（对准主体/红圈）→ 360px → JPEG q86 → base64 内嵌，单文件自包含
@@ -235,6 +261,7 @@ python3 $SK/scripts/make_standalone.py \
 ```
 
 - 输出 `standalone.html`（HTML 结构原样、不删任何字符；CSS 复用原 `<style>`；帧/step 显隐由 `applyTime(t)` 数据驱动）+ `schedule.json`（总时长与截图区间）
+- **竖版 / 横竖都要**：取向含竖版时，对 `$H/视频课/index_present_portrait.html` 再跑一次同样的 `make_standalone.py`（加 `--present ...portrait` `--out $W/standalone_portrait.html` `--sched $W/schedule_portrait.json`），尺寸自动按 1080×1440。`--report` 复用同一份 `report.json`（阶段 3 音频只合成一次，两套共用）。后续 `capture*.js` / `qc_frames.js` 各自指向 `_portrait` 的那份 standalone 即可，无需改任何宽高参数
 - **`--gap` 必须填 0.9**：`dialog2audio.py` 合并 `_merged.wav` 时帧间是硬编码 0.9s（旧文档写 0.25 是坑，会使末帧漂移近 10s、音画严重失步）。校验：standalone 总时长 ≈ `_merged.wav` 时长（±0.1s）
 - `--subtitles`：底部蜡笔风字幕条（师生分色：老师深蓝/学生粉，`--keywords` 黄底橙字高亮，长句按标点自动切 ≤30 字短条并按字数比例分配时间），字幕条放在页脚上方（bottom:104px），**只改 standalone，不动 index_present.html，不影响老师上课用放映版**；同时会修掉"帧间空隙画面内容清空闪烁"（step 延续到 gend）
 - `--srt`：同步产出 .srt（给剪辑/平台备用）

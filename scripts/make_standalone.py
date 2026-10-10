@@ -116,6 +116,13 @@ def main():
     styles = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
     BASE_CSS = "\n".join(styles) if styles else ""
 
+    # 从源放映版 #stageWrap 读取舞台尺寸（竖版 1080×1440 / 横版 1920×1080，不写死）。
+    # 匹配 <div id="stageWrap" style="...width:1080px...height:1440px"> 或 CSS #stageWrap{...}
+    dm = re.search(r'id="stageWrap"[^>]*style="[^"]*?width:\s*(\d+)px[^"]*?height:\s*(\d+)px', html) \
+        or re.search(r'#stageWrap\s*\{[^}]*?width:\s*(\d+)px[^}]*?height:\s*(\d+)px', html)
+    W = int(dm.group(1)) if dm else 1920
+    H = int(dm.group(2)) if dm else 1080
+
     frames, order = extract_frames(html)
     if not frames:
         sys.exit("没有解析到任何 stage-frame，检查 index_present.html 结构")
@@ -201,7 +208,7 @@ def main():
     OVERRIDE_CSS = """
   /* ===== 时间轴驱动（standalone） ===== */
   html, body { margin:0; padding:0; background:#FFF7EC; }
-  #root { position:relative; width:1920px; height:1080px; overflow:hidden; background:#FFF7EC; }
+  #root { position:relative; width:%dpx; height:%dpx; overflow:hidden; background:#FFF7EC; }
   .stage-frame { display:none; }
   .stage-frame.on { display:block; }
   .step { opacity:0; transform:none; }
@@ -213,6 +220,7 @@ def main():
   .step, .step.on, .step.gone, .stage-frame, #subtitle, #subbar {
           transition:none !important; animation:none !important; }
 """)
+    OVERRIDE_CSS = OVERRIDE_CSS % (W, H)   # 注入舞台尺寸（竖版/横版自适应）
     SUB_CSS = """
   /* ===== 视频版四角布局：左上徽章(不动) / 右上标语 / 底部居中字幕 / 右下品牌 ===== */
   #f01 .hdr { left:76px !important; }   /* 第1帧徽章行贴左上，与其他帧一致 */
@@ -273,7 +281,9 @@ def main():
               + ("  applySub(t);\n" if args.subtitles else "") +
               "}\nwindow.applyTime = applyTime;\napplyTime(0);\n</script>\n")
 
-    doc = ('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>' + args.title +
+    doc = ('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">'
+           + '<meta name="hf-size" content="%dx%d">' % (W, H)
+           + '<title>' + args.title +
            '</title><style>\n' + BASE_CSS + OVERRIDE_CSS
            + (SUB_CSS if args.subtitles else "") + '\n</style></head><body>\n<div id="root">\n'
            + "\n".join(frames_html) + "\n</div>\n" + SUB_HTML + script + "</body></html>")
