@@ -45,7 +45,17 @@ bash $SK/scripts/preflight.sh "$H"
 | 竖版课件模板   | 竖屏课件视觉基准（1080×1440 单栏大字号） | `$SK/assets/templates/crayon/preview_portrait.html`                               |
 | 竖版封面模板   | 视频号封面固定模板（1080×1260 对决版式） | `$SK/assets/templates/crayon/封面模板_竖版视频号_1080x1260.html`                           |
 
-环境变量可覆盖：`VOICE_CLONE` / `CHROME_BIN` / `FFMPEG` / `SYS_PY`（带 PIL 的系统 python，默认 `/opt/homebrew/bin/python3`，托管版 python 没装 PIL）/ `TEACHER_NAME`（老师显示名，默认 `小贤老师`；改后须同步改课件气泡署名与剧本角色行）。
+环境变量可覆盖（**优先级高于配置文件**，适合临时覆盖）：`VOICE_CLONE` / `CHROME_BIN` / `FFMPEG` / `SYS_PY` / `TEACHER_NAME` / `FAREWELL_WAV`。**机器相关路径与音色的权威来源是 `config.local.json`**（由 `config.example.json` 复制而来，已 gitignore），详见下方「本地配置」。
+
+## 本地配置（配置与代码分离，禁止写死路径/模型名）
+
+所有机器相关路径、音色模型名、`gap`、老师显示名只在一处定义，脚本/流水线不再写死。共两层：
+
+- **环境配置（skill 级，机器相关）**：复制 `config.example.json` → `config.local.json`（gitignore），改 `paths.voice_clone_dir` 等为你的机器值；`voices` 节是音色唯一真相源（改模型只改这里）。
+- **课程配置（每课一份，`$H/视频课/course_config.json`）**：取向确认 gate 时由 agent 写入，记录本课 `orientation` / `teacher_display_name` / `gap` / `keywords`；阶段 2/3/4/5 直接读它。
+- **合并优先级**：环境变量 > 课程配置 > 环境配置（`scripts/load_config.py` 统一加载；CLI `python3 load_config.py --get paths.voice_clone_dir` / `--course "$H/视频课" --json`）。
+
+> 设计对齐最佳实践：skill 只持判断/命令/模板，所有可变参数外置为配置；换机只改 `config.local.json`，不再碰任何脚本里的绝对路径。
 
 ## 脚本清单（全部参数化，可直接跑）
 
@@ -53,7 +63,7 @@ bash $SK/scripts/preflight.sh "$H"
 | ---------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `scripts/preflight.sh`             | 环境自检（18 项）                                                                                  | `bash preflight.sh [课目录]`                                                     |
 | `scripts/verify_steps.py`          | 校验 HTML 帧/步 == 剧本帧/句                                                                        | `python3 verify_steps.py <课目录>`                                               |
-| `scripts/dual_tts_dialog2audio.py` | 双音色配音（**须放在 `$VC/` 下跑**，与 `$VC/dialog2audio.py` 同内容）                                        | 见阶段 3 路由 A                                                                    |
+| `scripts/load_config.py`          | 统一配置加载器（合并 环境变量>课程config>config.local.json；CLI `--get/--json/--course`）       | `python3 load_config.py --get paths.voice_clone_dir`                            |
 | `scripts/dialog2audio_local.py`    | 本地 TTS 兜底配音（macOS `say`，纯标准库零依赖；输出合同与路由 A 一致，阶段 4 无缝衔接）                                     | 见阶段 3 路由 B                                                                    |
 | `scripts/make_standalone.py`       | 生成 `standalone.html` + `schedule.json`（时间轴驱动）                                               | 见阶段 4a                                                                        |
 | `scripts/capture.js`               | 按时间轴逐区间截图（自动找 puppeteer-core）                                                               | `node capture.js <工作目录>`                                                      |
@@ -89,13 +99,19 @@ bash $SK/scripts/preflight.sh "$H"
 - 尺寸全自动：`make_standalone.py` 从源 `#stageWrap` 读尺寸（1920×1080 / 1080×1440），`capture*.js` / `qc_frames.js` 跟着源尺寸走，不用手填宽高；竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致
 
 
-### 老师显示名可配置（TEACHER_NAME，方案 A）
+### 老师显示名可配置（方案 A）
 
-老师**显示名**支持自定义；音色固定 `xiaoxian_v2`（2026-10-08 定稿，e20/e12_s288）。设置后，剧本角色行、课件气泡署名、声音路由三处须一致：
+老师**显示名**支持自定义；音色固定 `xiaoxian_v2`（2026-10-08 定稿，e20/e12_s288）。显示名是**展示层配置**，统一来源（优先级从高到低）：
 
-- 剧本 `script_v2_dialog.txt`：老师行前缀改成 `你设的名：`（如 `TEACHER_NAME=林老师` → 写 `林老师：…`）；全/半角冒号都兼容
+- 课程配置 `course_config.json` 的 `teacher_display_name`（取向确认 gate 时写入）
+- 或环境变量 `TEACHER_NAME`（临时覆盖）
+- 或 `config.local.json` 的 `defaults.teacher_display_name`（默认 `小贤老师`）
+
+设置后，剧本角色行、课件气泡署名、声音路由须一致：
+
+- 剧本 `script_v2_dialog.txt`：老师行前缀改成该名（如 `林老师：…`）；全/半角冒号都兼容（`verify_steps.py` 与路由 B `dialog2audio_local.py` 均按该名识别 `teacher` 角色）
 - 课件 HTML 气泡署名：把模板里的「小贤老师」文字换成该名（横版 `preview.html` / 竖版 `preview_portrait.html` 老师气泡处已加注释提示）
-- 声音路由：`verify_steps.py` 与两个 TTS 脚本均读 `TEACHER_NAME`（默认 `小贤老师`），自动把该前缀识别为 `teacher` 角色 → 复用 `xiaoxian_v2` 音色（v2 情绪路由见 `references/pipeline.md` 阶段 3 路由 A）
+- 声音路由：老师角色恒映射 `xiaoxian_v2` 音色（路由 A 用 `$VC/dialog2audio.py`，其 `EXPS.teacher.exp` 已是 `xiaoxian_v2`；v2 情绪路由见 `references/pipeline.md` 阶段 3 路由 A）。**注意**：路由 A 的 GPT-SoVITS 脚本按 `小贤老师：` 解析角色行，故自定义显示名时——剧本格式行建议仍写 `小贤老师：`，仅在 HTML 气泡显示自定义名；或后续把 `$VC/dialog2audio.py` 也接 `TEACHER_NAME`
 - 不设置则全程 `小贤老师`，与旧行为完全一致
 
 > 仅改显示名、不改音色，是方案 A 的范围；若以后要"名 + 克隆音色映射都可配"，再扩到方案 B（`SAY_TEACHER` 已预留路由位）。
@@ -104,7 +120,7 @@ bash $SK/scripts/preflight.sh "$H"
 
 产出 `$H/视频课/script_v2_dialog.txt`（驱动 HTML 帧结构与 TTS 的唯一真相源）。
 
-格式（被 `dual_tts_dialog2audio.py` 与 `verify_steps.py` 共同解析）：
+格式（被 `verify_steps.py` 解析，角色行前缀见下方「老师显示名可配置」）：
 
 ```
 【第 1 帧】开场 · 主题
@@ -157,7 +173,7 @@ bash $SK/scripts/preflight.sh "$H"
 
 **路由 A · GPT-SoVITS 克隆音色（首选，音质最佳）** —— 在 `$VC` 下跑（脚本内 `EXPS` 自动取最新权重，参考音在 `dataset/` 下，**不要手写权重路径**）。命令见 `references/pipeline.md` 阶段 3 路由 A（`dialog2audio.py --script … --outdir $W/audio --no-cleanup`，`--only 4,7,11` 重跑坏句）。
 
-- 老师 `xiaoxian_v2`（定稿 e20/e12_s288；ref `dataset/xiaoxian_v2/wavs/xiaoxian_v2_021.wav`，含 v2 情绪路由表）、学生 `macie`（ref `dataset/macie/wavs/macie_13.wav`）
+- 音色见 `config.local.json` 的 `voices` 节（默认 老师 `xiaoxian_v2` 定稿 e20/e12_s288、含 v2 情绪路由表；学生 `macie`）；改模型只改配置，不用动这里
 - 参数：`--takes 3`、`--temperature 1.0`、`--gap 0.4`（帧内行距）、`--device cpu`（默认，稳）
 - **必须加 `--no-cleanup`**：否则逐句 `os.remove` 会触发沙箱 bulk-delete 守卫，进程被杀（EXIT=1）
 - 产出：`$W/audio/frame_NN.wav`（每帧）、`$W/audio/_merged.wav`（全课，帧间 0.9s）、**`$W/audio/report.json`**（每帧 `units:[{speaker,text,pause,dur,start}]`，`start` 是句内起始秒 —— 阶段 4 直接吃它）

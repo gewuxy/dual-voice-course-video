@@ -1,0 +1,25 @@
+{
+  "paths": {
+    "voice_clone_dir": "",
+    "chrome_bin": "",
+    "ffmpeg": "ffmpeg",
+    "sys_py": "/opt/homebrew/bin/python3"
+  },
+  "voices": {
+    "teacher": {
+      "exp": "xiaoxian_v2",
+      "ref": "dataset/xiaoxian_v2/wavs/xiaoxian_v2_021.wav",
+      "ref_text": "眼睛看到的是颜色，电脑看到的是数字。鼻子闻到的是香味，传感器读到的是数据。",
+      "farewell": "dataset/xiaoxian_v2/wavs/xiaoxian_v2_036.wav"
+    },
+    "student": {
+      "exp": "macie",
+      "ref": "dataset/macie/wavs/macie_13.wav",
+      "ref_text": "我叫 Macie，今年八岁，我最喜欢画画和搭积木。"
+    }
+  },
+  "defaults": {
+    "gap": 0.9,
+    "teacher_display_name": "小贤老师"
+  }
+}

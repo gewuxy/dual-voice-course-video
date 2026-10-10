@@ -11,3 +11,8 @@ __pycache__/
 
 # 本地内部交接文档（K2 视频课生产管线，含项目专属路径/进度，不对外发布）
 HANDOFF.md
+
+# 本地配置（含机器绝对路径/音色，不对外发布；模板 config.example.json 已提交）
+config.local.json
+config.local.yaml
+config.local.toml

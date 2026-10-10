@@ -80,7 +80,7 @@ python3 $SK/scripts/dialog2audio_local.py --script "$H/视频课/script_v2_dialo
 # 坏句重跑： --only 4,7,11 （CLI 与路由 A 兼容）
 ```
 
-- 老师 `xiaoxian_v2`（定稿 e20/e12_s288）、学生 `macie`（路由 A；ref 与 v2 情绪路由见 `SKILL.md` 阶段 3）；路由 B 按平台自动选后端、师生双音色方案见 `SKILL.md` 阶段 3 路由 B 表
+- 音色见 `config.local.json` 的 `voices` 节（默认 老师 `xiaoxian_v2` 定稿 e20/e12_s288、含 v2 情绪路由；学生 `macie`）；改模型只改配置。路由 B 按平台自动选后端、师生双音色方案见 `SKILL.md` 阶段 3 路由 B 表
 - 权重自动取最新 epoch；参数 `--takes 3 --temperature 1.0 --gap 0.4 --device cpu`
 - **必加 `--no-cleanup`**（否则逐句 `os.remove` 触发沙箱 bulk-delete 守卫，进程被杀 EXIT=1）
 - 单句成句判定阈值必须 `>=1`（旧 `>=4` 会整句丢掉「苹果！」这类 1–3 字童声，表现为"学生句消失"而非报错）

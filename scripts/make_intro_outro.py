@@ -3,7 +3,7 @@
 用法:
   python make_intro_outro.py --video <正片.mp4> --out <输出.mp4> [--speed 1.5]
 固定资产（assets/intro_outro/）: introcard.png / endcard.png / anchor_line.wav
-告别词: voice_clone/dataset/xiaoxian_v2/wavs/xiaoxian_v2_036.wav
+告别词: config.voices.teacher.farewell（基于 VOICE_CLONE 拼接；可用 FAREWELL_WAV 环境变量覆盖）
 结构:
   片头 6.5s: 蜡笔风片头卡 + 锚句配音（0.25s 起，同样倍速），首尾淡入淡出
   正片: 原样保留，不做任何叠加/闪避
@@ -18,13 +18,13 @@ FFMPEG = os.environ.get("FFMPEG", shutil.which("ffmpeg") or "/opt/homebrew/bin/f
 # skill 内部资源：始终相对本脚本推导（scripts/ 的上一级），clone 到任何位置都可用
 SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL = os.path.join(SKILL_DIR, "assets", "intro_outro")
-# 告别词音频属于外部 voice_clone 项目：优先 FAREWELL_WAV，其次用 VOICE_CLONE 拼接
-VOICE_CLONE = os.environ.get("VOICE_CLONE", "")
+# 告别词音频：优先级 FAREWELL_WAV 环境变量 > config.voices.teacher.farewell（基于 VOICE_CLONE 拼接）
+# 不再写死绝对路径；换机/换音色只改 config.local.json
+sys.path.insert(0, os.path.join(SKILL_DIR, "scripts"))
+from load_config import farewell_path
 FAREWELL = os.environ.get("FAREWELL_WAV", "")
-if not FAREWELL and VOICE_CLONE:
-    FAREWELL = os.path.join(VOICE_CLONE, "dataset/xiaoxian_v2/wavs/xiaoxian_v2_036.wav")
 if not FAREWELL:
-    sys.exit("✗ 找不到告别词音频。请设置环境变量 FAREWELL_WAV（指向 voice_clone/dataset/xiaoxian_v2/wavs/xiaoxian_v2_036.wav），或先设置 VOICE_CLONE。")
+    FAREWELL = farewell_path()   # 缺配置时内部 sys.exit 给出明确提示
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--video", required=True)

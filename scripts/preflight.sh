@@ -4,12 +4,10 @@
 # 用法：
 #   bash preflight.sh [课程目录]      # 课程目录可选，给了就顺便校验 $H/视频课/index_present.html
 #
-# 可覆盖的环境变量：
-#   VOICE_CLONE   语音克隆项目根目录（外部依赖，默认 /Users/luozexian/WorkBuddy/2026-09-29-09-22-59/voice_clone；换机请改或 export）
-#   CHROME_BIN    Chrome 可执行文件
-#   FFMPEG        ffmpeg 可执行文件
-#   SYS_PY        带 PIL 的系统 python（默认 /opt/homebrew/bin/python3）
-#   TPL           蜡笔风模板 preview.html 路径（默认自动相对本 skill，无需设置）
+# 配置（统一来源，见 SKILL.md「本地配置」）：
+#   - 机器相关路径/音色优先读 config.local.json（由 config.example.json 复制而来，gitignore）
+#   - 环境变量 VOICE_CLONE/CHROME_BIN/FFMPEG/SYS_PY 可临时覆盖，优先级最高
+#   不再写死任何绝对路径；换机只改 config.local.json 或 export 环境变量
 #
 # 阶段 3 配音有两条路由，自动二选一：
 #   路由 A  GPT-SoVITS 双音色克隆（xiaoxian_v2 + macie，音质最佳）
@@ -19,9 +17,22 @@
 # 本 skill 目录：始终相对本脚本推导，clone 到任何位置都可用
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
-VOICE_CLONE="${VOICE_CLONE:-/Users/luozexian/WorkBuddy/2026-09-29-09-22-59/voice_clone}"
+CFG_PY="$SKILL_DIR/scripts/load_config.py"
+
+# 配置优先级：环境变量 > config.local.json（缺失回退 config.example.json）
+_vc() { python3 "$CFG_PY" --get paths.voice_clone_dir 2>/dev/null; }
+VOICE_CLONE="${VOICE_CLONE:-$(_vc)}"
+if [ -z "$VOICE_CLONE" ]; then
+  echo "⚠️ 未配置 voice_clone 目录：复制 config.example.json 为 config.local.json 并填 paths.voice_clone_dir，或 export VOICE_CLONE"
+fi
+_chrome() { python3 "$CFG_PY" --get paths.chrome_bin 2>/dev/null; }
+CHROME_BIN="${CHROME_BIN:-$(_chrome)}"
 CHROME_BIN="${CHROME_BIN:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
+_ff() { python3 "$CFG_PY" --get paths.ffmpeg 2>/dev/null; }
+FFMPEG="${FFMPEG:-$(_ff)}"
 FFMPEG="${FFMPEG:-/opt/homebrew/bin/ffmpeg}"
+_sp() { python3 "$CFG_PY" --get paths.sys_py 2>/dev/null; }
+SYS_PY="${SYS_PY:-$(_sp)}"
 SYS_PY="${SYS_PY:-/opt/homebrew/bin/python3}"
 H="${1:-}"
 TPL="${TPL:-$SKILL_DIR/assets/templates/crayon/preview.html}"
@@ -38,16 +49,21 @@ gchk() {
 }
 
 echo "== 1. 配音路由（阶段3：A=GPT-SoVITS 克隆 / B=macOS 本地 TTS，自动二选一）=="
+# 音色名/参考音统一从 config.voices 读取（单一真相源，不写死）
+T_EXP="$(python3 "$CFG_PY" --get voices.teacher.exp 2>/dev/null)"
+S_EXP="$(python3 "$CFG_PY" --get voices.student.exp 2>/dev/null)"
+T_REF="$(python3 "$CFG_PY" --get voices.teacher.ref 2>/dev/null)"
+S_REF="$(python3 "$CFG_PY" --get voices.student.ref 2>/dev/null)"
 gchk "voice_clone 目录：$VOICE_CLONE" "[ -d '$VOICE_CLONE' ]"
 gchk "venv python（Python 3.11 + torch）" "'$VOICE_CLONE/venv/bin/python' -c 'import torch, numpy, soundfile'"
 gchk "GPT-SoVITS 仓库" "[ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS' ]"
 gchk "预训练底模（chinese-roberta / chinese-hubert / gsv-v2final）" \
     "[ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained' ] && [ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS/pretrained_models/chinese-hubert-base' ] && [ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large' ]"
-gchk "老师权重 xiaoxian_v2（GPT_weights + SoVITS_weights，定稿 e20/e12_s288）" "ls '$VOICE_CLONE'/GPT_weights/xiaoxian_v2-e*.ckpt '$VOICE_CLONE'/SoVITS_weights/xiaoxian_v2_e*_s*.pth"
-gchk "学生权重 macie（GPT_weights + SoVITS_weights）" "ls '$VOICE_CLONE'/GPT_weights/macie-e*.ckpt '$VOICE_CLONE'/SoVITS_weights/macie_e*_s*.pth"
-gchk "参考音 xiaoxian_v2_021.wav" "[ -f '$VOICE_CLONE/dataset/xiaoxian_v2/wavs/xiaoxian_v2_021.wav' ]"
-gchk "参考音 macie_13.wav" "[ -f '$VOICE_CLONE/dataset/macie/wavs/macie_13.wav' ]"
-gchk "双音色脚本 dialog2audio.py" "[ -f '$VOICE_CLONE/dialog2audio.py' ]" "从 skill 的 scripts/dual_tts_dialog2audio.py 复制过去"
+gchk "老师权重 $T_EXP（GPT_weights + SoVITS_weights）" "ls '$VOICE_CLONE'/GPT_weights/${T_EXP}-e*.ckpt '$VOICE_CLONE'/SoVITS_weights/${T_EXP}_e*_s*.pth"
+gchk "学生权重 $S_EXP（GPT_weights + SoVITS_weights）" "ls '$VOICE_CLONE'/GPT_weights/${S_EXP}-e*.ckpt '$VOICE_CLONE'/SoVITS_weights/${S_EXP}_e*_s*.pth"
+gchk "参考音 $T_REF" "[ -f '$VOICE_CLONE/$T_REF' ]"
+gchk "参考音 $S_REF" "[ -f '$VOICE_CLONE/$S_REF' ]"
+gchk "双音色脚本 dialog2audio.py（路由 A 权威脚本，位于 voice_clone 项目）" "[ -f '$VOICE_CLONE/dialog2audio.py' ]" "voice_clone 项目自带；skill 不再维护副本"
 
 if [ -x "$VOICE_CLONE/venv/bin/python" ] && [ -f "$VOICE_CLONE/dialog2audio.py" ] && [ -d "$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS" ]; then
   echo "  → 配音路由：A（GPT-SoVITS 双音色克隆）"
