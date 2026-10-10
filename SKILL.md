@@ -60,7 +60,7 @@ EOF
 ffmpeg -y -framerate 30 -i $W/frames/f%05d.png -c:v libx264 -pix_fmt yuv420p -crf 20 $W/video_cfr.mp4
 ffmpeg -y -i $W/video_cfr.mp4 -i $W/audio/_merged_norm.wav -map 0:v:0 -map 1:a:0 \
   -c:v copy -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "$H/视频课/<课程名>_双音色成片.mp4"
-# ★ _merged_norm.wav = 合成音频先做两遍式 loudnorm（见 known_pitfalls #18，合成直出仅约 -19 LUFS）
+# ★ _merged_norm.wav = 合成音频先做两遍式 loudnorm（见 references/known_pitfalls.md §6，合成直出仅约 -19 LUFS）
 #   第一遍: ffmpeg -i $W/audio/_merged.wav -af loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json -f null -
 #   第二遍: ffmpeg -y -i _merged.wav -af "loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=<输入I>:measured_TP=<TP>:measured_LRA=<LRA>:measured_thresh=<thresh>:linear=true" -ar 44100 -ac 2 _merged_norm.wav
 
@@ -274,7 +274,7 @@ bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3
 - **节奏**（照 L2 `sensingandunderstanding.mp4` 前 5 秒）：logo 飞入 0.02–0.85 → 品牌名 0.60–1.25 → 主张句 1.05–1.70 → **配套三件套逐个飞入** 1.62–2.66（左/下/右三个方向、窗口交叠）→ 收尾句 2.62–3.12 → 课名贴纸 3.05–3.85 → 蜡笔擦除 4.35–4.95
 - **文案全走 CLI**：`--brand / --claim / --lead / --k1 / --k2 / --k3 / --noplug / --title`（`--title` 里的 `<em>关键词</em>` 自动加黄色高亮胶囊）
 - **时长**改 `--total`：模板里所有时间点都过 `K(x)=x*TOTAL/5.0` 等比缩放，不用改 JS
-- **配乐** `scripts/make_intro_music.py`：100BPM、C 大调 I–V/V–vi–IV 琶音 + 铺底 pad + 轻沙锤 + 合成混响；**默认不加卡点铃铛**（用户定案，见 known_pitfalls #22）
+- **配乐** `scripts/make_intro_music.py`：100BPM、C 大调 I–V/V–vi–IV 琶音 + 铺底 pad + 轻沙锤 + 合成混响；**默认不加卡点铃铛**（用户定案，见 references/known_pitfalls.md §6）
 - **资产**：`assets/intro/`（模板 + 官网 logo + README）
 
 *确认 gate*：出片后抽 4 帧 + 完整听一遍。**片头定稿后再开正片渲染**——换音色/改文案会改时轴，画面得重渲（L3 一次 9664 帧 ≈ 12–15 分钟）。
@@ -310,6 +310,5 @@ bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3
 ## 参考文档
 
 - `references/pipeline.md`：每阶段命令与文件结构笔记
-- `references/known_pitfalls.md`：早期真实踩坑清单（#1–#13：split_units 阈值、bind_delays 堆叠、hyperframes、re.sub 破坏、超长 base64、QC 残影、真照片卡片溢出、视频号 1:1 裁切、PSNR 误区等）
-- `known_pitfalls.md`（根目录）：后续新坑（#14–#25，L6 之后的动效库、SVG 裁切、loudnorm、切片、ref 路由、片头高亮、孤立拉丁字母、破折号吞字等）
+- `references/known_pitfalls.md`：通用踩坑清单（按根因/主题归类，**与课程内容无关**，动手前必读）。涵盖：吞字类（孤立拉丁字母、破折号单字短片段、童声短句）、双音色 TTS、时间轴对齐、HTML 排版版式、CSS 动效、响度/混流(loudnorm)、切片引流、合成编码、QC、封面、教学设计通用原则、路由 B 跨平台兜底。
 - `references/example_schedule.json`：`schedule.json` 结构示例

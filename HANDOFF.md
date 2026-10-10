@@ -14,7 +14,7 @@
 ## 二、五阶段管线（每课全量产出流程）
 
 1. **稿**：`script_v2_dialog.txt`（格式：`【第N帧】老师：…[[前停]] / 学生：…[[后停]]`）
-2. **画面**：`build_l<N>.py` 生成课件 HTML（动效库见 known_pitfalls #15~#17）
+2. **画面**：`build_l<N>.py` 生成课件 HTML（动效库见 references/known_pitfalls.md §5）
 3. **声音**：`voice_clone/dialog2audio.py` 按句路由情绪 ref 合成双音色 → `audio_v2/`（帧音频 + report.json）
 4. **整合**：`scripts/make_standalone.py`（报告→分镜 HTML）→ 用 SKILL.md 阶段 4c 的 ffmpeg 命令混流（loudnorm -16 LUFS + faststart 必加；`compose.py` 已弃用，勿用）
 5. **封面**：双封面模板（横版 1920×1080 + 竖版视频号 1080×1260），另出 1:1 裁切自查图
@@ -29,7 +29,7 @@
 ```
 dual-voice-course-video/
 ├── SKILL.md                    # 管线总说明（阶段 1~6）
-├── known_pitfalls.md           # 已知坑 #1~#20，动手前必读
+├── references/known_pitfalls.md # 通用踩坑清单（按根因归类，与课程内容无关），动手前必读
 ├── references/pipeline.md      # 管线细节
 ├── scripts/
 │   ├── make_standalone.py      # report.json → 分镜 HTML
