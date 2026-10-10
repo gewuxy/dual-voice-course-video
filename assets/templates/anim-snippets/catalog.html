@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>动效片段库 · 预览目录</title>
+<link rel="stylesheet" href="mo.css">
+<style>
+  :root{ --c-yellow:#FFD84D; --c-green:#7BC96F; --c-blue:#5AB0F5; --c-red:#FF6B6B; --c-purple:#B088F9; --ink:#3A3226; --font-title:"圆体-简","Yuanti SC",sans-serif; --font-body:"圆体-简",sans-serif; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-body);color:var(--ink);background:#EAE4D6;padding:40px 28px 80px}
+  h1{font-family:var(--font-title);font-size:40px;margin-bottom:6px}
+  .lead{color:#7A6E5C;margin-bottom:28px;max-width:880px;line-height:1.6}
+  .group{margin:34px 0 10px;font-family:var(--font-title);font-size:24px;border-left:6px solid var(--c-green);padding-left:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .card{background:#FFFDF8;border-radius:20px;box-shadow:6px 8px 0 rgba(58,50,38,.10);overflow:hidden;display:flex;flex-direction:column}
+  .stage{position:relative;height:200px;background:radial-gradient(120% 90% at 12% 8%,#FFFDF6,#FFF4E0);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .stage.dark{background:#0b0b0e}
+  .sample{font-family:var(--font-title);font-size:30px;background:var(--c-yellow);padding:14px 26px;border-radius:18px;box-shadow:4px 5px 0 rgba(58,50,38,.12)}
+  .sample.b{background:var(--c-blue)}
+  .sample.g{background:var(--c-green)}
+  .meta{padding:12px 16px 14px}
+  .name{font-family:var(--font-title);font-size:18px;margin-bottom:4px}
+  .when{font-size:13px;color:#7A6E5C;line-height:1.5;min-height:38px}
+  .replay{margin-top:8px;border:none;background:var(--c-green);color:#fff;font-family:var(--font-title);font-size:15px;padding:7px 16px;border-radius:999px;cursor:pointer}
+  .replay:hover{filter:brightness(1.05)}
+  .note{font-size:12px;color:#9a8f7c;margin-top:6px}
+  /* 真实素材示意（截图） */
+  .photo{width:150px;height:110px;border-radius:14px;background:linear-gradient(135deg,#5AB0F5,#B088F9);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+  .sticker{background:#FFFDF8;border-radius:18px;box-shadow:6px 7px 0 rgba(58,50,38,.12);padding:16px 22px;font-family:var(--font-title);font-size:22px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:rgba(123,201,111,.18);border:1px solid rgba(123,201,111,.5);border-radius:999px;padding:8px 18px;font-size:16px}
+</style>
+</head>
+<body>
+<h1>动效片段库 · 预览目录</h1>
+<p class="lead">每条动效按"何时用"标注。做新课某帧时，先看它属于哪类（概念 / 游戏 / 对比 / 流程 / 总结），再挑对应的片段——不是为和上一课不同而非要不同。点"重播"看效果。</p>
+
+<div class="group">入场 · 缩放弹出类</div>
+<div class="grid">
+  <div class="card"><div class="stage"><div class="sample" id="s-pop">答案 B</div></div>
+    <div class="meta"><div class="name">pop · 缩放弹出</div><div class="when">答案卡、贴纸、重点词出现（带过冲）</div><button class="replay" data-cls="anim-pop" data-tgt="s-pop">重播</button></div></div>
+  <div class="card"><div class="stage"><div class="sample g" id="s-slam">特征！</div></div>
+    <div class="meta"><div class="name">slam · 砸入</div><div class="when">金句、大数字、主词落定（猛一下回弹）</div><button class="replay" data-cls="anim-slam" data-tgt="s-slam">重播</button></div></div>
+  <div class="card"><div class="stage"><div class="sticker" id="s-rise">老师：我们来看看</div></div>
+    <div class="meta"><div class="name">fadeRise · 上浮淡入</div><div class="when">要点、列表、老师/学生气泡（两端停稳）</div><button class="replay" data-cls="anim-fade-rise" data-tgt="s-rise">重播</button></div></div>
+</div>
+
+<div class="group">入场 · 素材 / 聚焦类</div>
+<div class="grid">
+  <div class="card"><div class="stage"><div class="photo" id="s-blur">WorkBuddy 截图</div></div>
+    <div class="meta"><div class="name">blurIn · 模糊浮出</div><div class="when">真实截图/照片/课件大图登场（像对焦）</div><button class="replay" data-cls="anim-blur-in" data-tgt="s-blur">重播</button></div></div>
+  <div class="card"><div class="stage"><div class="sample b" id="s-iris">细节</div></div>
+    <div class="meta"><div class="name">irisIn · 向内溶解</div><div class="when">从大图钻进某细节、揭示卡片内容</div><button class="replay" data-cls="anim-iris-in" data-tgt="s-iris">重播</button></div></div>
+  <div class="card"><div class="stage"><div class="sample" id="s-fl" style="margin-right:auto">A</div><div class="sample b" id="s-fr" style="margin-left:auto">B</div></div>
+    <div class="meta"><div class="name">flyLeft / flyRight · 飞入</div><div class="when">对比两栏、两角色/两选项从两侧来</div><button class="replay" data-dbl="1" data-cls="anim-fly-left" data-tgt="s-fl" data-cls2="anim-fly-right" data-tgt2="s-fr">重播</button></div></div>
+  <div class="card"><div class="stage"><div class="sample g" id="s-chars">数据集</div></div>
+    <div class="meta"><div class="name">charsIn · 逐字上浮</div><div class="when">标题、关键词（需 JS 拆字）</div><button class="replay" data-chars="1" data-tgt="s-chars">重播</button></div></div>
+</div>
+
+<div class="group">持续微动（仅素材 / 装饰层）</div>
+<div class="grid">
+  <div class="card"><div class="stage"><div class="photo idle-kenburns" id="s-kb">课件总览</div></div>
+    <div class="meta"><div class="name">kenburns · Ken Burns</div><div class="when">大截图/课件总览"看全并浏览"（落定后仍在动）</div><div class="note">持续循环，仅素材层</div></div></div>
+  <div class="card"><div class="stage"><div class="chip idle-glow" id="s-glow">● 正在生成</div></div>
+    <div class="meta"><div class="name">glow · 闪烁渐变</div><div class="when">状态 chip / 当前激活卡 / 正在说话的一方</div><div class="note">持续循环，别满屏加</div></div></div>
+  <div class="card"><div class="stage"><div class="sticker idle-float" id="s-float">★</div></div>
+    <div class="meta"><div class="name">float · 漂浮</div><div class="when">背景装饰、环境层</div><div class="note">持续循环，非主体</div></div></div>
+</div>
+
+<div class="group">帧间转场（全屏覆盖层，GSAP 版见 mo.gsap.js）</div>
+<div class="grid" id="tr-grid">
+  <div class="card"><div class="stage dark" id="tr-iris"></div>
+    <div class="meta"><div class="name">iris · 向内溶解</div><div class="when">聚焦/进入下一步，最柔和</div><button class="replay" data-tr="mo-trans-iris">重播</button></div></div>
+  <div class="card"><div class="stage dark" id="tr-blinds"></div>
+    <div class="meta"><div class="name">blinds · 百叶窗</div><div class="when">揭幕感、节奏明快</div><button class="replay" data-tr="mo-trans-blinds" data-strips="8">重播</button></div></div>
+  <div class="card"><div class="stage dark" id="tr-wipe"></div>
+    <div class="meta"><div class="name">wipe · 擦除</div><div class="when">左→右推进，像翻页</div><button class="replay" data-tr="mo-trans-wipe">重播</button></div></div>
+  <div class="card"><div class="stage dark" id="tr-fly"></div>
+    <div class="meta"><div class="name">fly · 飞入</div><div class="when">新画面从下升起</div><button class="replay" data-tr="mo-trans-fly">重播</button></div></div>
+</div>
+
+<script src="mo.gsap.js"></script>
+<script>
+function replay(cls, tgt){
+  const el = document.getElementById(tgt);
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+}
+document.querySelectorAll('.replay').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    if(b.dataset.chars){
+      const el=document.getElementById(b.dataset.tgt);
+      if(window.MO && MO.charsIn) MO.charsIn(el);
+      else { el.classList.remove('anim-fade-rise'); void el.offsetWidth; el.classList.add('anim-fade-rise'); }
+      return;
+    }
+    if(b.dataset.tr){
+      const box=document.getElementById(b.dataset.tr.replace('mo-trans-','tr-'));
+      box.innerHTML='';
+      const layer=document.createElement('div');
+      layer.className='mo-trans '+b.dataset.tr;
+      if(b.dataset.strips){ for(let i=0;i<+b.dataset.strips;i++){const s=document.createElement('i');s.style.animationDelay=(i*0.03)+'s';layer.appendChild(s);} }
+      box.appendChild(layer);
+      return;
+    }
+    if(b.dataset.dbl){
+      replay(b.dataset.cls, b.dataset.tgt);
+      replay(b.dataset.cls2, b.dataset.tgt2);
+      return;
+    }
+    replay(b.dataset.cls, b.dataset.tgt);
+  });
+});
+</script>
+</body>
+</html>

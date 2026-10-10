@@ -149,6 +149,15 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 - **改超长 base64 行时不要用 Edit 工具**（字符串匹配必然失败），用 Python `str.replace` / 正则
 - 真照片贴纸（118px + 标签）比原 SVG 图标高，卡片易顶到页脚：`vis` 的 `top` 压到 566 左右，`nm` 44、`tx` 一句话不折行
 
+**动效（按内容判断，不从上一课复制，也不用为差异化而差异化）**
+
+- 做每帧时**先看这帧在讲什么课型**，再挑动效——不是照抄上一课的套路，也不是为了和上一课不同而硬换。判断决策表在 `$SK/assets/templates/anim-snippets/README.md`「二、按课型选动效」，必须按它走。
+- 三类课型速记：① 讲概念 / 介绍特征 → `pop` 或 `blurIn`+`kenburns`；② 互动游戏 / 问答 → `slam`+`glow`+`elastic`；③ 对比 A vs B → `flyLeft`+`flyRight` 或 `iris`/`blinds`/`wipe` 转场。流程步骤用 `fadeRise`+数字步进+顺序 `glow`；总结回顾用 `fadeRise`+`slam`+`charsIn`。有真实截图/照片 → 一律 `blurIn`+`kenburns` 满幅，代码只做解释标注。
+- 节奏铁律（避免被读成"翻页式 PPT"）：运动是「停住 → 猛一下 → 停住」的**脉冲节奏**，不是匀速慢推 / 全员呼吸。入场用 `MO.PULSE`（快推 `punch 0.28s`、横移 `pan 0.30s`、砸入 `slam 0.17s`）；一帧只让一个主体动，其余静止。
+- 片段库两个用法：纯 CSS 课件 → `<link rel="stylesheet" href="assets/templates/anim-snippets/mo.css">` 加 class（`anim-pop`/`anim-slam`/`anim-fade-rise`/`anim-blur-in`/`anim-iris-in`/`anim-fly-left`/`anim-fly-right` + 持续 `idle-kenburns`/`idle-glow`/`idle-float`）；GSAP 时间轴渲染成片 → 引入 `mo.gsap.js` 后 `MO.entrance(tl, sel, kind, at)` / `MO.transition(tl, kind, at)` / `MO.continuous(sel, kind)`。无 GSAP 时自动降级为 CSS class，不报错。
+- 开工前 / 交付前各对照一遍 `$SK/assets/templates/anim-snippets/README.md`「三、六种做坏方式」（翻页式PPT、照搬上一课、没有具体的物、死背景空画面、有真实素材却用代码画、一眼AI味拼贴）。
+- 做完一支新课，效果好的动效组合**回流**进 README 第二节决策表；动效坑写进 `references/known_pitfalls.md`（§5 动效）。同课型用同一套动效完全正确，只有课型变了才换。
+
 
 **QC 循环（必做）**：
 

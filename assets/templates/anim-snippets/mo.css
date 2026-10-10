@@ -1,0 +1,133 @@
+/* ============================================================================
+ * mo.css — 双音色课程视频 · 动效片段库（纯 CSS 版，无需 JS 即可用）
+ * 配套：mo.gsap.js（GSAP 时间轴版，用于 HyperFrames 渲染）、README.md（判断指引）
+ *
+ * 设计原则（借鉴 huashu-art-motion 的 MO 库 + 脉冲节奏）：
+ *   - 动在事件上：入场/揭示是"脉冲"——先停住，到了该出现的时刻猛地一下，然后落定停住。
+ *     不要用全员匀速呼吸、全程慢推来"凑运动"，那会被读成翻页式 PPT。
+ *   - 一帧一个视觉事件：每帧只让一个主体入场，其余静止。
+ *   - 持续微动（kenburns / glow / float）只给"素材展示 / 装饰层"，主体落定后停住。
+ *   - 蜡笔风统一：色板用 --c-* 变量（与 crayon 模板一致），字体用圆体/娃娃体。
+ *
+ * 用法：在课件 HTML 的 <head> 引入本文件，再给元素加对应 class：
+ *   <div class="sticker anim-pop">答案</div>
+ * 想重播就移除再添加 class（catalog.html 里的"重播"按钮就是这么做的）。
+ * ========================================================================== */
+
+/* ---------------------- 入场：缩放弹出（最常用，强调"出现"） ---------------------- */
+/* 适用：答案卡、贴纸、重点词。带轻微过冲，弹出感强。
+   别用：大段正文（太跳），那种用 fade-rise。 */
+@keyframes mo-pop {
+  0%   { opacity:0; transform: scale(.82); }
+  60%  { opacity:1; transform: scale(1.05); }
+  100% { opacity:1; transform: scale(1); }
+}
+.anim-pop { animation: mo-pop .50s cubic-bezier(.34,1.56,.64,1) both; }
+
+/* 砸入：从一个放大的点"砸"下来并回弹——用于金句/大数字/主词落定。
+   节奏参考 MO.slam：1.5→0.94→1.0。 */
+@keyframes mo-slam {
+  0%   { opacity:0; transform: scale(1.5); }
+  55%  { opacity:1; transform: scale(.94); }
+  100% { opacity:1; transform: scale(1); }
+}
+.anim-slam { animation: mo-slam .42s cubic-bezier(.2,0,0,1) both; }
+
+/* 上浮淡入：要点、列表项、老师/学生气泡。两端停稳（sineInOut 感）。
+   适用：逐条出现的内容。别用：需要"砸"出来的强调物（用 slam）。 */
+@keyframes mo-fade-rise {
+  0%   { opacity:0; transform: translateY(26px); }
+  100% { opacity:1; transform: translateY(0); }
+}
+.anim-fade-rise { animation: mo-fade-rise .50s cubic-bezier(.22,1,.36,1) both; }
+
+/* 模糊浮出：真实截图 / 照片 / 课件大图登场。从模糊清晰化，像镜头对焦。
+   适用：素材类主体（你要求"看全"的截图、WorkBuddy 演示图）。别用：文字卡。 */
+@keyframes mo-blur-in {
+  0%   { opacity:0; filter: blur(14px); transform: scale(1.04); }
+  100% { opacity:1; filter: blur(0);    transform: scale(1); }
+}
+.anim-blur-in { animation: mo-blur-in .60s ease both; }
+
+/* 向内溶解：用圆形 clip 从中心揭开——聚焦某个细节 / 进入下一步。
+   适用：从一个大图里"钻进"某处、或揭示一张卡片的内容。别用：整屏换景（用转场）。 */
+@keyframes mo-iris-in {
+  0%   { opacity:0; clip-path: circle(0% at 50% 50%); }
+  100% { opacity:1; clip-path: circle(75% at 50% 50%); }
+}
+.anim-iris-in { animation: mo-iris-in .55s cubic-bezier(.22,1,.36,1) both; }
+
+/* 飞入：从侧边滑入。左飞/右飞用于"对比"两栏（A 从左、B 从右）。
+   适用：并列比较、两个角色/两选项入场。 */
+@keyframes mo-fly {
+  0%   { opacity:0; transform: translateX(120px); }
+  100% { opacity:1; transform: translateX(0); }
+}
+.anim-fly-left  { animation: mo-fly .50s cubic-bezier(.22,1,.36,1) both; }
+.anim-fly-right { animation: mo-fly .50s cubic-bezier(.22,1,.36,1) both reverse; }
+
+/* 逐字上浮：标题/关键词逐字升起（需 JS 把文字拆成 <span>；见 mo.gsap.js 的 charsIn）。
+   这里给一个纯 CSS 的整块版本作退化。 */
+@keyframes mo-rise {
+  0%   { opacity:0; transform: translateY(18px); }
+  100% { opacity:1; transform: translateY(0); }
+}
+
+/* ---------------------- 持续微动（仅素材展示 / 装饰层，主体落定后停住） ---------------------- */
+/* Ken Burns 呼吸 + 轻平移：截图/照片"看全并像在浏览"。9s 一循环，缓慢。
+   适用：F1 这类大截图、课件总览。别用：要点卡/文字（会显得不稳）。 */
+@keyframes mo-kenburns {
+  0%   { transform: scale(1)    translate(0,0); }
+  100% { transform: scale(1.12) translate(-12px,-10px); }
+}
+.idle-kenburns { animation: mo-kenburns 9s ease-in-out infinite alternate; }
+
+/* 闪烁渐变（绿光晕脉冲）：强调状态 chip / 当前激活的卡片 / 正在说话的一方。
+   适用：需要"这里现在有东西在发生"的提示。别用：满屏元素全加（晃眼）。 */
+@keyframes mo-glow {
+  0%,100% { box-shadow: 0 0 0 rgba(123,201,111,0); }
+  50%     { box-shadow: 0 0 26px rgba(123,201,111,.55); }
+}
+.idle-glow { animation: mo-glow 1.6s ease-in-out infinite; }
+
+/* 漂浮：环境层（星点、装饰贴纸）轻轻上下。4s，避开 5s 附近（HIG 不适区间）。
+   适用：背景装饰，不是主体。 */
+@keyframes mo-float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-8px); }
+}
+.idle-float { animation: mo-float 4s ease-in-out infinite; }
+
+/* ---------------------- 帧间转场（全屏覆盖层；GSAP 版见 mo.gsap.js transition()） ---------------------- */
+/* 这些 class 给一个 inset:0 的覆盖 div 用，配合 JS 控制 opacity/clip 出现与消失。 */
+.mo-trans { position:absolute; inset:0; pointer-events:none; z-index:90; }
+
+/* 向内溶解：圆从中心扩大揭开新画面 */
+@keyframes mo-trans-iris {
+  0%   { clip-path: circle(0% at 50% 50%); }
+  100% { clip-path: circle(150% at 50% 50%); }
+}
+.mo-trans-iris { background:#0b0b0e; animation: mo-trans-iris .5s cubic-bezier(.22,1,.36,1) forwards; }
+
+/* 百叶窗：纵向条依次展开 */
+@keyframes mo-trans-blind {
+  0%   { transform: scaleY(0); }
+  100% { transform: scaleY(1); }
+}
+.mo-trans-blinds { display:flex; flex-direction:column; }
+.mo-trans-blinds > i { flex:1; background:#0b0b0e; transform-origin:top;
+  animation: mo-trans-blind .4s cubic-bezier(.22,1,.36,1) forwards; }
+
+/* 擦除：从左向右盖过 */
+@keyframes mo-trans-wipe {
+  0%   { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+.mo-trans-wipe { background:#0b0b0e; animation: mo-trans-wipe .45s cubic-bezier(.22,1,.36,1) forwards; }
+
+/* 飞入：新画面从下方升起盖住旧画面 */
+@keyframes mo-trans-fly {
+  0%   { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+.mo-trans-fly { background:#0b0b0e; animation: mo-trans-fly .5s cubic-bezier(.22,1,.36,1) forwards; }

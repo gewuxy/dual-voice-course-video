@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>动效片段库 · K-2 课帧样例</title>
+<link rel="stylesheet" href="../mo.css">
+<style>
+  :root{ --c-yellow:#FFD84D;--c-green:#7BC96F;--c-blue:#5AB0F5;--c-red:#FF6B6B;--c-purple:#B088F9;--c-pink:#FFB3C7;--ink:#3A3226;--font-title:"圆体-简","Yuanti SC",sans-serif;--font-body:"圆体-简",sans-serif; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-body);color:var(--ink);background:#EAE4D6;padding:32px}
+  h1{font-family:var(--font-title);font-size:34px;margin-bottom:6px}
+  .hint{color:#7A6E5C;margin-bottom:24px;line-height:1.6;max-width:900px}
+  .frame{width:960px;max-width:100%;height:540px;position:relative;margin:0 auto 28px;background:radial-gradient(120% 90% at 12% 8%,#FFFDF6,#FFF4E0);border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(58,50,38,.22)}
+  .frame .hdr{position:absolute;left:40px;top:32px;font-family:var(--font-title);font-size:22px;color:var(--c-red)}
+  .frame .body{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:90px 40px 40px}
+  .sticker{background:#FFFDF8;border-radius:18px 22px 18px 24px;box-shadow:6px 7px 0 rgba(58,50,38,.12);padding:16px 28px;font-family:var(--font-title);font-size:26px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:rgba(123,201,111,.18);border:1px solid rgba(123,201,111,.5);border-radius:999px;padding:10px 22px;font-size:18px}
+  .col{display:flex;gap:40px}
+  .col .sticker{min-width:200px;text-align:center}
+  .rule{text-align:center;color:#9a8f7c;font-size:14px;margin-top:8px}
+  .big{font-family:var(--font-title);font-size:64px;color:var(--c-green)}
+  button{display:block;margin:10px auto 0;background:var(--c-green);color:#fff;border:none;font-family:var(--font-title);font-size:16px;padding:8px 20px;border-radius:999px;cursor:pointer}
+</style>
+</head>
+<body>
+<h1>K-2 课帧样例 · 怎么用动效片段库</h1>
+<p class="hint">三个真实课型，演示"按内容判断动效"。每帧点"重播"看效果。Agent 生成 <code>build_l&lt;N&gt;.py</code> 的课件 HTML 时，照这个结构套：蜡笔风框架不变，内部入场/转场按课型挑片段。</p>
+
+<!-- ① 概念讲解帧：缩放弹出 + 截图看全 -->
+<div class="frame">
+  <div class="hdr">第 6 课 · 特征与数据结构</div>
+  <div class="body">
+    <div class="sticker" id="e1-q">什么是"特征"？</div>
+    <div class="photo" id="e1-img" style="width:360px;height:200px;border-radius:16px;background:linear-gradient(135deg,#5AB0F5,#B088F9);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px">真实素材：猫的照片（blurIn + kenburns）</div>
+  </div>
+  <div class="rule">课型=概念讲解 → 问题用 pop 弹出，真实素材用 blurIn+kenburns 让人看全</div>
+  <button onclick="playConcept()">重播</button>
+</div>
+
+<!-- ② 互动游戏帧：砸入 + 闪烁 -->
+<div class="frame">
+  <div class="hdr">互动 · 9×9 走格子</div>
+  <div class="body">
+    <div class="chip idle-glow" id="e2-chip">● 该你了，选一格！</div>
+    <div class="big" id="e2-hit">命中！</div>
+  </div>
+  <div class="rule">课型=互动游戏 → 当前激活项 glow 闪烁，命中用 slam 砸下</div>
+  <button onclick="playGame()">重播</button>
+</div>
+
+<!-- ③ 对比帧：两侧飞入 -->
+<div class="frame">
+  <div class="hdr">对比 · 人类感官 vs 计算机传感器</div>
+  <div class="body">
+    <div class="col">
+      <div class="sticker" id="e3-a" style="background:var(--c-yellow)">眼睛 👁 看</div>
+      <div class="sticker" id="e3-b" style="background:var(--c-blue)">摄像头 📷 拍</div>
+    </div>
+  </div>
+  <div class="rule">课型=对比 → 两栏从两侧 fly 入场（A 左、B 右），不混用淡入</div>
+  <button onclick="playCompare()">重播</button>
+</div>
+
+<script src="../mo.gsap.js"></script>
+<script>
+function reset(id,cls){const e=document.getElementById(id);if(cls){e.classList.remove(cls);void e.offsetWidth;e.classList.add(cls);}else{e.classList.remove('anim-pop','anim-blur-in','idle-kenburns','anim-slam','idle-glow','anim-fly-left','anim-fly-right');void e.offsetWidth;}}
+function playConcept(){
+  reset('e1-q');reset('e1-img');
+  requestAnimationFrame(()=>{document.getElementById('e1-q').classList.add('anim-pop');document.getElementById('e1-img').classList.add('anim-blur-in','idle-kenburns');});
+}
+function playGame(){
+  reset('e2-chip','idle-glow');reset('e2-hit');
+  requestAnimationFrame(()=>{document.getElementById('e2-chip').classList.add('idle-glow');document.getElementById('e2-hit').classList.add('anim-slam');});
+}
+function playCompare(){
+  reset('e3-a');reset('e3-b');
+  requestAnimationFrame(()=>{document.getElementById('e3-a').classList.add('anim-fly-left');document.getElementById('e3-b').classList.add('anim-fly-right');});
+}
+</script>
+</body>
+</html>
