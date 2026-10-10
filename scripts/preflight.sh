@@ -12,7 +12,7 @@
 #   TPL           蜡笔风模板 preview.html 路径（默认自动相对本 skill，无需设置）
 #
 # 阶段 3 配音有两条路由，自动二选一：
-#   路由 A  GPT-SoVITS 双音色克隆（xiaoxian + macie，音质最佳）
+#   路由 A  GPT-SoVITS 双音色克隆（xiaoxian_v2 + macie，音质最佳）
 #   路由 B  macOS 本地 TTS（scripts/dialog2audio_local.py，纯标准库，零依赖兜底；
 #           音质为系统级合成，后续可按 SKILL.md「换音色重合成」流程无缝升级到路由 A）
 
@@ -43,9 +43,9 @@ gchk "venv python（Python 3.11 + torch）" "'$VOICE_CLONE/venv/bin/python' -c '
 gchk "GPT-SoVITS 仓库" "[ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS' ]"
 gchk "预训练底模（chinese-roberta / chinese-hubert / gsv-v2final）" \
     "[ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained' ] && [ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS/pretrained_models/chinese-hubert-base' ] && [ -d '$VOICE_CLONE/GPT-SoVITS/GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large' ]"
-gchk "老师权重 xiaoxian（GPT_weights + SoVITS_weights）" "ls '$VOICE_CLONE'/GPT_weights/xiaoxian-e*.ckpt '$VOICE_CLONE'/SoVITS_weights/xiaoxian_e*_s*.pth"
+gchk "老师权重 xiaoxian_v2（GPT_weights + SoVITS_weights，定稿 e20/e12_s288）" "ls '$VOICE_CLONE'/GPT_weights/xiaoxian_v2-e*.ckpt '$VOICE_CLONE'/SoVITS_weights/xiaoxian_v2_e*_s*.pth"
 gchk "学生权重 macie（GPT_weights + SoVITS_weights）" "ls '$VOICE_CLONE'/GPT_weights/macie-e*.ckpt '$VOICE_CLONE'/SoVITS_weights/macie_e*_s*.pth"
-gchk "参考音 xiaoxian_0029.wav" "[ -f '$VOICE_CLONE/dataset/xiaoxian/wavs/xiaoxian_0029.wav' ]"
+gchk "参考音 xiaoxian_v2_021.wav" "[ -f '$VOICE_CLONE/dataset/xiaoxian_v2/wavs/xiaoxian_v2_021.wav' ]"
 gchk "参考音 macie_13.wav" "[ -f '$VOICE_CLONE/dataset/macie/wavs/macie_13.wav' ]"
 gchk "双音色脚本 dialog2audio.py" "[ -f '$VOICE_CLONE/dialog2audio.py' ]" "从 skill 的 scripts/dual_tts_dialog2audio.py 复制过去"
 

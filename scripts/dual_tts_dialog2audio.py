@@ -5,7 +5,7 @@
 
 解析规则（尽量简单，只保留必须）：
   【第 N 帧】            -> 帧分隔，同一帧内的行依次合成、首尾相接
-  小贤老师："..."[[n]]   -> 用 xiaoxian 音色合成；[[n]] = 该句之后额外静音 n 秒
+  小贤老师："..."[[n]]   -> 用 xiaoxian_v2 音色合成；[[n]] = 该句之后额外静音 n 秒
   学生："..."[[n]]       -> 用 macie 音色合成
   学生行含「哭脸/笑脸」  -> 视为动作，不念词，只留静音（[[n]] 秒，无则 3 秒）
   —— 破折号 -> 逗号；AI/A.I. -> 诶爱；引号/括号去除
@@ -39,19 +39,48 @@ MIN_UNIT = 12
 HARD_MAX = 28
 ACTION_WORDS = ("哭脸", "笑脸")
 
-# 老师显示名（可配置：环境变量 TEACHER_NAME，默认「小贤老师」；音色仍固定 xiaoxian）。
+# 老师显示名（可配置：环境变量 TEACHER_NAME，默认「小贤老师」；音色固定 xiaoxian_v2 定稿）。
 # 设了 TEACHER_NAME，剧本里老师角色行就用该名（兼容全角/半角冒号）。
 TEACHER_NAME = os.environ.get("TEACHER_NAME", "小贤老师")
 
-# 两个说话人各自的模型 / 参考音
+# 两个说话人各自的模型 / 参考音（teacher 已切换 xiaoxian_v2，2026-10-08 定稿）
 EXPS = {
-    "teacher": {"exp": "xiaoxian",
-                "ref": os.path.join(ROOT, "dataset", "xiaoxian", "wavs", "xiaoxian_0029.wav"),
-                "ref_text": "我们是不是就能告诉电脑，这是一只猫啦？对了！这就是我们今天要学会的本领"},
+    "teacher": {"exp": "xiaoxian_v2",
+                "ref": os.path.join(ROOT, "dataset", "xiaoxian_v2", "wavs", "xiaoxian_v2_021.wav"),
+                "ref_text": "眼睛看到的是颜色，耳朵听到的是声音，这就是不一样的感官！"},
     "student": {"exp": "macie",
                 "ref": os.path.join(ROOT, "dataset", "macie", "wavs", "macie_13.wav"),
                 "ref_text": "我叫 Macie，今年八岁，我最喜欢画画和搭积木。"},
 }
+
+# ---- 教师参考音频按句路由（v2 情绪版语料；选 ref 按目标句情绪声学特征，惊叹类用音高上限最高的 009）----
+_VW = os.path.join(ROOT, "dataset", "xiaoxian_v2", "wavs")
+ROUTE_REFS = {
+    "praise_hi":  (_VW + "/xiaoxian_v2_009.wav", "答对啦！你简直太厉害了吧！"),
+    "praise_lo":  (_VW + "/xiaoxian_v2_015.wav", "别着急，深呼吸，你可以的。"),
+    "cheer":      (_VW + "/xiaoxian_v2_009.wav", "答对啦！你简直太厉害了吧！"),
+    "question":   (_VW + "/xiaoxian_v2_004.wav", "咦？你们猜猜看，这里面藏着谁呀？"),
+    "suspense":   (_VW + "/xiaoxian_v2_017.wav", "你听，这是什么声音？好像有什么东西来了……"),
+    "emphasis":   (_VW + "/xiaoxian_v2_020.wav", "记住咯：数量要多！特征要明确！内容要多样！"),
+}
+_ROUTE_RULES = [
+    ("suspense",  ("嘘", "秘密", "悄悄", "猜一猜是什么声音")),
+    ("emphasis",  ("注意听", "记住", "千万", "一定要", "重点")),
+    ("praise_hi", ("太厉害", "居然", "全部都答对", "太棒了", "太棒啦")),
+    ("praise_lo", ("答对啦", "答对了", "太聪明", "真棒", "掌声", "大大的赞", "好开心", "没关系", "慢慢来", "你可以的")),
+    ("cheer",     ("哇塞", "天哪", "好厉害", "哇，", "哇！")),
+    ("question",  ("咦", "猜猜", "为什么", "想不想", "是不是", "是什么", "有什么")),
+]
+
+
+def route_ref(unit):
+    """教师单句按内容选参考音频，返回 (ref, ref_text) 或 None（用默认）。"""
+    for cat, words in _ROUTE_RULES:
+        if any(w in unit for w in words):
+            return ROUTE_REFS[cat]
+    if unit.rstrip().endswith(("？", "?")):
+        return ROUTE_REFS["question"]
+    return None
 
 
 def pick_weights(exp):
@@ -205,7 +234,13 @@ def synth_line(speaker, text, pause, models, out_prefix, takes, temperature):
     units = split_units(clean(text))
     paths = []
     for ui, unit in enumerate(units):
-        f = synth_unit(tts, ref, ref_text, unit, f"{out_prefix}_u{ui}", takes, temperature)
+        u_ref, u_txt = (ref, ref_text)
+        if speaker == "teacher":
+            rr = route_ref(unit)
+            if rr:
+                u_ref, u_txt = rr
+                print(f"    [ref路由:{os.path.basename(u_ref)}] {unit[:16]}…")
+        f = synth_unit(tts, u_ref, u_txt, unit, f"{out_prefix}_u{ui}", takes, temperature)
         if f:
             paths.append(f)
     if not paths:

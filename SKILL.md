@@ -91,11 +91,11 @@ bash $SK/scripts/preflight.sh "$H"
 
 ### 老师显示名可配置（TEACHER_NAME，方案 A）
 
-老师**显示名**支持自定义，音色仍固定 `xiaoxian`（默认）。设置后，剧本角色行、课件气泡署名、声音路由三处须一致：
+老师**显示名**支持自定义；音色固定 `xiaoxian_v2`（2026-10-08 定稿，e20/e12_s288）。设置后，剧本角色行、课件气泡署名、声音路由三处须一致：
 
 - 剧本 `script_v2_dialog.txt`：老师行前缀改成 `你设的名：`（如 `TEACHER_NAME=林老师` → 写 `林老师：…`）；全/半角冒号都兼容
 - 课件 HTML 气泡署名：把模板里的「小贤老师」文字换成该名（横版 `preview.html` / 竖版 `preview_portrait.html` 老师气泡处已加注释提示）
-- 声音路由：`verify_steps.py` 与两个 TTS 脚本均读 `TEACHER_NAME`（默认 `小贤老师`），自动把该前缀识别为 `teacher` 角色 → 复用 `xiaoxian` 音色
+- 声音路由：`verify_steps.py` 与两个 TTS 脚本均读 `TEACHER_NAME`（默认 `小贤老师`），自动把该前缀识别为 `teacher` 角色 → 复用 `xiaoxian_v2` 音色（v2 情绪路由见 `references/pipeline.md` 阶段 3 路由 A）
 - 不设置则全程 `小贤老师`，与旧行为完全一致
 
 > 仅改显示名、不改音色，是方案 A 的范围；若以后要"名 + 克隆音色映射都可配"，再扩到方案 B（`SAY_TEACHER` 已预留路由位）。
@@ -157,7 +157,7 @@ bash $SK/scripts/preflight.sh "$H"
 
 **路由 A · GPT-SoVITS 克隆音色（首选，音质最佳）** —— 在 `$VC` 下跑（脚本内 `EXPS` 自动取最新权重，参考音在 `dataset/` 下，**不要手写权重路径**）。命令见 `references/pipeline.md` 阶段 3 路由 A（`dialog2audio.py --script … --outdir $W/audio --no-cleanup`，`--only 4,7,11` 重跑坏句）。
 
-- 老师 `xiaoxian`（ref `dataset/xiaoxian/wavs/xiaoxian_0029.wav`）、学生 `macie`（ref `dataset/macie/wavs/macie_13.wav`）
+- 老师 `xiaoxian_v2`（定稿 e20/e12_s288；ref `dataset/xiaoxian_v2/wavs/xiaoxian_v2_021.wav`，含 v2 情绪路由表）、学生 `macie`（ref `dataset/macie/wavs/macie_13.wav`）
 - 参数：`--takes 3`、`--temperature 1.0`、`--gap 0.4`（帧内行距）、`--device cpu`（默认，稳）
 - **必须加 `--no-cleanup`**：否则逐句 `os.remove` 会触发沙箱 bulk-delete 守卫，进程被杀（EXIT=1）
 - 产出：`$W/audio/frame_NN.wav`（每帧）、`$W/audio/_merged.wav`（全课，帧间 0.9s）、**`$W/audio/report.json`**（每帧 `units:[{speaker,text,pause,dur,start}]`，`start` 是句内起始秒 —— 阶段 4 直接吃它）
