@@ -1,17 +1,16 @@
 \---  
 name: dual-voice-course-video  
-version: 1.0.0  
+version: 1.1.0  
 display_name: 主题一键成课：互动课件+讲解视频  
 display_name_en: Topic-to-Course — Interactive Slides and Narrated Video  
-description_zh: 给一个主题（或一页旧课件/PPT），自动产出全套课程内容：演讲稿剧本 → 互动放映版 HTML 课件（逐步演示、可课堂使用）→ 老师/学生双音色配音讲解视频（逐帧音画对齐 mp4 + 字幕）→ 配套横竖版封面。适合教师、知识博主、企业培训师、课程产品团队、家长等任何需要把知识点变成视频课的人。配音路由自动判定：有 GPT-SoVITS 用克隆音色（音质最佳），没有则落本地系统 TTS（macOS/Windows/Linux 全平台兜底），后续可无缝换音色重合成。  
 description_en: Give it a topic (or an old PPT) and get a full lesson package automatically — narration script -> interactive step-by-step HTML slides -> dual-voice (teacher + student) narrated video with frame-accurate alignment and subtitles -> matching cover images. Built for teachers, content creators, corporate trainers, course teams, and parents. Voice route is auto-detected — GPT-SoVITS cloned voices when available, otherwise local system TTS (macOS/Windows/Linux) — with a seamless re-synthesis path for later voice upgrades.  
-description: 主题一键成课：用户给一个课程主题（或已有课件/PPT），自动产出演讲稿、互动放映版 HTML 课件、老师/学生双音色配音讲解视频（逐帧对齐）与配套封面。制作顺序为「先写演讲稿并确认 → 再做 HTML 放映版并确认 → 按稿生成双音色音频 → 把音频和 HTML 整合成最终视频 → 最后生成配套封面」。适合教师备课、知识博主出片、企业培训、课程打样、家庭定制讲解。当用户要求"为一节课/一个主题生成带配音的视频""把放映版 HTML 和时间轴对齐成视频""做双音色课程视频""演讲稿转视频""顺带出个封面"时使用。  
+description: 主题一键成课：用户给一个课程主题（或已有课件/PPT），自动产出演讲稿、互动放映版 HTML 课件、老师/学生双音色配音讲解视频（逐帧音画对齐 + 字幕）与配套封面。制作顺序为「先写演讲稿并确认 → 再做 HTML 放映版并确认 → 按稿生成双音色音频 → 把音频和 HTML 整合成最终视频 → 最后生成配套封面」。适合教师、知识博主、企业培训师、课程产品团队、家长等任何需要把知识点变成互动课件或视频课的人。配音路由自动判定：有 GPT-SoVITS 用克隆音色（音质最佳），没有则落本地系统 TTS（macOS/Windows/Linux 全平台兜底），后续可无缝换音色重合成。当用户要求"为一节课/一个主题生成 互动课件或带配音的视频""做双音色课程视频""演讲稿转视频"时使用。  
 agent_created: true  
 \---
 
 # 双音色课程视频制作流水线
 
-把一节 AI 课的 **演讲稿 → HTML 放映版 → 双音色音频 → 音画整合出片 → 配套封面** 五步固化，产出「老师讲、学生也在问」、画面动作精确到每一句的 mp4 与可发布的视频号封面。
+把一节 AI 课的 **演讲稿 → HTML 放映版 → 双音色音频 → 音画整合出片 → 配套封面** 五步固化，产出画面动作精确到每一句的 mp4 与可发布的视频号封面。
 
 ## 快速开始（任何 agent / 新会话照这个跑）
 
@@ -34,11 +33,11 @@ bash $SK/scripts/preflight.sh "$H"
 
 ## 路径变量（换机 / 换人只需改这里）
 
-| 变量       | 含义                        | 本机实际值                                                                             |
+| 变量       | 含义                        | 你机器上的设定（示例，**真实值只写在 `config.local.json`**）                               |
 | -------- | ------------------------- | --------------------------------------------------------------------------------- |
 | `$SK`    | 本 skill 目录                | clone 后你自己的路径（如 `~/skills/dual-voice-course-video`）；或 `cd` 进 skill 目录用 `$PWD`     |
 | `$VC`    | 语音克隆项目（**不在教育项目目录下**）     | 运行前 `export VOICE_CLONE=/path/to/voice_clone`（脚本默认读该环境变量）                         |
-| `$H`     | 本节课程目录                    | `…/Grades K-2. Introduction to AI Course/AI-L1. Human Senses vs Computer Sensors` |
+| `$H`     | 本节课程目录（**agent 在取向确认 gate 时新建并 `export $H`**，不写死） | `~/AI课程/AI-L1.人类感官vs计算机传感器`（仅示意，你机器自定，非固定）                       |
 | `$H/视频课` | 本节全部产物                    | script / index_present.html / 素材 / 成片 / 封面                                        |
 | `$W`     | 临时工作目录                    | `/tmp/<课名>`（音频、standalone、shots、成片）                                               |
 | 模板       | 蜡笔手绘风视觉基准（封面/课件统一）        | `$SK/assets/templates/crayon/preview.html`                                        |
@@ -59,19 +58,19 @@ bash $SK/scripts/preflight.sh "$H"
 
 ## 脚本清单（全部参数化，可直接跑）
 
-| 脚本                                 | 作用                                                                                          | 用法                                                                            |
-| ---------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `scripts/preflight.sh`             | 环境自检（18 项）                                                                                  | `bash preflight.sh [课目录]`                                                     |
-| `scripts/verify_steps.py`          | 校验 HTML 帧/步 == 剧本帧/句                                                                        | `python3 verify_steps.py <课目录>`                                               |
-| `scripts/load_config.py`          | 统一配置加载器（合并 环境变量>课程config>config.local.json；CLI `--get/--json/--course`）       | `python3 load_config.py --get paths.voice_clone_dir`                            |
-| `scripts/dialog2audio_local.py`    | 本地 TTS 兜底配音（macOS `say`，纯标准库零依赖；输出合同与路由 A 一致，阶段 4 无缝衔接）                                     | 见阶段 3 路由 B                                                                    |
-| `scripts/make_standalone.py`       | 生成 `standalone.html` + `schedule.json`（时间轴驱动）                                               | 见阶段 4a                                                                        |
-| `scripts/capture.js`               | 按时间轴逐区间截图（自动找 puppeteer-core）                                                               | `node capture.js <工作目录>`                                                      |
-| `scripts/capture_anim.js`          | **动效版成片渲染**（--animate 配套；逐 1/30s tick 驱动 applyTime + getAnimations 虚拟时钟同步，JPEG 落盘，约 10 帧/s） | `node capture_anim.js <standalone.html> <帧目录> [总秒数]`                          |
-| `scripts/qc_frames.js`             | 放映版逐帧 QC：全展开截图 + 溢出检测 + 可选音频探测/逐 step 图                                                     | `node qc_frames.js <index_present.html> <出图目录> [audioId] [step帧号]`            |
-| `scripts/contact_sheet.py`         | 截图拼总览图（需系统 python + PIL）                                                                    | `python3 contact_sheet.py <shots目录> <出图.png> 4 4`                             |
-| `scripts/make_intro.sh`            | **蜡笔风动态片头一键生成**（令牌替换 → capture_anim 渲染 → 配乐 → 编码；默认 5.0s，模板见 assets/intro/，说明见「阶段 4d」）      | `bash make_intro.sh --out out.mp4 --title "第 3 课 · <em>事物的特征</em>"`           |
-| `scripts/make_intro_music.py`      | 片头配乐生成（100BPM / C 大调 I–V/V–vi–IV 琶音+铺底+沙锤+混响；参数化、可复现；需 numpy+scipy）                         | `python make_intro_music.py --out m.wav --duration 5.0 [--bpm 100] [--bells]` |
+| 脚本                              | 作用                                                                                          | 用法                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `scripts/preflight.sh`          | 环境自检（18 项）                                                                                  | `bash preflight.sh [课目录]`                                                     |
+| `scripts/verify_steps.py`       | 校验 HTML 帧/步 == 剧本帧/句                                                                        | `python3 verify_steps.py <课目录>`                                               |
+| `scripts/load_config.py`        | 统一配置加载器（合并 环境变量>课程config>config.local.json；CLI `--get/--json/--course`）                     | `python3 load_config.py --get paths.voice_clone_dir`                          |
+| `scripts/dialog2audio_local.py` | 本地 TTS 兜底配音（macOS `say`，纯标准库零依赖；输出合同与路由 A 一致，阶段 4 无缝衔接）                                     | 见阶段 3 路由 B                                                                    |
+| `scripts/make_standalone.py`    | 生成 `standalone.html` + `schedule.json`（时间轴驱动）                                               | 见阶段 4a                                                                        |
+| `scripts/capture.js`            | 按时间轴逐区间截图（自动找 puppeteer-core）                                                               | `node capture.js <工作目录>`                                                      |
+| `scripts/capture_anim.js`       | **动效版成片渲染**（--animate 配套；逐 1/30s tick 驱动 applyTime + getAnimations 虚拟时钟同步，JPEG 落盘，约 10 帧/s） | `node capture_anim.js <standalone.html> <帧目录> [总秒数]`                          |
+| `scripts/qc_frames.js`          | 放映版逐帧 QC：全展开截图 + 溢出检测 + 可选音频探测/逐 step 图                                                     | `node qc_frames.js <index_present.html> <出图目录> [audioId] [step帧号]`            |
+| `scripts/contact_sheet.py`      | 截图拼总览图（需系统 python + PIL）                                                                    | `python3 contact_sheet.py <shots目录> <出图.png> 4 4`                             |
+| `scripts/make_intro.sh`         | **蜡笔风动态片头一键生成**（令牌替换 → capture_anim 渲染 → 配乐 → 编码；默认 5.0s，模板见 assets/intro/，说明见「阶段 4d」）      | `bash make_intro.sh --out out.mp4 --title "第 3 课 · <em>事物的特征</em>"`           |
+| `scripts/make_intro_music.py`   | 片头配乐生成（100BPM / C 大调 I–V/V–vi–IV 琶音+铺底+沙锤+混响；参数化、可复现；需 numpy+scipy）                         | `python make_intro_music.py --out m.wav --duration 5.0 [--bpm 100] [--bells]` |
 
 ## 核心约束：分阶段、每步可控（⛔ 门禁是硬停止，不是建议）
 
@@ -97,7 +96,6 @@ bash $SK/scripts/preflight.sh "$H"
 - **竖版**：1080×1440，视频号/抖音/Shorts 原生竖视频，阶段 2 用 `preview_portrait.html`（单栏大字号版式），产出 `index_present_portrait.html`
 - **横竖都要**：同一内容两套，阶段 2 出 `index_present.html` + `index_present_portrait.html`；阶段 3 音频**只合成一次**；阶段 4 两套各按尺寸渲染、复用同一份音频；阶段 5 封面横竖都出
 - 尺寸全自动：`make_standalone.py` 从源 `#stageWrap` 读尺寸（1920×1080 / 1080×1440），`capture*.js` / `qc_frames.js` 跟着源尺寸走，不用手填宽高；竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致
-
 
 ### 老师显示名与剧本角色标签解耦
 
@@ -139,6 +137,7 @@ bash $SK/scripts/preflight.sh "$H"
 - 认知铁律：专业名词和术语（触觉/化学/味觉传感器）只由老师说出，学生只答日常词（摄像头、麦克风）；不确定的用"不知道！/猜不到！"再让老师揭示
 - 视频介质适配：用户原始内容若按线下课堂设计（分组讨论/上台演示/实物传递/动手实验），须改写为视频可呈现形式——① 线下不可执行的动作（闻花、摸木头）改成"看屏幕 + 听真实音频 + 回想"；② 动手/互动环节用 `[[1.5]]` 停顿留操作时间代替"当场做"，不强制出画面，并加一句"小朋友在家也可以跟着做"的邀请
 
+
 **产出**：`script_v2_dialog.txt`。
 
 > ⛔ **阶段 1 门禁（硬停止）**：写完后**停下**，用 `AskUserQuestion` 向用户完整呈现剧本（或分帧摘要）+「台词 / 角色分配 / 分帧节奏是否确认？确认后进入阶段 2 做放映版」。在用户明确回"继续"前，**不得开始阶段 2 的 `index_present.html` 任何写入或 preflight 之外的命令**。用户要改就按意见改完，再二次确认。
@@ -148,7 +147,6 @@ bash $SK/scripts/preflight.sh "$H"
 基于确认稿做 `$H/视频课/index_present.html`：每帧一个 `.stage-frame`（`id="f01"…`），帧内 `.step` 块数 = 该帧台词句数，可选 `data-hide-at="N"`（到第 N 步淡出）。
 
 - **取向分支**：取向为「横版」→ 基于 `$SK/assets/templates/crayon/preview.html` 做 `index_present.html`；「竖版」→ 基于 `preview_portrait.html`（1080×1440 单栏大字号版式）做 `index_present_portrait.html`；「横竖都要」→ 两套都做（同一剧本，版式各自适配）。竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致；竖版用 `mo.css` 的 `anim-fade-rise`/`anim-pop` 等 class 与横版同一套动效判断逻辑（见下方「动效」）。
-
 - 视觉**必须**沿用蜡笔手绘风模板：手绘抖动笔触（SVG `feTurbulence`+`feDisplacementMap`）、纸纹噪点、蜡笔 blob、贴纸卡、圆体-简/娃娃体-简；固定品牌要素（左上徽章「AI 启蒙 · 第 X 课」+ 适合年级；底部「小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力」）
 - 图标优先纯 SVG 简笔画；**用户给了真照片时**，做成「拍立得贴纸」（方裁→360px→JPEG q86→base64 内嵌，118px + 28px 标签，单文件自包含）。完整 base64 配方代码与压高度参数见 `references/pipeline.md` 阶段 2
 - **改超长 base64 行时不要用 Edit 工具**（字符串匹配必然失败），用 Python `str.replace` / 正则
@@ -162,7 +160,6 @@ bash $SK/scripts/preflight.sh "$H"
 - 片段库两个用法：纯 CSS 课件 → `<link rel="stylesheet" href="assets/templates/anim-snippets/mo.css">` 加 class（`anim-pop`/`anim-slam`/`anim-fade-rise`/`anim-blur-in`/`anim-iris-in`/`anim-fly-left`/`anim-fly-right` + 持续 `idle-kenburns`/`idle-glow`/`idle-float`）；GSAP 时间轴渲染成片 → 引入 `mo.gsap.js` 后 `MO.entrance(tl, sel, kind, at)` / `MO.transition(tl, kind, at)` / `MO.continuous(sel, kind)`。无 GSAP 时自动降级为 CSS class，不报错。
 - 开工前 / 交付前各对照一遍 `$SK/assets/templates/anim-snippets/README.md`「三、六种做坏方式」（翻页式PPT、照搬上一课、没有具体的物、死背景空画面、有真实素材却用代码画、一眼AI味拼贴）。
 - 做完一支新课，效果好的动效组合**回流**进 README 第二节决策表；动效坑写进 `references/known_pitfalls.md`（§5 动效）。同课型用同一套动效完全正确，只有课型变了才换。
-
 
 **QC 循环（必做）**：命令见 `references/pipeline.md` 阶段 2（`qc_frames.js` + `contact_sheet.py`）。逐帧看 png，溢出帧（`⚠️ 溢出帧`）按上述贴纸/卡片压高度手法修，直到 `✅ 全部帧无溢出` + 目视构图 OK。
 
@@ -240,7 +237,6 @@ bash $SK/scripts/preflight.sh "$H"
   - ⚠️ 无声版里字幕时间是按**当前音色**时长烧进画面的：新音色若每句时长变化，直接混流会字幕错位。**正确重合成路径**：新音色跑 dialog2audio → 用新 report.json/durations 重跑 make_standalone → 重截图 → 硬链接帧 → 编码 → 混流（全链脚本化，仅时长变化无需改画面内容）；无声版视频只用于预览/对比，或新音色时长与旧版几乎一致时直接混流  
     *子确认点*：用户预览成片，确认音画同步、字幕、双音色清晰；可另出轻量版。
 
-
 **4d 片头与片尾（蜡笔风动态片头，2026-10-08 定稿）**
 
 **片头不带念稿**——只做品牌与价值主张，不念课程内容（用户 2026-10-08 定案）。5.0s / 30fps / 1920×1080。
@@ -265,8 +261,8 @@ bash $SK/scripts/preflight.sh "$H"
 
 **双模板固定制（2026-10-02 用户定稿，每课固定出这两张，不再每课另选版式）**：
 
-| 模板      | 画布        | 模板文件（勿改结构）                                                                       | 用途            |
-| ------- | --------- | -------------------------------------------------------------------------------- | ------------- |
+| 模板      | 画布        | 模板文件（勿改结构）                                                        | 用途            |
+| ------- | --------- | ----------------------------------------------------------------- | ------------- |
 | 横版课件封面  | 1920×1080 | `$TPL/preview.html`（第 1 页「封面」slide）                               | 课件/公众号/横版视频封面 |
 | 竖版视频号封面 | 1080×1260 | `$TPL/封面模板_竖版视频号_1080x1260.html`（对决版式：左贴纸卡 + VS 圆 + 右贴纸卡 + 娃娃体批注） | 视频号竖版封面       |
 
@@ -277,6 +273,7 @@ bash $SK/scripts/preflight.sh "$H"
 - **产出**：`$H/视频课/封面/封面_横版_*.png`（1920×1080）+ `封面_竖版_*.png`（1080×1260）+ `自查_1比1裁切_*.png`
 
 > ⛔ **阶段 5 门禁（硬停止）**：横版/竖版 HTML 风格稿填内容后**停下**，用 `AskUserQuestion` 向用户确认取向（主副标题 / 贴纸卡 / 批注）后再 puppeteer 截图出图；出图后用户要调就改 HTML 重截，不反复猜。成片视听验收也必须留给人，不得自动定稿发布。
+
 - 实际案例（L1）：`AI-L1/视频课/封面/封面A_对决版.html|png`（即竖版模板的填内容版）；横版案例见 preview.html 第 1 页
 
 ## 关键铁律（违反必翻车）

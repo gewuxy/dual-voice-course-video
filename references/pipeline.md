@@ -55,7 +55,7 @@ python3 $SK/scripts/verify_steps.py "$H"
 
 ```bash
 node $SK/scripts/qc_frames.js "$H/视频课/index_present.html" /tmp/qc_x <audioId> <帧号>
-/opt/homebrew/bin/python3 $SK/scripts/contact_sheet.py /tmp/qc_x /tmp/预览_总览.png 4 4
+python3 $SK/scripts/contact_sheet.py /tmp/qc_x /tmp/预览_总览.png 4 4
 ```
 
 看到 `✅ 全部帧无溢出` + 目视构图 OK 为止；有 `⚠️ 溢出帧` 就按上面的配方压高度。竖版把文件名换成 `index_present_portrait.html` 即可。
