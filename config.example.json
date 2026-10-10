@@ -20,6 +20,6 @@
   },
   "defaults": {
     "gap": 0.9,
-    "teacher_display_name": "小贤老师"
+    "teacher_display_name": "老师"
   }
 }

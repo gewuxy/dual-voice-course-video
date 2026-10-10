@@ -74,7 +74,7 @@ def load_config(course_dir=None):
     defaults = merged.get("defaults", {})
     merged["voice_clone_dir"] = paths.get("voice_clone_dir", "")
     merged["teacher_display_name"] = merged.get("teacher_display_name") \
-        or defaults.get("teacher_display_name", "小贤老师")
+        or defaults.get("teacher_display_name", "老师")
     merged["gap"] = merged.get("gap", defaults.get("gap", 0.9))
     return merged
 

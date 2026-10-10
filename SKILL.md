@@ -99,20 +99,23 @@ bash $SK/scripts/preflight.sh "$H"
 - 尺寸全自动：`make_standalone.py` 从源 `#stageWrap` 读尺寸（1920×1080 / 1080×1440），`capture*.js` / `qc_frames.js` 跟着源尺寸走，不用手填宽高；竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致
 
 
-### 老师显示名可配置（方案 A）
+### 老师显示名与剧本角色标签解耦
 
-老师**显示名**支持自定义；音色固定 `xiaoxian_v2`（2026-10-08 定稿，e20/e12_s288）。显示名是**展示层配置**，统一来源（优先级从高到低）：
+给"别人用"场景：剧本里的老师角色标签固定为通用 `老师：`（与克隆音色绑定，是 TTS 路由判定声线的唯一依据），**显示名**是纯展示层、可任意配置，二者彻底解耦。这样剧本一份写死 `老师：` 就能给任何人复用，谁用谁在 HTML 里填自己的名字。
+
+显示名统一来源（优先级从高到低）：
 
 - 课程配置 `course_config.json` 的 `teacher_display_name`（取向确认 gate 时写入）
 - 或环境变量 `TEACHER_NAME`（临时覆盖）
-- 或 `config.local.json` 的 `defaults.teacher_display_name`（默认 `小贤老师`）
+- 或 `config.local.json` 的 `defaults.teacher_display_name`（默认 `老师`）
 
-设置后，剧本角色行、课件气泡署名、声音路由须一致：
+要点：
 
-- 剧本 `script_v2_dialog.txt`：老师行前缀改成该名（如 `林老师：…`）；全/半角冒号都兼容（`verify_steps.py` 与路由 B `dialog2audio_local.py` 均按该名识别 `teacher` 角色）
-- 课件 HTML 气泡署名：把模板里的「小贤老师」文字换成该名（横版 `preview.html` / 竖版 `preview_portrait.html` 老师气泡处已加注释提示）
-- 声音路由：老师角色恒映射 `xiaoxian_v2` 音色（路由 A 用 `$VC/dialog2audio.py`，其 `EXPS.teacher.exp` 已是 `xiaoxian_v2`；v2 情绪路由见 `references/pipeline.md` 阶段 3 路由 A）。**注意**：路由 A 的 GPT-SoVITS 脚本按 `小贤老师：` 解析角色行，故自定义显示名时——剧本格式行建议仍写 `小贤老师：`，仅在 HTML 气泡显示自定义名；或后续把 `$VC/dialog2audio.py` 也接 `TEACHER_NAME`
-- 不设置则全程 `小贤老师`，与旧行为完全一致
+- **剧本角色行固定 `老师：`**（student 固定 `学生：`），不随显示名变；TTS 路由只认这个标签判定声线
+- **改显示名只改 HTML，不改剧本**：把课件模板里的占位「老师」换成该显示名即可（横版 `preview.html` / 竖版 `preview_portrait.html` 老师气泡处已加注释提示）
+- 声音路由：老师角色恒映射 `xiaoxian_v2` 音色（路由 A 用 `$VC/dialog2audio.py`，其 `EXPS.teacher.exp` 已是 `xiaoxian_v2`；v2 情绪路由见 `references/pipeline.md` 阶段 3 路由 A）；路由 A 同时兼容旧剧本 `小贤老师：` 前缀（已用过的 L1–L7 等旧课无需改剧本）；路由 B `dialog2audio_local.py` 兼容 `老师：`/`小贤老师：`/自定义 `TEACHER_NAME`
+- 字幕（report.json speaker 字段）统一为通用 `老师`/`学生`，天然多端通用，不与显示名耦合
+- 不设置则显示名默认 `老师`，与旧行为（显示「小贤老师」）脱钩——若你自己的课要显示「小贤老师」，在 `config.local.json` 设 `defaults.teacher_display_name: "小贤老师"` 即可，剧本仍写 `老师：`
 
 > 仅改显示名、不改音色，是方案 A 的范围；若以后要"名 + 克隆音色映射都可配"，再扩到方案 B（`SAY_TEACHER` 已预留路由位）。
 
@@ -120,15 +123,15 @@ bash $SK/scripts/preflight.sh "$H"
 
 产出 `$H/视频课/script_v2_dialog.txt`（驱动 HTML 帧结构与 TTS 的唯一真相源）。
 
-格式（被 `verify_steps.py` 解析，角色行前缀见下方「老师显示名可配置」）：
+格式（被 `verify_steps.py` 解析，角色行前缀见下方「老师显示名与剧本角色标签解耦」）：
 
 ```
 【第 1 帧】开场 · 主题
-小贤老师："请你仔细观察，它是什么颜色的？"[[1.2]]
+老师："请你仔细观察，它是什么颜色的？"[[1.2]]
 学生："红色！"[[0.8]]
 ```
 
-- 帧头 `【第 N 帧】`；角色行老师默认 `小贤老师：`（可用环境变量 `TEACHER_NAME` 改显示名，见下方「老师显示名可配置」），学生 `学生：`，台词用中文引号包裹
+- 帧头 `【第 N 帧】`；角色行老师固定 `老师：`（通用角色标签，与显示名解耦，显示名见下方「老师显示名与剧本角色标签解耦」），学生 `学生：`，台词用中文引号包裹
 - `[[n]]` = 该句之后的静音秒数（学生思考/做动作的时间）
 - 学生行含「哭脸/笑脸」→ 不念词，只留静音（做表情）
 - **一帧内的角色行数 = 该帧 HTML 的 `.step` 数**（后续 1:1 对齐的唯一依据）
