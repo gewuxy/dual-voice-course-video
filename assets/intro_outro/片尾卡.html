@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- 片尾卡 1920×1080 · 蜡笔儿童风 · 与课件模板同色系
+     【替换】点：①课号与下课名（下方两处）②系列总节数（若 K2 不是 12 节） -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1920px; height:1080px; overflow:hidden; position:relative;
+         font-family:"圆体-简","PingFang SC",sans-serif; color:#1D2D49; background:#FBEBC1; }
+  .blob { position:absolute; border-radius:50% 40% 55% 45%; opacity:.9; }
+  .stripe { position:absolute; inset:0; opacity:.05;
+    background:repeating-linear-gradient(-35deg,#1D2D49 0 6px,transparent 6px 26px); }
+  .bye { position:absolute; top:120px; left:0; width:100%; text-align:center; }
+  .bye .face { font-size:150px; line-height:1; }
+  .bye .t { margin-top:18px; font-size:56px; font-weight:700; letter-spacing:2px; }
+  .cards { position:absolute; top:440px; left:0; width:100%; display:flex; justify-content:center; gap:60px; }
+  .card { background:#fff; border:6px solid #1D2D49; border-radius:28px; padding:34px 44px; text-align:center; }
+  .card .k { font-size:26px; color:#5F5E5A; margin-bottom:10px; }
+  .card .v { font-size:44px; font-weight:700; }
+  .card.next { background:#F6E360; transform:rotate(-2deg); }
+  .card.album { background:#72B551; color:#fff; transform:rotate(2deg); }
+  .card.album .k { color:#EAF3DE; }
+  .guide { position:absolute; top:720px; left:0; width:100%; text-align:center;
+           font-size:38px; font-weight:700; color:#1D2D49; }
+  .b2b { position:absolute; bottom:150px; left:0; width:100%; text-align:center;
+         font-size:28px; color:#5F5E5A; }
+  .b2b b { color:#1D2D49; }
+  .brand { position:absolute; bottom:56px; left:0; width:100%; height:64px;
+           display:flex; align-items:center; justify-content:center; }
+  .brand span { background:#1D2D49; color:#fff; font-size:28px; padding:12px 44px; border-radius:32px; letter-spacing:3px; }
+  .dm { position:absolute; right:70px; top:80px; font-size:26px; background:#6EBAF9; color:#fff;
+        padding:12px 28px; border-radius:24px; transform:rotate(3deg); }
+</style>
+</head>
+<body>
+  <div class="blob" style="width:340px;height:300px;background:#F4B3C4;left:-90px;top:-80px;"></div>
+  <div class="blob" style="width:260px;height:230px;background:#72B551;right:-60px;bottom:180px;"></div>
+  <div class="blob" style="width:200px;height:180px;background:#6EBAF9;left:180px;bottom:-60px;"></div>
+  <div class="stripe"></div>
+
+  <div class="bye">
+    <div class="face">👋</div>
+    <div class="t">今天的探险到这里就结束啦，下次见咯，拜拜！</div>
+  </div>
+
+  <div class="cards">
+    <!-- 【替换①】下集课号与课名 -->
+    <div class="card next"><div class="k">下集预告</div><div class="v">第 4 课 · 智能与非智能机器</div></div>
+    <div class="card album"><div class="k">合集</div><div class="v">AI 启蒙 · K2 系列</div></div>
+  </div>
+  <div class="guide">点合集，看完整 AI 启蒙系列</div>
+
+  <!-- 【替换②】系列总节数 -->
+  <div class="b2b">本套 K-2 共 <b>12</b> 节 · 配套教案 · 学生教材 · 学习档案</div>
+  <div class="dm">合作开课 · 私信「课程」</div>
+  <div class="brand"><span>小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力</span></div>
+</body>
+</html>

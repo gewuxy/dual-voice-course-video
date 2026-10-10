@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>视频号封面模板 · 竖版 1080×1260 · 蜡笔手绘对决版</title>
+<!--
+  ============================================================
+  视频号竖版封面固定模板（2026-10-02 定稿，与横版 preview.html 封面页配对使用）
+  画布：1080 x 1260（视频号 6:7 竖版；信息流 1:1 中心裁切窗为 y 90~1170）
+  铁律：标题/徽章/品牌行全部压在 y 90~1170 安全区内
+  换课只改 3 处（搜索 【替换】）：
+    ① 徽章课号+年级  ② 主/副标题  ③ 左右贴纸卡与手写批注
+  实际案例：AI-L1/视频课/封面/封面A_对决版.html
+  ============================================================
+-->
+<style>
+:root{
+  --paper:#FFFDF4; --ink:#3A3226; --ink2:#7A6E5C;
+  --c-yellow:#FFD84D; --c-orange:#FF9F45; --c-red:#FF6B6B; --c-pink:#FFB3C7;
+  --c-green:#7BC96F; --c-teal:#4CC9B0; --c-blue:#5AB0F5; --c-purple:#B088F9;
+  --line:#3A3226;
+  --font-title:"圆体-简","Yuanti SC","PingFang SC",sans-serif;
+  --font-hand:"娃娃体-简","HanziPen SC","PingFang SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1260px;overflow:hidden}
+body{position:relative;background:var(--paper);font-family:var(--font-title);color:var(--ink)}
+/* 噪点纸纹（必须保留） */
+body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:50;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23g)'/></svg>");
+  opacity:.10;mix-blend-mode:multiply}
+.blob{position:absolute;border-radius:58% 42% 55% 45%/48% 58% 42% 52%;opacity:.92;filter:url(#wob)}
+.sticker{position:absolute;background:#fff;border:6px solid var(--line);border-radius:44px;
+  box-shadow:0 12px 0 rgba(58,50,38,.14)}
+.badge{position:absolute;top:52px;left:48px;display:flex;align-items:center;gap:20px;z-index:10}
+.badge .b1{padding:14px 34px;border-radius:999px;background:var(--c-yellow);border:5px solid var(--line);
+  font-size:36px;font-weight:800;transform:rotate(-2deg);box-shadow:0 7px 0 rgba(58,50,38,.14)}
+.badge .b2{font-family:var(--font-hand);font-size:32px;color:var(--ink2)}
+.brand{position:absolute;left:0;right:0;bottom:118px;text-align:center;z-index:10; /* y≈1112，在 1:1 裁切窗内 */
+  font-size:30px;color:var(--ink2);letter-spacing:3px}
+.brand b{color:#3268A3;font-weight:800}
+.mark{position:relative;display:inline-block;z-index:0}
+.mark::before{content:'';position:absolute;left:-16px;right:-16px;top:18%;bottom:4%;
+  transform:skewX(-7deg) rotate(-1.2deg);border-radius:36px 44px 30px 48px/40px 30px 46px 34px;z-index:-1}
+.mark.y::before{background:var(--c-yellow)} .mark.b::before{background:var(--c-blue);opacity:.75}
+.mark.p::before{background:var(--c-pink)}   .mark.g::before{background:var(--c-green);opacity:.75}
+.hw{font-family:var(--font-hand)}
+/* 贴纸卡内文字：必须放得下（卡 330×440，字号 ≤29px，可两行） */
+.cap{text-align:center;margin-top:14px;font-family:var(--font-hand);font-size:29px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="wob" x="-15%" y="-15%" width="130%" height="130%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="9" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</defs></svg>
+
+<!-- 背景 blob（低饱和，不抢主体） -->
+<div class="blob" style="width:340px;height:300px;background:var(--c-yellow);opacity:.28;left:-100px;top:430px"></div>
+<div class="blob" style="width:380px;height:320px;background:var(--c-blue);opacity:.22;right:-120px;top:400px"></div>
+<div class="blob" style="width:420px;height:200px;background:var(--c-pink);opacity:.20;left:330px;top:1120px"></div>
+
+<!-- 【替换①】徽章：课号 + 年级 -->
+<div class="badge"><span class="b1">AI 启蒙 · 第 1 课</span><span class="b2">适合小学 1-3 年级</span></div>
+
+<!-- 【替换②】主标题（mark.y 黄底）+ 副标题（mark.b 蓝底）；主标题字号 96~110 -->
+<div style="position:absolute;left:0;right:0;top:150px;text-align:center;z-index:5">
+  <div style="font-size:104px;font-weight:800;letter-spacing:6px;line-height:1.18">
+    <span class="mark y">人类感官</span></div>
+  <div style="font-size:66px;font-weight:800;letter-spacing:4px;margin-top:14px;color:var(--ink)">
+    <span class="hw">vs</span>&nbsp; <span class="mark b">计算机传感器</span></div>
+</div>
+
+<!-- 【替换③-左】贴纸卡 330×440，rotate(-2.2deg)，SVG 简笔画 + cap 说明（≤两行） -->
+<div class="sticker" style="left:74px;top:460px;width:330px;height:440px;transform:rotate(-2.2deg);padding-top:20px">
+  <svg width="280" height="290" viewBox="0 0 280 300" style="filter:url(#wob)">
+    <circle cx="140" cy="120" r="86" fill="#FFE8CF" stroke="#3A3226" stroke-width="6"/>
+    <path d="M64 96 Q140 18 216 96" fill="#5A4632" stroke="#3A3226" stroke-width="6"/>
+    <circle cx="108" cy="118" r="9" fill="#3A3226"/><circle cx="172" cy="118" r="9" fill="#3A3226"/>
+    <path d="M118 152 Q140 172 162 152" fill="none" stroke="#3A3226" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="86" cy="140" r="10" fill="#FFB3C7" opacity=".8"/><circle cx="194" cy="140" r="10" fill="#FFB3C7" opacity=".8"/>
+    <rect x="96" y="212" width="88" height="66" rx="26" fill="#5AB0F5" stroke="#3A3226" stroke-width="6"/>
+  </svg>
+  <div class="cap">眼睛 · 耳朵 · 鼻子<br>舌头 · 小手</div>
+</div>
+
+<!-- 中间 VS 圆（对决版式保留；其他版式可换成问号/箭头） -->
+<div style="position:absolute;left:0;right:0;top:600px;text-align:center;z-index:8">
+  <span style="display:inline-block;width:150px;height:150px;border-radius:50%;background:var(--c-orange);
+    border:7px solid var(--line);box-shadow:0 10px 0 rgba(58,50,38,.16);transform:rotate(-6deg);
+    font-family:var(--font-hand);font-size:76px;font-weight:800;color:#fff;line-height:136px">VS</span>
+</div>
+
+<!-- 【替换③-右】贴纸卡 rotate(2deg) -->
+<div class="sticker" style="right:74px;top:460px;width:330px;height:440px;transform:rotate(2deg);padding-top:20px">
+  <svg width="280" height="290" viewBox="0 0 280 300" style="filter:url(#wob)">
+    <line x1="140" y1="26" x2="140" y2="52" stroke="#3A3226" stroke-width="6"/>
+    <circle cx="140" cy="20" r="12" fill="#FF6B6B" stroke="#3A3226" stroke-width="5"/>
+    <rect x="42" y="52" width="196" height="168" rx="34" fill="#BDD6EA" stroke="#3A3226" stroke-width="6"/>
+    <circle cx="100" cy="120" r="34" fill="#fff" stroke="#3A3226" stroke-width="6"/>
+    <circle cx="100" cy="120" r="14" fill="#3268A3"/>
+    <circle cx="180" cy="120" r="34" fill="#fff" stroke="#3A3226" stroke-width="6"/>
+    <circle cx="180" cy="120" r="14" fill="#3268A3"/>
+    <rect x="104" y="170" width="72" height="26" rx="13" fill="#3A3226"/>
+    <rect x="92" y="238" width="96" height="48" rx="20" fill="#7BC96F" stroke="#3A3226" stroke-width="6"/>
+  </svg>
+  <div class="cap">摄像头 · 麦克风<br>还有各种传感器</div>
+</div>
+
+<!-- 【替换③-批注】娃娃体手写引导句 -->
+<div class="hw" style="position:absolute;left:0;right:0;top:952px;text-align:center;z-index:9;
+  font-size:52px;color:#C2255C;transform:rotate(-1.5deg)">
+  它们是怎么"看到"世界的？</div>
+
+<!-- 品牌行：固定不改 -->
+<div class="brand"><b>小贤 AI 青少年教育</b> · 体系课程 · 实训项目 · AI 创造力</div>
+</body>
+</html>

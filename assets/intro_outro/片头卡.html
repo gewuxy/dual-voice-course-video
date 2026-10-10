@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!-- 片头卡 1920×1080 · 蜡笔儿童风 · 独立片头（不叠正片），配锚句配音约 6.5s
+     【替换】点：①课号与课名（badge 一处）②锚句关键词高亮（一般不动） -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1920px; height:1080px; overflow:hidden; position:relative;
+         font-family:"圆体-简","PingFang SC",sans-serif; color:#1D2D49; background:#FBEBC1; }
+  .blob { position:absolute; border-radius:50% 40% 55% 45%; opacity:.9; }
+  .stripe { position:absolute; inset:0; opacity:.05;
+    background:repeating-linear-gradient(-35deg,#1D2D49 0 6px,transparent 6px 26px); }
+  .badge { position:absolute; top:70px; left:80px; display:flex; gap:22px; align-items:center; }
+  .badge .b1 { background:#1D2D49; color:#fff; font-size:34px; font-weight:700;
+               padding:16px 36px; border-radius:28px; letter-spacing:2px; }
+  .badge .b2 { background:#fff; border:4px solid #1D2D49; color:#1D2D49; font-size:28px;
+               font-weight:700; padding:12px 28px; border-radius:24px; transform:rotate(2deg); }
+  .hero { position:absolute; top:300px; left:0; width:100%; text-align:center; }
+  .hero .face { font-size:140px; line-height:1; }
+  .hero .t { margin-top:44px; font-size:72px; font-weight:700; line-height:1.55; letter-spacing:2px; }
+  .hero .t em { font-style:normal; color:#E8632B; }
+  .sub { position:absolute; top:770px; left:0; width:100%; text-align:center;
+         font-size:36px; color:#5F5E5A; }
+  .brand { position:absolute; bottom:56px; left:0; width:100%; height:64px;
+           display:flex; align-items:center; justify-content:center; }
+  .brand span { background:#1D2D49; color:#fff; font-size:28px; padding:12px 44px; border-radius:32px; letter-spacing:3px; }
+</style>
+</head>
+<body>
+  <div class="blob" style="width:340px;height:300px;background:#F4B3C4;left:-90px;top:-80px;"></div>
+  <div class="blob" style="width:260px;height:230px;background:#72B551;right:-60px;bottom:180px;"></div>
+  <div class="blob" style="width:200px;height:180px;background:#6EBAF9;left:180px;bottom:-60px;"></div>
+  <div class="stripe"></div>
+
+  <div class="badge">
+    <!-- 【替换①】课号与课名 -->
+    <div class="b1">AI 启蒙 · 第 3 课 · 事物的特征</div>
+    <div class="b2">适合 5–8 岁</div>
+  </div>
+
+  <div class="hero">
+    <div class="face">🤖</div>
+    <div class="t">5–8 岁的 AI 课，可以这样上——<br><em>家长和娃一起玩</em>，<em>老师拿来就能上</em>。</div>
+  </div>
+  <div class="sub">家长陪娃一起看 · 老师拿来直接上课</div>
+
+  <div class="brand"><span>小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力</span></div>
+</body>
+</html>

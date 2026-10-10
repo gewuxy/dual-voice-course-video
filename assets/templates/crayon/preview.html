@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>儿童蜡笔手绘风 · 课件模板预览</title>
+<style>
+/* ============ 蜡笔色板 ============ */
+:root{
+  --paper:#FFFDF4;
+  --paper-2:#FFF6E2;
+  --ink:#3A3226;
+  --ink-2:#7A6E5C;
+  --c-yellow:#FFD84D;
+  --c-orange:#FF9F45;
+  --c-red:#FF6B6B;
+  --c-pink:#FFB3C7;
+  --c-green:#7BC96F;
+  --c-teal:#4CC9B0;
+  --c-blue:#5AB0F5;
+  --c-purple:#B088F9;
+  --c-brown:#C89B6A;
+  --line:#3A3226;
+  --font-title:"圆体-简","Yuanti SC","站酷快乐体2016修订版","PingFang SC",sans-serif;
+  --font-hand:"娃娃体-简","仓耳渔阳体","HanziPen SC","PingFang SC",sans-serif;
+  --font-body:"圆体-简","Yuanti SC","PingFang SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:#EAE4D6;
+  font-family:var(--font-body);
+  color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;overflow:hidden;
+}
+
+/* ============ 舞台：1920x1080 等比缩放 ============ */
+#stageWrap{width:1920px;height:1080px;transform-origin:center center;flex:none}
+.stage{
+  position:relative;width:1920px;height:1080px;overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 12% 8%, #FFFDF6 0%, #FFF9EC 45%, #FFF4E0 100%);
+  box-shadow:0 18px 50px rgba(58,50,38,.28);
+}
+/* 纸纹噪点 */
+.stage::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:60;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23g)'/></svg>");
+  opacity:.10;mix-blend-mode:multiply;
+}
+/* 淡点阵（作业本感） */
+.stage::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(58,50,38,.09) 1.6px, transparent 1.7px);
+  background-size:40px 40px;opacity:.5;
+}
+
+/* ============ 通用元件 ============ */
+.slide{position:absolute;inset:0;display:none;z-index:2}
+.slide.on{display:block}
+
+/* 蜡笔涂色块（斜条纹 + 不规则边） */
+.crayon{
+  position:relative;isolation:isolate;
+}
+.crayon::before{
+  content:"";position:absolute;inset:-2px;z-index:-1;
+  background:var(--fill,var(--c-yellow));
+  border-radius:62% 38% 55% 45% / 58% 52% 48% 42%;
+  transform:rotate(-1.1deg);
+}
+.crayon::after{
+  content:"";position:absolute;inset:-2px;z-index:-1;
+  background:repeating-linear-gradient(118deg,
+     rgba(255,255,255,.55) 0 4px, rgba(255,255,255,0) 4px 11px);
+  border-radius:62% 38% 55% 45% / 58% 52% 48% 42%;
+  transform:rotate(-1.1deg);opacity:.55;
+}
+
+/* 贴纸卡：白边 + 硬阴影 + 微旋转 */
+.sticker{
+  position:relative;background:#FFFDF8;
+  border-radius:26px 30px 26px 32px;
+  box-shadow:9px 11px 0 rgba(58,50,38,.13), 0 3px 0 rgba(58,50,38,.05);
+  padding:22px;
+}
+.sticker::before{ /* 白色贴纸外沿 */
+  content:"";position:absolute;inset:-7px;border-radius:32px 36px 32px 38px;
+  background:#FFFDF8;z-index:-1;
+}
+
+/* 胶带 */
+.tape{
+  position:absolute;background:rgba(255,216,77,.72);
+  border-left:2px dashed rgba(255,255,255,.7);border-right:2px dashed rgba(255,255,255,.7);
+  box-shadow:0 2px 0 rgba(58,50,38,.08);
+}
+
+/* 手绘标题 */
+.title{
+  font-family:var(--font-title);font-weight:700;color:var(--ink);
+  letter-spacing:.02em;line-height:1.06;
+}
+/* 荧光笔高亮（文字下层） */
+.hl{position:relative;z-index:0;display:inline-block;padding:0 .04em}
+.hl>i{
+  position:absolute;z-index:-1;left:-.05em;right:-.05em;bottom:.06em;height:.40em;
+  background:var(--hl,var(--c-yellow));opacity:.92;
+  border-radius:58% 42% 47% 53% / 70% 55% 45% 60%;
+  transform:rotate(-1.4deg);
+}
+.hl>u{ /* 第二层更淡的蜡笔痕 */
+  position:absolute;z-index:-1;left:.02em;right:-.08em;bottom:.14em;height:.30em;
+  background:var(--hl,var(--c-yellow));opacity:.35;
+  border-radius:45% 55% 60% 40% / 55% 50% 50% 45%;
+  transform:rotate(1.2deg);text-decoration:none;
+}
+
+/* 页眉 / 页脚 */
+.hdr{position:absolute;left:76px;top:58px;display:flex;align-items:center;gap:20px}
+.hdr .badge{
+  font-family:var(--font-hand);font-size:40px;color:#8A5A2B;
+  background:var(--c-yellow);padding:10px 30px;border-radius:999px;
+  transform:rotate(-2deg);box-shadow:4px 5px 0 rgba(58,50,38,.14);
+}
+.hdr .pno{
+  font-family:var(--font-hand);font-size:36px;color:var(--ink-2);
+}
+.foot{
+  position:absolute;left:0;right:0;bottom:44px;
+  display:flex;align-items:center;justify-content:center;gap:26px;
+  font-family:var(--font-hand);font-size:31px;color:var(--ink-2);
+}
+.foot .brand{
+  font-family:var(--font-title);font-weight:700;font-size:34px;color:var(--ink);
+  background:#FFF;border:3px solid var(--ink);border-radius:999px;
+  padding:6px 26px;box-shadow:4px 5px 0 rgba(58,50,38,.16);transform:rotate(-1deg);
+}
+</style>
+</head>
+<body>
+<div id="stageWrap">
+<div class="stage" id="stage">
+
+<!-- ===== 手绘滤镜定义 ===== -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="wobble" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="9" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="wobble2" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="4" seed="21" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ===== 第 1 页 封面 ===== -->
+<section class="slide on">
+  <!-- 背景装饰 -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;z-index:1" viewBox="0 0 1920 1080">
+    <g filter="url(#wobble)" fill="none" stroke-linecap="round">
+      <!-- 左上太阳 -->
+      <circle cx="150" cy="150" r="62" fill="#FFD84D" stroke="#3A3226" stroke-width="5"/>
+      <g stroke="#3A3226" stroke-width="5">
+        <path d="M150 58 v-24"/><path d="M150 266 v24"/><path d="M58 150 H34"/><path d="M242 150 h24"/>
+        <path d="M85 85 L68 68"/><path d="M215 215 l17 17"/><path d="M215 85 l17-17"/><path d="M85 215 l-17 17"/>
+      </g>
+      <!-- 右上云 -->
+      <path d="M1690 150 q-8-42 34-44 q16-38 62-22 q40 4 44 40 q34 6 22 40 h-172 q-24 0 -16-28 z"
+            fill="#FFFFFF" stroke="#3A3226" stroke-width="5"/>
+      <!-- 底部小草 -->
+      <g stroke="#7BC96F" stroke-width="7">
+        <path d="M120 1030 q16-46 6-72"/><path d="M180 1030 q-18-40 -4-66"/>
+        <path d="M1760 1030 q16-46 6-72"/><path d="M1820 1030 q-18-40 -4-66"/>
+        <path d="M940 1036 q22-40 8-62"/>
+      </g>
+    </g>
+  </svg>
+
+  <!-- 顶部标签 -->
+  <div class="hdr" style="left:262px">
+    <span class="badge">AI 启蒙 · 第 12 课</span>
+    <span class="pno">适合 小学 1–2 年级</span>
+  </div>
+
+  <!-- 主标题 -->
+  <div style="position:absolute;left:0;right:0;top:196px;text-align:center;z-index:4">
+    <div class="title" style="font-size:206px">
+      <span class="hl" style="--hl:var(--c-yellow)">数据<i></i><u></u></span><span class="hl" style="--hl:var(--c-green)">集<i></i><u></u></span>
+    </div>
+    <div style="margin-top:30px;position:relative;display:inline-block">
+      <span class="title" style="font-size:76px">教电脑认识世界</span>
+      <svg style="position:absolute;left:-10px;right:-10px;bottom:-34px;width:calc(100% + 20px);height:26px"
+           viewBox="0 0 600 26" preserveAspectRatio="none">
+        <path d="M4 16 q40-14 82 0 t82 0 t82 0 t82 0 t82 0 t82 0"
+              fill="none" stroke="#4CC9B0" stroke-width="7" stroke-linecap="round" filter="url(#wobble2)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 三张照片贴纸 -->
+  <div style="position:absolute;left:0;right:0;top:596px;display:flex;justify-content:center;
+              align-items:flex-end;gap:58px;z-index:4">
+    <!-- 猫 -->
+    <div class="sticker" style="width:266px;height:294px;transform:rotate(-6deg)">
+      <svg viewBox="0 0 160 160" style="width:152px;height:152px;display:block;margin:6px auto 0">
+        <g filter="url(#wobble)" stroke="#3A3226" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M40 64 L32 18 L80 46 Z" fill="#FF9F45"/>
+          <path d="M120 64 L128 18 L80 46 Z" fill="#FF9F45"/>
+          <ellipse cx="80" cy="86" rx="52" ry="44" fill="#FFB865"/>
+          <ellipse cx="62" cy="80" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="98" cy="80" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <path d="M74 98 h12 l-6 8 z" fill="#FF6B6B"/>
+          <path d="M80 106 q-8 9 -15 3" fill="none"/>
+          <path d="M80 106 q8 9 15 3" fill="none"/>
+          <path d="M22 90 h20 M22 100 h20 M138 90 h-20 M138 100 h-20"/>
+        </g>
+      </svg>
+      <div style="text-align:center;font-family:var(--font-hand);font-size:37px;color:var(--ink);margin-top:2px">一堆猫</div>
+    </div>
+    <!-- 加号 -->
+    <svg viewBox="0 0 80 80" style="width:58px;height:58px;margin-bottom:104px">
+      <path d="M12 40 h56 M40 12 v56" stroke="#FF6B6B" stroke-width="13" stroke-linecap="round" filter="url(#wobble)"/>
+    </svg>
+    <!-- 狗 -->
+    <div class="sticker" style="width:298px;height:330px;transform:rotate(1.5deg);z-index:2">
+      <svg viewBox="0 0 160 160" style="width:170px;height:170px;display:block;margin:8px auto 0">
+        <g filter="url(#wobble)" stroke="#3A3226" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+          <ellipse cx="34" cy="66" rx="16" ry="34" fill="#A87A4E" transform="rotate(-16 34 66)"/>
+          <ellipse cx="126" cy="66" rx="16" ry="34" fill="#A87A4E" transform="rotate(16 126 66)"/>
+          <ellipse cx="80" cy="90" rx="50" ry="42" fill="#C89B6A"/>
+          <ellipse cx="62" cy="84" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="98" cy="84" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="80" cy="104" rx="12" ry="9" fill="#3A3226"/>
+          <path d="M80 113 v7" fill="none"/>
+          <path d="M80 113 q-10 10 -17 4" fill="none"/>
+          <path d="M80 113 q10 10 17 4" fill="none"/>
+          <path d="M80 120 q8 13 0 20 q-8 -7 0 -20 z" fill="#FF6B6B"/>
+        </g>
+      </svg>
+      <div style="text-align:center;font-family:var(--font-hand);font-size:37px;color:var(--ink);margin-top:2px">一堆狗</div>
+    </div>
+    <!-- 加号 -->
+    <svg viewBox="0 0 80 80" style="width:58px;height:58px;margin-bottom:104px">
+      <path d="M12 40 h56 M40 12 v56" stroke="#FF6B6B" stroke-width="13" stroke-linecap="round" filter="url(#wobble)"/>
+    </svg>
+    <!-- 兔 -->
+    <div class="sticker" style="width:266px;height:294px;transform:rotate(6deg)">
+      <svg viewBox="0 0 160 160" style="width:152px;height:152px;display:block;margin:6px auto 0">
+        <g filter="url(#wobble)" stroke="#3A3226" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+          <ellipse cx="56" cy="34" rx="14" ry="40" fill="#FFFFFF" transform="rotate(-9 56 34)"/>
+          <ellipse cx="104" cy="34" rx="14" ry="40" fill="#FFFFFF" transform="rotate(9 104 34)"/>
+          <ellipse cx="56" cy="36" rx="6" ry="26" fill="#FFB3C7" stroke="none" transform="rotate(-9 56 36)"/>
+          <ellipse cx="104" cy="36" rx="6" ry="26" fill="#FFB3C7" stroke="none" transform="rotate(9 104 36)"/>
+          <ellipse cx="80" cy="98" rx="46" ry="38" fill="#FFFFFF"/>
+          <ellipse cx="64" cy="94" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="96" cy="94" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <path d="M76 108 h8 l-4 6 z" fill="#FFB3C7"/>
+          <path d="M80 114 q-7 8 -13 3" fill="none"/>
+          <path d="M80 114 q7 8 13 3" fill="none"/>
+          <path d="M26 100 h18 M26 110 h18 M134 100 h-18 M134 110 h-18"/>
+        </g>
+      </svg>
+      <div style="text-align:center;font-family:var(--font-hand);font-size:37px;color:var(--ink);margin-top:2px">一堆兔子</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="brand">小贤 AI 青少年教育</span>
+    <span>体系课程 · 实训项目 · AI 创造力</span>
+  </div>
+</section>
+
+<!-- ===== 第 2 页 知识讲解（三列贴纸卡） ===== -->
+<section class="slide">
+  <div class="hdr">
+    <span class="badge">电脑怎么学？</span>
+    <span class="pno">第 12 课 · 数据集</span>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;top:170px;text-align:center;z-index:4">
+    <div class="title" style="font-size:94px">
+      给电脑看很多照片，它就会
+      <span class="hl" style="--hl:var(--c-yellow)">认了<i></i><u></u></span>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:118px;right:118px;top:392px;display:flex;gap:56px;z-index:4">
+    <!-- 卡 1 -->
+    <div class="sticker" style="flex:1;height:420px;transform:rotate(-1.6deg);padding:0">
+      <div style="background:var(--c-blue);height:182px;border-radius:20px 22px 0 0;position:relative;overflow:hidden">
+        <svg viewBox="0 0 200 200" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:184px;height:184px">
+          <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="44" y="66" width="104" height="86" rx="10" fill="#FFFDF4" transform="rotate(-9 96 109)"/>
+            <rect x="56" y="52" width="104" height="86" rx="10" fill="#FFFFFF" transform="rotate(5 108 95)"/>
+            <circle cx="86" cy="80" r="13" fill="#FFD84D"/>
+            <path d="M60 126 l30-32 l22 24 l16-14 l24 22 z" fill="#7BC96F"/>
+          </g>
+        </svg>
+      </div>
+      <div style="padding:32px 36px 36px;text-align:center">
+        <div class="title" style="font-size:56px">① 先看很多照片</div>
+        <div style="font-size:34px;color:var(--ink-2);margin-top:20px;line-height:1.8">
+          一张不够，要成百上千张
+        </div>
+      </div>
+    </div>
+    <!-- 卡 2 -->
+    <div class="sticker" style="flex:1;height:420px;transform:rotate(2deg);padding:0">
+      <div style="background:var(--c-green);height:182px;border-radius:20px 22px 0 0;position:relative;overflow:hidden">
+        <svg viewBox="0 0 200 200" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:184px;height:184px">
+          <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+            <circle cx="86" cy="84" r="52" fill="#EAF7FF"/>
+            <path d="M124 122 L166 164" stroke-width="14"/>
+            <ellipse cx="78" cy="76" rx="20" ry="15" fill="#FFD84D" stroke="none"/>
+            <path d="M60 92 q18 16 36 0" fill="none" stroke-width="5"/>
+          </g>
+        </svg>
+      </div>
+      <div style="padding:32px 36px 36px;text-align:center">
+        <div class="title" style="font-size:56px">② 找一样的地方</div>
+        <div style="font-size:34px;color:var(--ink-2);margin-top:20px;line-height:1.8">
+          猫都有尖耳朵和胡须
+        </div>
+      </div>
+    </div>
+    <!-- 卡 3 -->
+    <div class="sticker" style="flex:1;height:420px;transform:rotate(-1deg);padding:0">
+      <div style="background:var(--c-purple);height:182px;border-radius:20px 22px 0 0;position:relative;overflow:hidden">
+        <svg viewBox="0 0 200 200" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:184px;height:184px">
+          <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M100 26 a54 54 0 0 1 32 98 v10 h-64 v-10 a54 54 0 0 1 32 -98 z" fill="#FFD84D"/>
+            <rect x="76" y="138" width="48" height="16" rx="6" fill="#FFFFFF"/>
+            <rect x="82" y="158" width="36" height="14" rx="6" fill="#FFFFFF"/>
+            <path d="M20 60 h26 M164 60 h-26 M100 12 v-8" stroke-width="6"/>
+          </g>
+        </svg>
+      </div>
+      <div style="padding:32px 36px 36px;text-align:center">
+        <div class="title" style="font-size:56px">③ 记住这个样子</div>
+        <div style="font-size:34px;color:var(--ink-2);margin-top:20px;line-height:1.8">
+          下次再见到，就认得啦
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部金句条 -->
+  <div style="position:absolute;left:280px;right:280px;top:852px;z-index:4">
+    <div style="background:var(--c-yellow);border-radius:30px 26px 32px 28px;
+                padding:20px 44px;text-align:center;
+                box-shadow:8px 9px 0 rgba(58,50,38,.14);transform:rotate(-0.8deg)">
+      <span class="title" style="font-size:46px">照片越多 → 认得越准</span>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="brand">小贤 AI 青少年教育</span>
+    <span>体系课程 · 实训项目 · AI 创造力</span>
+  </div>
+</section>
+
+<!-- ===== 第 3 页 课堂互动 ===== -->
+<section class="slide">
+  <div class="hdr">
+    <span class="badge">考考你！</span>
+    <span class="pno">动动脑筋</span>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;top:168px;text-align:center;z-index:4">
+    <div class="title" style="font-size:96px">
+      只给它看 <span class="hl" style="--hl:var(--c-pink)">1 张<i></i><u></u></span> 猫照片，行不行？
+    </div>
+  </div>
+
+  <!-- 老师 + 对话框 -->
+  <div style="position:absolute;left:158px;top:344px;display:flex;align-items:center;gap:40px;z-index:4">
+    <div class="sticker" style="width:216px;height:216px;border-radius:50%;transform:rotate(-4deg);padding:0;
+                                display:flex;align-items:center;justify-content:center;background:#FFE9C9">
+      <svg viewBox="0 0 160 160" style="width:162px;height:162px">
+        <g filter="url(#wobble)" stroke="#3A3226" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M30 62 q0-46 50-46 q50 0 50 46 q0 12-6 18 q-8-10-18-8 q-8-14-26-14 q-18 0-26 14 q-10-2-18 8 q-6-6-6-18 z" fill="#6B5140"/>
+          <circle cx="80" cy="82" r="42" fill="#FFD9B8"/>
+          <circle cx="66" cy="80" r="9" fill="#FFFFFF"/><circle cx="66" cy="80" r="4" fill="#3A3226" stroke="none"/>
+          <circle cx="94" cy="80" r="9" fill="#FFFFFF"/><circle cx="94" cy="80" r="4" fill="#3A3226" stroke="none"/>
+          <path d="M70 100 q10 9 20 0" fill="none"/>
+          <path d="M40 72 h20 M100 72 h20" stroke-width="4"/>
+        </g>
+      </svg>
+    </div>
+    <div style="position:relative">
+      <div style="background:#FFFDF8;border-radius:36px 40px 36px 8px;padding:36px 50px;max-width:700px;
+                  box-shadow:9px 11px 0 rgba(58,50,38,.13)">
+        <div style="font-family:var(--font-hand);font-size:36px;color:#B088F9;margin-bottom:14px">小贤老师</div>
+        <div class="title" style="font-size:46px;line-height:1.75">
+          想一想：看到一只白猫，<br>它还能认出黑猫吗？
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 选项贴纸 -->
+  <div style="position:absolute;left:168px;right:168px;top:668px;display:flex;gap:50px;z-index:4">
+    <div class="sticker" style="flex:1;padding:30px 38px;transform:rotate(-2deg);display:flex;align-items:center;gap:24px">
+      <span style="font-family:var(--font-title);font-size:58px;color:#FF6B6B">A</span>
+      <span class="title" style="font-size:44px">认不出来</span>
+      <svg viewBox="0 0 60 60" style="width:52px;height:52px;margin-left:auto">
+        <path d="M12 32 l14 16 l26-34" fill="none" stroke="#7BC96F" stroke-width="9"
+              stroke-linecap="round" stroke-linejoin="round" filter="url(#wobble)"/>
+      </svg>
+    </div>
+    <div class="sticker" style="flex:1;padding:30px 38px;transform:rotate(1.5deg);display:flex;align-items:center;gap:24px;opacity:.72">
+      <span style="font-family:var(--font-title);font-size:58px;color:#5AB0F5">B</span>
+      <span class="title" style="font-size:44px">照样认得</span>
+      <svg viewBox="0 0 60 60" style="width:52px;height:52px;margin-left:auto">
+        <path d="M16 16 l28 28 M44 16 l-28 28" fill="none" stroke="#FF6B6B" stroke-width="9"
+              stroke-linecap="round" filter="url(#wobble)"/>
+      </svg>
+    </div>
+    <div class="sticker" style="flex:1;padding:30px 38px;transform:rotate(-1deg);display:flex;align-items:center;gap:24px;opacity:.72">
+      <span style="font-family:var(--font-title);font-size:58px;color:#B088F9">C</span>
+      <span class="title" style="font-size:44px">不知道</span>
+    </div>
+  </div>
+
+  <!-- 答案条 -->
+  <div style="position:absolute;left:290px;right:290px;top:846px;z-index:4">
+    <div style="background:var(--c-teal);border-radius:30px 26px 32px 28px;padding:20px 44px;text-align:center;
+                box-shadow:8px 9px 0 rgba(58,50,38,.14);transform:rotate(0.7deg)">
+      <span class="title" style="font-size:44px;color:#FFF">照片太少的「数据集」，电脑就会认错</span>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="brand">小贤 AI 青少年教育</span>
+    <span>体系课程 · 实训项目 · AI 创造力</span>
+  </div>
+</section>
+
+<!-- ===== 第 4 页 封底 ===== -->
+<section class="slide">
+  <svg style="position:absolute;inset:0;width:100%;height:100%;z-index:1" viewBox="0 0 1920 1080">
+    <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linecap="round">
+      <path d="M300 250 l14 40 l42 4 l-32 26 l11 41 l-35-24 l-35 24 l11-41 l-32-26 l42-4 z" fill="#FFD84D"/>
+      <path d="M1620 320 l11 32 l34 3 l-26 21 l9 33 l-28-19 l-28 19 l9-33 l-26-21 l34-3 z" fill="#FFB3C7"/>
+      <path d="M420 830 l9 26 l28 3 l-21 17 l7 27 l-23-16 l-23 16 l7-27 l-21-17 l28-3 z" fill="#7BC96F"/>
+    </g>
+  </svg>
+
+  <div style="position:absolute;left:0;right:0;top:168px;text-align:center;z-index:4">
+    <div class="title" style="font-size:176px">
+      <span class="hl" style="--hl:var(--c-yellow)">下节课见<i></i><u></u></span>！
+    </div>
+    <div style="margin-top:48px;font-family:var(--font-hand);font-size:56px;color:var(--ink-2)">
+      今天，我们教会了电脑「看照片」
+    </div>
+  </div>
+
+  <!-- 蜡笔插画 -->
+  <div style="position:absolute;left:0;right:0;top:500px;display:flex;justify-content:center;gap:24px;z-index:4">
+    <svg viewBox="0 0 90 240" style="width:64px;height:172px">
+      <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linejoin="round">
+        <path d="M22 56 L68 56 L62 20 L28 20 Z" fill="#FF6B6B"/>
+        <rect x="22" y="56" width="46" height="170" rx="6" fill="#FF6B6B"/>
+        <path d="M22 200 h46" stroke-width="4"/>
+      </g>
+    </svg>
+    <svg viewBox="0 0 90 240" style="width:64px;height:172px">
+      <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linejoin="round">
+        <path d="M22 56 L68 56 L62 20 L28 20 Z" fill="#FFD84D"/>
+        <rect x="22" y="56" width="46" height="170" rx="6" fill="#FFD84D"/>
+        <path d="M22 200 h46" stroke-width="4"/>
+      </g>
+    </svg>
+    <svg viewBox="0 0 90 240" style="width:64px;height:172px">
+      <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linejoin="round">
+        <path d="M22 56 L68 56 L62 20 L28 20 Z" fill="#7BC96F"/>
+        <rect x="22" y="56" width="46" height="170" rx="6" fill="#7BC96F"/>
+        <path d="M22 200 h46" stroke-width="4"/>
+      </g>
+    </svg>
+    <svg viewBox="0 0 90 240" style="width:64px;height:172px">
+      <g filter="url(#wobble)" stroke="#3A3226" stroke-width="5" stroke-linejoin="round">
+        <path d="M22 56 L68 56 L62 20 L28 20 Z" fill="#5AB0F5"/>
+        <rect x="22" y="56" width="46" height="170" rx="6" fill="#5AB0F5"/>
+        <path d="M22 200 h46" stroke-width="4"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- 品牌条 -->
+  <div style="position:absolute;left:280px;right:280px;top:730px;z-index:4">
+    <div style="background:#FFFDF8;border:5px solid var(--ink);border-radius:34px 30px 36px 32px;
+                padding:32px 56px;text-align:center;box-shadow:10px 12px 0 rgba(58,50,38,.16);
+                transform:rotate(-0.6deg)">
+      <div class="title" style="font-size:54px">小贤 AI 青少年教育</div>
+      <div style="font-size:30px;color:var(--ink-2);margin-top:16px;line-height:1.85">
+        为中小学、培训机构和家庭，提供完整的青少年人工智能课程体系与实训项目，<br>
+        培养 AI 时代具有创造力的新少年
+      </div>
+      <div style="font-family:var(--font-hand);font-size:34px;color:#8A5A2B;margin-top:22px">
+        体系课程 · 实训项目 · AI 创造力
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+</div>
+
+<!-- ===== 预览控制条（不进画面） ===== -->
+<div id="nav" style="display:flex;gap:12px;align-items:center;font-family:var(--font-body)">
+  <button data-i="0">1 封面</button>
+  <button data-i="1">2 讲解</button>
+  <button data-i="2">3 互动</button>
+  <button data-i="3">4 封底</button>
+  <span style="font-size:14px;color:#8A8172;margin-left:8px">← → 翻页 ｜ 此控制条不在画面内</span>
+</div>
+
+<script>
+(function(){
+  var slides = document.querySelectorAll('.slide');
+  var btns = document.querySelectorAll('#nav button');
+  var cur = 0;
+  function go(i){
+    cur = (i + slides.length) % slides.length;
+    slides.forEach(function(s,k){ s.classList.toggle('on', k === cur); });
+    btns.forEach(function(b,k){ b.style.background = (k === cur) ? '#3A3226' : '#FFF'; 
+                                b.style.color = (k === cur) ? '#FFF' : '#3A3226'; });
+  }
+  btns.forEach(function(b){ b.onclick = function(){ go(+b.dataset.i); }; });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight') go(cur+1);
+    if(e.key === 'ArrowLeft') go(cur-1);
+  });
+  go(0);
+
+  function fit(){
+    var pad = 90;
+    var s = Math.min((window.innerWidth - 40) / 1920, (window.innerHeight - pad) / 1080);
+    document.getElementById('stageWrap').style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+})();
+</script>
+<style>
+#nav button{
+  font-family:var(--font-title);font-size:16px;padding:8px 20px;cursor:pointer;
+  border:2px solid #3A3226;border-radius:999px;background:#FFF;color:#3A3226;
+  box-shadow:3px 4px 0 rgba(58,50,38,.18);
+}
+</style>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<!-- 蜡笔风动态片头模板 · 1920×1080 · 默认 6.5s · 30fps
+     视觉令牌 = 互动课件 index_present.html（奶油纸底/点阵/噪点/藏青描边/圆体-简/娃娃体-简）
+     分屏节奏 = L2 sensingandunderstanding.mp4 前 5 秒（SkillStruck 极简分屏）：
+       拍1 logo 单独居中 → 拍2 logo 左移 + 品牌名（锁定组合）→ 空白呼吸拍
+       → 拍3 主张句 + 配套三件套 + 收尾句（一组内容，纵向铺开）→ 空白呼吸拍
+       → 拍4 课名贴纸单独一屏居中 → 蜡笔擦除接正片
+     （2026-10-08 用户定案：不要把内容挤在一个画面里，课名必须单独一屏）
+
+     令牌（由 scripts/make_intro.sh 替换）：
+       {{TOTAL}}  总时长秒数（默认 7.5；所有时间点按 TOTAL/7.5 等比缩放）
+       {{BRAND}}  品牌名          {{TITLE}}  课名（可含 <em>关键词</em>，em 会自动加黄色高亮胶囊）
+       {{CLAIM}}  主张句（可含 <b>强调</b>）
+       {{LEAD}}   三件套引导词     {{K1}} {{K2}} {{K3}}  三件套文字
+       {{NOPLUG}} 收尾句          {{LOGO}}   logo 文件名
+
+     渲染（不要手写 ffmpeg，用脚本）：
+       node <SK>/scripts/capture_anim.js intro.html frames <TOTAL>
+       python <SK>/scripts/make_intro_music.py --out music.wav --duration <TOTAL>
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{
+    --paper:#FFFDF4; --ink:#3A3226; --ink-2:#7A6E5C;
+    --c-yellow:#FFD84D; --c-orange:#FF9F45; --c-red:#FF6B6B; --c-pink:#FFB3C7;
+    --c-green:#7BC96F; --c-teal:#4CC9B0; --c-blue:#5AB0F5; --c-purple:#B088F9;
+    --font-title:"圆体-简","Yuanti SC","PingFang SC",sans-serif;
+    --font-hand:"娃娃体-简","HanziPen SC","PingFang SC",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;
+    background:radial-gradient(120% 90% at 12% 8%, #FFFDF6 0%, #FFF9EC 45%, #FFF4E0 100%);
+    font-family:var(--font-title);color:var(--ink)}
+  body::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+    background-image:radial-gradient(rgba(58,50,38,.09) 1.6px, transparent 1.7px);background-size:40px 40px;opacity:.5}
+  body::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:50;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23g)'/></svg>");
+    opacity:.10;mix-blend-mode:multiply}
+  #root{position:relative;width:1920px;height:1080px;overflow:hidden}
+  .blob{position:absolute;border-radius:62% 38% 55% 45%/58% 52% 48% 42%;will-change:transform,opacity}
+
+  /* 拍1+2：logo → 品牌锁定组合（唯一同屏的组合，对齐参考片 1.0–2.4s） */
+  .brandrow{position:absolute;left:0;right:0;top:398px;display:flex;align-items:center;justify-content:center;gap:44px}
+  #chip{position:relative;width:232px;height:232px;background:#FFFDF8;border:7px solid var(--ink);
+    border-radius:52px;display:flex;align-items:center;justify-content:center;
+    box-shadow:12px 14px 0 rgba(58,50,38,.16);will-change:transform,opacity}
+  #chip img{width:168px;height:168px;display:block}
+  #brandwrap{will-change:transform,opacity}
+  #brand{font-weight:700;font-size:88px;letter-spacing:.03em;line-height:1.12;white-space:nowrap}
+
+  /* 拍3：主张句 + 三件套 + 收尾句（一组内容，纵向铺开，块间距 ≥90px） */
+  #claim{position:absolute;left:0;right:0;top:248px;text-align:center;
+    font-family:var(--font-title);font-size:66px;color:#4A4238;letter-spacing:.02em;white-space:nowrap;
+    will-change:transform,opacity}
+  #claim b{font-weight:700;color:var(--ink)}
+
+  #kit{position:absolute;left:0;right:0;top:478px;display:flex;align-items:center;justify-content:center;gap:34px}
+  #kitlead{font-family:var(--font-hand);font-size:46px;color:#5F5E5A;margin-right:8px;will-change:opacity}
+  .kitem{position:relative;will-change:transform,opacity}
+  .kitem .card{position:relative;z-index:2;background:#FFFDF8;border:6px solid var(--ink);border-radius:26px;
+    padding:20px 40px;font-weight:700;font-size:48px;box-shadow:9px 11px 0 rgba(58,50,38,.15);white-space:nowrap}
+  .kitem .blob2{position:absolute;inset:-12px;z-index:1;border-radius:46% 54% 42% 58%/52% 46% 54% 48%;opacity:.9}
+
+  #noplug{position:absolute;left:50%;top:748px;transform:translateX(-50%);
+    background:var(--c-green);border:6px solid var(--ink);border-radius:999px;padding:16px 48px;
+    font-family:var(--font-hand);font-size:46px;box-shadow:9px 11px 0 rgba(58,50,38,.15);white-space:nowrap;
+    will-change:transform,opacity}
+
+  /* 拍4：课名贴纸单独一屏（垂直居中，字号加大——独屏后它是唯一主角） */
+  #titlecard{position:absolute;left:50%;top:50%;margin-top:-88px;transform:translateX(-50%) rotate(-1.3deg);
+    background:#FFFDF8;border:7px solid var(--ink);border-radius:36px;padding:26px 60px;
+    box-shadow:12px 14px 0 rgba(58,50,38,.16);will-change:transform,opacity}
+  #titlecard .t{font-weight:700;font-size:86px;letter-spacing:.03em;white-space:nowrap}
+  /* 关键词高亮：必须是 inline-block，否则底色框会因断行机会偏离文字（见 known_pitfalls #21） */
+  #titlecard .t em{font-style:normal;position:relative;display:inline-block;padding:0 .08em;margin:0 .03em;
+    background:var(--c-yellow);border-radius:16px;transform:rotate(-1.2deg)}
+
+  .deco{position:absolute;will-change:transform,opacity}
+  #wipe{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;
+    background:#FFFDF4;border-radius:50%;z-index:40;will-change:transform,opacity}
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="blob" id="b1" style="width:420px;height:350px;background:var(--c-yellow);left:110px;top:90px;opacity:.5"></div>
+  <div class="blob" id="b2" style="width:330px;height:290px;background:var(--c-teal);right:80px;top:600px;opacity:.42"></div>
+  <div class="blob" id="b3" style="width:250px;height:220px;background:var(--c-pink);right:190px;top:140px;opacity:.48"></div>
+  <div class="blob" id="b4" style="width:210px;height:190px;background:var(--c-purple);left:150px;top:760px;opacity:.28"></div>
+
+  <svg class="deco" id="d1" width="112" height="112" viewBox="0 0 64 64" style="left:300px;top:700px">
+    <path d="M32 6 L38 26 L58 32 L38 38 L32 58 L26 38 L6 32 L26 26 Z" fill="none" stroke="#3A3226" stroke-width="4" stroke-linejoin="round"/>
+  </svg>
+  <svg class="deco" id="d2" width="140" height="84" viewBox="0 0 100 60" style="right:330px;top:640px">
+    <path d="M6 40 Q22 12 38 40 T70 40 T96 40" fill="none" stroke="#4CC9B0" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+  <svg class="deco" id="d3" width="84" height="84" viewBox="0 0 64 64" style="left:1450px;top:150px">
+    <circle cx="32" cy="32" r="20" fill="#FF9F45"/>
+  </svg>
+
+  <div class="brandrow">
+    <div id="chip"><img src="{{LOGO}}" alt="{{BRAND}}"></div>
+    <div id="brandwrap"><div id="brand">{{BRAND}}</div></div>
+  </div>
+
+  <div id="claim">{{CLAIM}}</div>
+
+  <div id="kit">
+    <span id="kitlead">{{LEAD}}</span>
+    <span class="kitem" id="k1"><span class="blob2" style="background:var(--c-yellow)"></span><span class="card">{{K1}}</span></span>
+    <span class="kitem" id="k2"><span class="blob2" style="background:var(--c-pink)"></span><span class="card">{{K2}}</span></span>
+    <span class="kitem" id="k3"><span class="blob2" style="background:var(--c-teal)"></span><span class="card">{{K3}}</span></span>
+  </div>
+
+  <div id="noplug">{{NOPLUG}}</div>
+
+  <div id="titlecard"><div class="t">{{TITLE}}</div></div>
+
+  <div id="wipe"></div>
+</div>
+<script>
+var TOTAL = {{TOTAL}};
+var SCALE = TOTAL / 7.5;          // 基准时间轴按 7.5s 设计（4 拍分屏），其它时长等比缩放
+function K(x){ return x * SCALE; }
+function c01(x){return x<0?0:(x>1?1:x)}
+function seg(t,a,b){return c01((t-a)/(b-a))}
+function outCubic(p){return 1-Math.pow(1-p,3)}
+function outBack(p){const c=1.5;return 1+(c+1)*Math.pow(p-1,3)+c*Math.pow(p-1,2)}
+function outElastic(p){if(p<=0)return 0;if(p>=1)return 1;return Math.pow(2,-9*p)*Math.sin((p*10-0.75)*(2*Math.PI/3))+1}
+
+/* 分屏时间轴（基准 7.5s，全部过 K() 缩放；2026-10-08 用户定案：拍2 收短、拍3 拉长）
+   拍1  logo 单独居中      0.05–0.75 飞入，0.85 即开始左移（独占 ≈0.8s）
+   拍2  logo 左移入锁定位   0.85–1.30 ＋ 品牌名 1.10–1.85（完整驻留至 2.30，≈1.0s）
+   呼吸拍 锁定组合淡出      2.30–2.65 → 纯底
+   拍3  主张 2.90–3.50 ＋ 三件套 3.20–4.10 ＋ 收尾句 4.30–4.80（整组同屏驻留至 6.00，≈1.2s）
+   呼吸拍 拍3 淡出          6.00–6.30 → 纯底
+   拍4  课名独屏            6.40–6.95
+   擦除                     7.15–7.45（末帧 = 纯奶油底，无缝接正片第 1 帧） */
+function applyTime(t){
+  var d=outCubic(seg(t,0,TOTAL));
+  var b1=document.getElementById('b1'),b2=document.getElementById('b2'),b3=document.getElementById('b3'),b4=document.getElementById('b4');
+  b1.style.transform='translate('+(-26+64*d)+'px,'+(-16+44*d)+'px) rotate('+(2*d)+'deg)';
+  b2.style.transform='translate('+(34-70*d)+'px,'+(8-34*d)+'px) rotate('+(-3*d)+'deg)';
+  b3.style.transform='translate('+(-18+36*d)+'px,'+(26-52*d)+'px)';
+  b4.style.transform='translate('+(20-40*d)+'px,'+(-14+30*d)+'px)';
+
+  // 拍1+2 logo：先单独居中飞入（放大态），0.85 起左移滑入锁定位
+  var pin=outBack(seg(t,K(0.05),K(0.75)));      // 居中飞入
+  var psl=outCubic(seg(t,K(0.85),K(1.30)));     // 左移入位
+  var fadeLock=1-seg(t,K(2.30),K(2.65));        // 呼吸拍整组淡出
+  var chip=document.getElementById('chip');
+  // 居中态偏移：锁定位在整行左侧，居中态相对它右移约 420px
+  chip.style.transform='translateX('+(420*(1-psl))+'px) rotate('+(-3+10*(1-pin))+'deg) scale('+(1.14-0.14*Math.max(pin,psl))+')';
+  chip.style.opacity=(c01(seg(t,K(0.05),K(0.35)))*fadeLock).toFixed(3);
+
+  // 拍2 品牌名滑入（与 logo 入位交叠）
+  var pb=outCubic(seg(t,K(1.10),K(1.85)));
+  var bw=document.getElementById('brandwrap');
+  bw.style.transform='translateX('+(-54*(1-pb))+'px)';
+  bw.style.opacity=(pb*fadeLock).toFixed(3);
+
+  // 拍3 主张句
+  var f3=1-seg(t,K(6.00),K(6.30));              // 拍3 整组淡出
+  var pc=outCubic(seg(t,K(2.90),K(3.50)));
+  var cl=document.getElementById('claim');
+  cl.style.transform='translateY('+(26*(1-pc))+'px)';
+  cl.style.opacity=(pc*f3).toFixed(3);
+
+  // 拍3 引导词 + 三件套逐个飞入（方向各异、窗口交叠）
+  document.getElementById('kitlead').style.opacity=(outCubic(seg(t,K(3.10),K(3.35)))*f3).toFixed(3);
+  var kit=[['k1',3.20,3.70,-1.6, 130,  0],
+           ['k2',3.40,3.90, 1.3,   0,110],
+           ['k3',3.60,4.10,-1.0,-130,  0]];
+  kit.forEach(function(k){
+    var el=document.getElementById(k[0]);
+    var p=outBack(seg(t,K(k[1]),K(k[2])));
+    el.style.opacity=(c01(seg(t,K(k[1]),K(k[1]+0.22)))*f3).toFixed(3);
+    el.style.transform='translate('+(k[4]*(1-p))+'px,'+(k[5]*(1-p))+'px) rotate('+(k[3]+10*(1-p))+'deg) scale('+(0.88+0.12*p)+')';
+  });
+
+  // 拍3 收尾句
+  var pn=outElastic(seg(t,K(4.30),K(4.80)));
+  var np=document.getElementById('noplug');
+  np.style.opacity=(c01(seg(t,K(4.30),K(4.54)))*f3).toFixed(3);
+  np.style.transform='translateX(-50%) scale('+(0.55+0.45*pn)+')';
+
+  // 拍4 课名贴纸独屏（充分驻留到擦除）
+  var pt=outElastic(seg(t,K(6.40),K(6.95)));
+  var tc=document.getElementById('titlecard');
+  tc.style.opacity=c01(seg(t,K(6.40),K(6.70))).toFixed(3);
+  tc.style.transform='translateX(-50%) rotate(-1.3deg) translateY('+(58*(1-pt))+'px) scale('+(0.88+0.12*pt)+')';
+
+  // 手绘装饰
+  [['d1',1.20],['d2',1.42],['d3',0.95]].forEach(function(pair){
+    var el=document.getElementById(pair[0]);
+    var p=outElastic(seg(t,K(pair[1]),K(pair[1]+0.60)));
+    el.style.opacity=c01(seg(t,K(pair[1]),K(pair[1]+0.22))).toFixed(3);
+    el.style.transform='scale('+(0.4+0.6*p)+') rotate('+(-14+14*p)+'deg)';
+  });
+
+  // 蜡笔擦除 7.15–7.45（末帧 = 纯奶油底，无缝接正片第 1 帧）
+  var pw=c01(seg(t,K(7.15),K(7.45)));
+  var w=document.getElementById('wipe');
+  w.style.transform='scale('+(0.001+22*pw)+')';
+  w.style.opacity=(0.15+0.85*c01(seg(t,K(7.30),K(7.42)))).toFixed(3);
+}
+window.HF_DATA={f01:{gstart:0,gend:TOTAL,steps:[]}};
+window.applyTime=applyTime;
+applyTime(0);
+</script>
+</body>
+</html>

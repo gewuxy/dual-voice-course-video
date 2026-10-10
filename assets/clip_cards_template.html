@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{width:1920px;height:1080px;overflow:hidden;font-family:"圆体-简","Yuanti SC","PingFang SC",sans-serif;position:relative}
+  .card{position:absolute;inset:0;background:#FBEBC1}
+  /* 纸纹噪点 */
+  .noise{position:absolute;inset:0;opacity:.55;mix-blend-mode:multiply}
+  /* 蜡笔 blob */
+  .blob{position:absolute;border-radius:50% 45% 55% 48%;filter:blur(1px)}
+  .stripe{position:absolute;inset:0;border-radius:inherit;background:repeating-linear-gradient(115deg,transparent 0 26px,rgba(255,255,255,.28) 26px 44px)}
+  .badge{position:absolute;left:64px;top:56px;background:#fff;border:5px solid #1D2D49;border-radius:22px;padding:14px 30px;font-size:34px;font-weight:800;color:#1D2D49;transform:rotate(-2deg);box-shadow:6px 8px 0 rgba(29,45,73,.18)}
+  .main{position:absolute;left:50%;top:420px;transform:translate(-50%,-50%);text-align:center;width:1700px}
+  .kick{display:inline-block;background:var(--bc,#F6E360);border:6px solid #1D2D49;border-radius:24px;padding:10px 44px;font-size:52px;font-weight:800;color:#1D2D49;transform:rotate(-1.5deg);box-shadow:8px 10px 0 rgba(29,45,73,.15)}
+  .h1{font-size:150px;font-weight:900;color:#1D2D49;line-height:1.22;margin-top:44px;letter-spacing:2px}
+  .h1 .em{color:var(--ec,#D1507E);position:relative;white-space:nowrap}
+  .h1 .em svg{position:absolute;left:-2%;bottom:-16px;width:104%;height:34px}
+  .sub{font-size:62px;font-weight:800;color:#4B5D77;margin-top:36px}
+  .qmark{position:absolute;font-size:120px}
+  .brand{position:absolute;left:0;right:0;bottom:52px;text-align:center;font-size:36px;font-weight:800;color:#8A7A55;letter-spacing:3px}
+</style>
+<script>function esc(s){return s}</script>
+</head>
+<body>
+<div class="card" id="c1">
+  <svg class="noise"><filter id="n"><feTurbulence baseFrequency="0.9" numOctaves="2"/><feColorMatrix values="0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0.14 0"/></filter><rect width="1920" height="1080" filter="url(#n)"/></svg>
+  <div class="blob" style="left:-140px;top:-160px;width:520px;height:460px;background:#F6E360;opacity:.85"><div class="stripe"></div></div>
+  <div class="blob" style="right:-180px;bottom:-200px;width:620px;height:540px;background:#72B551;opacity:.7"><div class="stripe"></div></div>
+  <div class="blob" style="right:120px;top:80px;width:230px;height:210px;background:#F4B3C4;opacity:.8"><div class="stripe"></div></div>
+  <div class="badge">AI 启蒙 · 第 6 课</div>
+  <div class="qmark" style="left:180px;top:300px;transform:rotate(-14deg)">🧱</div>
+  <div class="qmark" style="right:190px;bottom:230px;transform:rotate(12deg)">✨</div>
+  <div class="main">
+    <div class="kick" style="--bc:#F6E360">孩子玩积木时</div>
+    <div class="h1">AI 在偷偷学<span class="em" style="--ec:#D1507E">分类<svg viewBox="0 0 300 34" preserveAspectRatio="none"><path d="M8 22 Q80 6 150 18 T292 14" fill="none" stroke="#F6A03C" stroke-width="12" stroke-linecap="round"/></svg></span></div>
+    <div class="sub">8 块积木，看懂计算机整理数据的秘密</div>
+  </div>
+  <div class="brand">小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力</div>
+</div>
+
+<div class="card" id="c2" style="display:none;background:#DDEFFB">
+  <svg class="noise" style="opacity:.4"><filter id="n2"><feTurbulence baseFrequency="0.9" numOctaves="2"/><feColorMatrix values="0 0 0 0 0.4 0 0 0 0 0.5 0 0 0 0 0.6 0 0 0 0.12 0"/></filter><rect width="1920" height="1080" filter="url(#n2)"/></svg>
+  <div class="blob" style="left:-150px;bottom:-180px;width:560px;height:500px;background:#6EBAF9;opacity:.75"><div class="stripe"></div></div>
+  <div class="blob" style="right:-160px;top:-140px;width:520px;height:460px;background:#F6E360;opacity:.9"><div class="stripe"></div></div>
+  <div class="badge" style="background:#fff">AI 启蒙 · 第 6 课</div>
+  <div class="qmark" style="left:210px;bottom:250px;transform:rotate(-10deg)">🐘</div>
+  <div class="qmark" style="right:220px;top:290px;transform:rotate(10deg)">🌳</div>
+  <div class="main">
+    <div class="kick" style="--bc:#72B551;color:#fff">猜猜看挑战</div>
+    <div class="h1">只用 <span class="em" style="--ec:#F6A03C">2 个问题</span>，<br>就能猜中你心里想的动物？</div>
+    <div class="sub">像树枝一样提问的机器，叫决策树</div>
+  </div>
+  <div class="brand">小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力</div>
+</div>
+
+<div class="card" id="c3" style="display:none;background:#FDE8EC">
+  <svg class="noise" style="opacity:.4"><filter id="n3"><feTurbulence baseFrequency="0.9" numOctaves="2"/><feColorMatrix values="0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.45 0 0 0 0.12 0"/></filter><rect width="1920" height="1080" filter="url(#n3)"/></svg>
+  <div class="blob" style="right:-170px;bottom:-190px;width:580px;height:520px;background:#F4B3C4;opacity:.85"><div class="stripe"></div></div>
+  <div class="blob" style="left:-150px;top:-130px;width:500px;height:440px;background:#6EBAF9;opacity:.7"><div class="stripe"></div></div>
+  <div class="badge" style="background:#fff">AI 启蒙 · 第 6 课</div>
+  <div class="qmark" style="left:190px;bottom:260px;transform:rotate(-12deg)">🛫</div>
+  <div class="qmark" style="right:200px;top:300px;transform:rotate(10deg)">📱</div>
+  <div class="main">
+    <div class="kick" style="--bc:#F4B3C4">你身边的 AI</div>
+    <div class="h1">过安检时，机器<br>在偷偷看<span class="em" style="--ec:#2E7CB8">什么</span>？</div>
+    <div class="sub">安检 · 相册 · 自动驾驶，都是同一个原理</div>
+  </div>
+  <div class="brand">小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力</div>
+</div>
+
+<div class="card" id="c4" style="display:none;background:#FBEBC1">
+  <svg class="noise"><filter id="n4"><feTurbulence baseFrequency="0.9" numOctaves="2"/><feColorMatrix values="0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0.14 0"/></filter><rect width="1920" height="1080" filter="url(#n4)"/></svg>
+  <div class="blob" style="left:-140px;top:-150px;width:520px;height:460px;background:#F6E360;opacity:.9"><div class="stripe"></div></div>
+  <div class="blob" style="right:-170px;bottom:-190px;width:600px;height:520px;background:#72B551;opacity:.7"><div class="stripe"></div></div>
+  <div class="main" style="top:470px">
+    <div class="kick" style="--bc:#1D2D49;color:#fff">完整课程</div>
+    <div class="h1" style="font-size:130px">看<span class="em" style="--ec:#D1507E">主页合集</span> 📚</div>
+    <div class="sub">会看特征，数据乖乖站好队！</div>
+  </div>
+  <div class="brand">小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力</div>
+</div>
+</body></html>
