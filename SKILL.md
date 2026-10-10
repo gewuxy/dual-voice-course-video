@@ -85,16 +85,16 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 
 ## 路径变量（换机 / 换人只需改这里）
 
-| 变量       | 含义                        | 本机实际值                                                                                  |
-| -------- | ------------------------- | -------------------------------------------------------------------------------------- |
-| `$SK`    | 本 skill 目录                | clone 后你自己的路径（如 `~/skills/dual-voice-course-video`）；或 `cd` 进 skill 目录用 `$PWD` |
-| `$VC`    | 语音克隆项目（**不在教育项目目录下**）     | 运行前 `export VOICE_CLONE=/path/to/voice_clone`（脚本默认读该环境变量）|
-| `$H`     | 本节课程目录                    | `…/Grades K-2. Introduction to AI Course/AI-L1. Human Senses vs Computer Sensors`      |
-| `$H/视频课` | 本节全部产物                    | script / index_present.html / 素材 / 成片 / 封面                                             |
-| `$W`     | 临时工作目录                    | `/tmp/<课名>`（音频、standalone、shots、成片）                                                    |
-| 模板       | 蜡笔手绘风视觉基准（封面/课件统一）        | `$SK/assets/templates/crayon/preview.html`              |
-| 竖版课件模板   | 竖屏课件视觉基准（1080×1440 单栏大字号）    | `$SK/assets/templates/crayon/preview_portrait.html`     |
-| 竖版封面模板   | 视频号封面固定模板（1080×1260 对决版式） | `$SK/assets/templates/crayon/封面模板_竖版视频号_1080x1260.html` |
+| 变量       | 含义                        | 本机实际值                                                                             |
+| -------- | ------------------------- | --------------------------------------------------------------------------------- |
+| `$SK`    | 本 skill 目录                | clone 后你自己的路径（如 `~/skills/dual-voice-course-video`）；或 `cd` 进 skill 目录用 `$PWD`     |
+| `$VC`    | 语音克隆项目（**不在教育项目目录下**）     | 运行前 `export VOICE_CLONE=/path/to/voice_clone`（脚本默认读该环境变量）                         |
+| `$H`     | 本节课程目录                    | `…/Grades K-2. Introduction to AI Course/AI-L1. Human Senses vs Computer Sensors` |
+| `$H/视频课` | 本节全部产物                    | script / index_present.html / 素材 / 成片 / 封面                                        |
+| `$W`     | 临时工作目录                    | `/tmp/<课名>`（音频、standalone、shots、成片）                                               |
+| 模板       | 蜡笔手绘风视觉基准（封面/课件统一）        | `$SK/assets/templates/crayon/preview.html`                                        |
+| 竖版课件模板   | 竖屏课件视觉基准（1080×1440 单栏大字号） | `$SK/assets/templates/crayon/preview_portrait.html`                               |
+| 竖版封面模板   | 视频号封面固定模板（1080×1260 对决版式） | `$SK/assets/templates/crayon/封面模板_竖版视频号_1080x1260.html`                           |
 
 环境变量可覆盖：`VOICE_CLONE` / `CHROME_BIN` / `FFMPEG` / `SYS_PY`（带 PIL 的系统 python，默认 `/opt/homebrew/bin/python3`，托管版 python 没装 PIL）/ `TEACHER_NAME`（老师显示名，默认 `小贤老师`；改后须同步改课件气泡署名与剧本角色行）。
 
@@ -119,6 +119,7 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 **严禁一次性自动连跑到底。** 本流水线有 5 个【确认 gate】：阶段 1（剧本）、阶段 2（放映版）、阶段 3（双音色音频）、阶段 5（封面），阶段 4 含 4a/4b/4c 子确认点。**每个 gate 是硬停止（hard stop）**：完成该阶段产出后，**必须停下**，主动用 `AskUserQuestion` 工具把本阶段产出 + 一个「确认后再继续」的问题抛给用户，实实在在等到用户回"继续/确认"或具体修改意见，才能开始下一阶段的任何文件写入或命令。台词、构图、音色/语速、对齐精度、封面取向都主观且易错，连跑会浪费大量算力（双音色合成一节 40 句约 8–15 分钟，重跑成本高）。
 
 **⛔ 门禁三铁律（任何模式/任何会话都生效，不可绕过）：**
+
 1. **不得用"简短汇报一句"代替用户确认**——汇报完不自动继续，必须等用户明确说"继续 / 可以 / 确认"才算过 gate。
 2. **不得为"高效/省事"合并或跳过 gate**——每个 gate 单独停下，逐关过。
 3. **用户没回之前，不得预读下一阶段、不得创建/改写下一阶段产物文件、不得跑下一阶段命令**。这三点违反任一条都算流程事故。
@@ -137,6 +138,7 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 - **竖版**：1080×1440，视频号/抖音/Shorts 原生竖视频，阶段 2 用 `preview_portrait.html`（单栏大字号版式），产出 `index_present_portrait.html`
 - **横竖都要**：同一内容两套，阶段 2 出 `index_present.html` + `index_present_portrait.html`；阶段 3 音频**只合成一次**；阶段 4 两套各按尺寸渲染、复用同一份音频；阶段 5 封面横竖都出
 - 尺寸全自动：`make_standalone.py` 从源 `#stageWrap` 读尺寸（1920×1080 / 1080×1440），`capture*.js` / `qc_frames.js` 跟着源尺寸走，不用手填宽高；竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致
+
 
 ### 老师显示名可配置（TEACHER_NAME，方案 A）
 
@@ -166,8 +168,8 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 - 学生行含「哭脸/笑脸」→ 不念词，只留静音（做表情）
 - **一帧内的角色行数 = 该帧 HTML 的 `.step` 数**（后续 1:1 对齐的唯一依据）
 - 引号内不要出现 `"` `"`，否则解析器会漏句
-- K-2 认知铁律：术语（触觉/化学/味觉传感器）只由老师说出，学生只答日常词（摄像头、麦克风）；不确定的用"不知道！/猜不到！"再让老师揭示
-- 视频介质适配：线下"闭眼闻花/摸木头"要改成"看屏幕 + 听真实音频 + 回想"
+- 认知铁律：专业名词和术语（触觉/化学/味觉传感器）只由老师说出，学生只答日常词（摄像头、麦克风）；不确定的用"不知道！/猜不到！"再让老师揭示
+- 视频介质适配：用户原始内容若按线下课堂设计（分组讨论/上台演示/实物传递/动手实验），须改写为视频可呈现形式——① 线下不可执行的动作（闻花、摸木头）改成"看屏幕 + 听真实音频 + 回想"；② 动手/互动环节用 `[[1.5]]` 停顿留操作时间代替"当场做"，不强制出画面，并加一句"小朋友在家也可以跟着做"的邀请（与 `references/pipeline.md` 写作要点一致）
 
 **产出**：`script_v2_dialog.txt`。
 
@@ -310,6 +312,7 @@ ffmpeg -y -i video_cfr.mp4 -i audio/_merged.wav -map 0:v:0 -map 1:a:0 \
   - `standalone.html` → `渲染用_standalone.html`
   - ⚠️ 无声版里字幕时间是按**当前音色**时长烧进画面的：新音色若每句时长变化，直接混流会字幕错位。**正确重合成路径**：新音色跑 dialog2audio → 用新 report.json/durations 重跑 make_standalone → 重截图 → 硬链接帧 → 编码 → 混流（全链脚本化，仅时长变化无需改画面内容）；无声版视频只用于预览/对比，或新音色时长与旧版几乎一致时直接混流  
     *子确认点*：用户预览成片，确认音画同步、字幕、双音色清晰；可另出轻量版。
+
 
 **4d 片头与片尾（蜡笔风动态片头，2026-10-08 定稿）**
 
