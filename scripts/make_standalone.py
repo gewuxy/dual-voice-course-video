@@ -8,7 +8,11 @@
       --report  /tmp/<课>/audio/report.json \
       --out     /tmp/<课>/standalone.html \
       --sched   /tmp/<课>/schedule.json \
-      [--gap 0.25] [--nf 16] [--title "课程名"] [--keep-audio]
+      [--gap 0.9] [--nf 16] [--title "课程名"] [--keep-audio]
+
+--gap 默认读 config（defaults.gap = 0.9）：与 dialog2audio（路由 A/B）拼 _merged.wav
+时帧间硬编码的 0.9s 静音一致。漏配/错配会使末帧漂移数秒、音画失步——除非明确知道
+自己在做什么，否则不要改这个值。
 
 关键设计（踩坑后固化）：
   1. **HTML 结构原样输出，一个字符都不删**。旧版用正则把 step 从 frame 里删掉当 static，
@@ -21,6 +25,9 @@
      不相等则帧内均匀分布——绝不能让所有 step 都堆在 0s，否则画面提前泄题。
 """
 import argparse, json, os, re, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from load_config import load_config   # gap 默认值走统一配置（defaults.gap = 0.9）
 
 
 def highlight(text, kws):
@@ -101,7 +108,8 @@ def main():
     ap.add_argument("--report", required=True, help="阶段3 产出的 report.json")
     ap.add_argument("--out", required=True, help="输出 standalone.html")
     ap.add_argument("--sched", required=True, help="输出 schedule.json")
-    ap.add_argument("--gap", type=float, default=0.25, help="帧间额外留白（秒）")
+    ap.add_argument("--gap", type=float, default=None,
+                    help="帧间静音秒；默认读 config（0.9，须与 _merged.wav 帧间一致，勿改）")
     ap.add_argument("--nf", type=int, default=None, help="帧数；缺省按 HTML 自动识别")
     ap.add_argument("--title", default="课程双音色成片")
     ap.add_argument("--keep-audio", action="store_true", help="保留内嵌 <audio>（默认剥掉）")
@@ -111,6 +119,7 @@ def main():
     ap.add_argument("--srt", default=None, help="同时输出 .srt 字幕文件路径")
     args = ap.parse_args()
     kws = [k.strip() for k in args.keywords.split(",") if k.strip()]
+    gap = args.gap if args.gap is not None else float(load_config().get("gap", 0.9))
 
     html = open(args.present, encoding="utf-8").read()
     styles = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
@@ -135,8 +144,8 @@ def main():
     starts, cum = {}, 0.0
     for fi in range(1, NF + 1):
         starts[fi] = round(cum, 3)
-        cum += dur_map.get(fi, 0.0) + args.gap
-    total = round(cum - args.gap, 3)
+        cum += dur_map.get(fi, 0.0) + gap
+    total = round(cum - gap, 3)
 
     def bind_delays(n_steps, units, fdur):
         if n_steps == 0:
@@ -158,7 +167,7 @@ def main():
         inner = frames[fi] if args.keep_audio else strip_audio(frames[fi])
         fdur = dur_map.get(fi, 0.0)
         gstart = starts[fi]
-        gend = round(gstart + fdur + args.gap, 3)   # 显示到下一帧前，避免白屏闪烁
+        gend = round(gstart + fdur + gap, 3)   # 显示到下一帧前，避免白屏闪烁
 
         steps = list(re.finditer(r'<div class="step"([^>]*)>', inner))
         delays = bind_delays(len(steps), units_map.get(fi, []), fdur)

@@ -6,32 +6,12 @@
 // 依赖：puppeteer-core（自动搜索 npx 缓存 / 全局 node_modules），Chrome（可用 CHROME_BIN 覆盖）
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
-
-function loadPuppeteer() {
-  // 1) 常规 require（NODE_PATH / 本地 node_modules）
-  try { return require('puppeteer-core'); } catch (e) {}
-  // 2) 搜 ~/.npm/_npx/*/node_modules 下的缓存安装
-  const roots = [path.join(os.homedir(), '.npm', '_npx')];
-  for (const root of roots) {
-    let dirs = [];
-    try { dirs = fs.readdirSync(root); } catch (e) { continue; }
-    for (const d of dirs) {
-      const p = path.join(root, d, 'node_modules', 'puppeteer-core');
-      if (fs.existsSync(p)) { try { return require(p); } catch (e) {} }
-    }
-  }
-  // 3) 全局 npm 根
-  for (const g of ['/usr/local/lib/node_modules', '/opt/homebrew/lib/node_modules']) {
-    const p = path.join(g, 'puppeteer-core');
-    if (fs.existsSync(p)) { try { return require(p); } catch (e) {} }
-  }
-  console.error('找不到 puppeteer-core。装一个：cd ~/.workbuddy/binaries/node/workspace && npm i puppeteer-core');
-  process.exit(2);
-}
+const { loadPuppeteer } = require('./pptr.js');
+const { resolve } = require('./read_config.js');
 
 const puppeteer = loadPuppeteer();
-const CHROME = process.env.CHROME_BIN || process.argv[3] ||
+// Chrome：env CHROME_BIN > config.paths.chrome_bin > macOS 默认
+const CHROME = resolve('chrome_bin') ||
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const DIR = process.argv[2] || process.env.WORK_DIR;
 if (!DIR) { console.error('用法：node capture.js <工作目录> [chrome路径]'); process.exit(2); }

@@ -92,6 +92,19 @@ def voice_clone_dir():
     return d
 
 
+def teacher_prefixes():
+    """剧本老师角色标签列表（TTS 判声线用）。
+
+    剧本固定写通用「老师：」；「小贤老师」兼容旧剧本；环境变量 TEACHER_NAME
+    追加自定义前缀（方案 A 遗留写法）。verify_steps / dialog2audio_local 共用，
+    不再各自维护一份。"""
+    ps = ["老师", "小贤老师"]
+    tn = os.environ.get("TEACHER_NAME")
+    if tn and tn not in ps:
+        ps.append(tn)
+    return ps
+
+
 def ref_path(speaker):
     """返回某说话人参考音的绝对路径（基于 voice_clone_dir + voices.<sp>.ref）。"""
     cfg = load_config()

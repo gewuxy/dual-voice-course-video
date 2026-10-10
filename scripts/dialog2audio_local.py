@@ -38,12 +38,10 @@ MIN_UNIT = 12
 HARD_MAX = 28
 ACTION_WORDS = ("哭脸", "笑脸")
 
-# 剧本里老师角色标签固定为通用「老师：」（与显示名解耦）；同时兼容旧剧本「小贤老师：」
-# 与自定义 TEACHER_NAME（方案 A 遗留写法）。显示名只影响 HTML，不影响声线判定。
-_TEACHER_PREFIXES = ["老师", "小贤老师"]
-_custom_tn = os.environ.get("TEACHER_NAME")
-if _custom_tn and _custom_tn not in _TEACHER_PREFIXES:
-    _TEACHER_PREFIXES.append(_custom_tn)
+# 剧本老师角色标签（通用「老师：」+ 旧「小贤老师：」+ 可选 TEACHER_NAME），统一定义在 load_config
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from load_config import teacher_prefixes
+_TEACHER_PREFIXES = teacher_prefixes()
 
 
 def clean(s):
@@ -58,7 +56,8 @@ def clean(s):
 
 def parse_line(line):
     """返回 (speaker, text, pause, pre) 或 None（非对白行）。
-    老师名读环境变量 TEACHER_NAME（默认「小贤老师」），兼容全角/半角冒号；学生固定「学生」。"""
+    老师角色标签见 load_config.teacher_prefixes()（通用「老师」+ 旧「小贤老师」
+    + 可选 TEACHER_NAME）；兼容全角/半角冒号；学生固定「学生」。"""
     for name, sp in [(n, "teacher") for n in _TEACHER_PREFIXES] + [("学生", "student")]:
         m = re.match(rf'^\s*{re.escape(name)}\s*[:：]\s*(.*)$', line)
         if not m:

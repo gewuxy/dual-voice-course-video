@@ -14,17 +14,10 @@
  * 用法: node capture_anim.js <standalone.html> <输出帧目录> [总秒数]
  * 输出: <输出帧目录>/f00000.jpg ...（约 120KB/帧，1.5GB/7min）
  */
-const fs = require('fs'), path = require('path'), os = require('os');
-function loadP() {
-  try { return require('puppeteer-core'); } catch (e) {
-    const r = path.join(os.homedir(), '.npm', '_npx');
-    for (const d of fs.readdirSync(r)) {
-      try { return require(path.join(r, d, 'node_modules', 'puppeteer-core')); } catch (e) {}
-    }
-  }
-  throw new Error('puppeteer-core not found');
-}
-const puppeteer = loadP();
+const fs = require('fs'), path = require('path');
+const { loadPuppeteer } = require('./pptr.js');
+const { resolve } = require('./read_config.js');
+const puppeteer = loadPuppeteer();
 
 (async () => {
   const html = path.resolve(process.argv[2]);
@@ -33,7 +26,7 @@ const puppeteer = loadP();
   fs.mkdirSync(outDir, { recursive: true });
 
   const b = await puppeteer.launch({
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    executablePath: resolve('chrome_bin') || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     headless: 'new',
     args: ['--no-sandbox', '--force-device-scale-factor=1', '--hide-scrollbars',
            '--disable-gpu', '--font-render-hinting=none']

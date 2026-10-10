@@ -8,7 +8,7 @@
 
 - `$SK` = 本 skill 目录（clone 后你自己的路径；或 `cd` 进 skill 目录用 `$PWD`）
 - `$VC` = 语音克隆项目（外部依赖，运行前 `export VOICE_CLONE=/path/to/voice_clone`，脚本默认读 `$VOICE_CLONE` 环境变量）
-- `$H` = 课程目录（例：`…/Grades K-2. Introduction to AI Course/AI-L1. Human Senses vs Computer Sensors`）
+- `$H` = 课程目录（**agent 在取向确认 gate 时新建并 `export $H`**；例：`~/AI课程/AI-L1.人类感官vs计算机传感器`，仅示意）
 - `$W` = 工作目录（例：`/tmp/l1`；放音频、standalone、shots、成片）
 
 制作顺序：**① 写稿 → ② 做 HTML → ③ 生成音频 → ④ 整合出片 → ⑤ 配套封面**（顺序不可换，见 `SKILL.md`「关键铁律」）。
@@ -55,10 +55,9 @@ python3 $SK/scripts/verify_steps.py "$H"
 
 ```bash
 node $SK/scripts/qc_frames.js "$H/视频课/index_present.html" /tmp/qc_x <audioId> <帧号>
-python3 $SK/scripts/contact_sheet.py /tmp/qc_x /tmp/预览_总览.png 4 4
 ```
 
-看到 `✅ 全部帧无溢出` + 目视构图 OK 为止；有 `⚠️ 溢出帧` 就按上面的配方压高度。竖版把文件名换成 `index_present_portrait.html` 即可。
+看到 `✅ 全部帧无溢出` + 逐帧目视 png 构图 OK 为止；有 `⚠️ 溢出帧` 就按上面的配方压高度。竖版把文件名换成 `index_present_portrait.html` 即可。
 
 ---
 
@@ -80,7 +79,7 @@ python3 $SK/scripts/dialog2audio_local.py --script "$H/视频课/script_v2_dialo
 # 坏句重跑： --only 4,7,11 （CLI 与路由 A 兼容）
 ```
 
-- 音色见 `config.local.json` 的 `voices` 节（默认 老师 `xiaoxian_v2` 定稿 e20/e12_s288、含 v2 情绪路由；学生 `macie`）；改模型只改配置。路由 B 按平台自动选后端、师生双音色方案见 `SKILL.md` 阶段 3 路由 B 表
+- 音色**实际定义在 `$VC/dialog2audio.py`**（老师 `xiaoxian_v2` 定稿 e20/e12_s288、含 v2 情绪路由；学生 `macie`）；`config.local.json` 的 `voices` 节是 preflight 自检源——换音色先改 dialog2audio.py，再同步 config 让自检跟上。路由 B 按平台自动选后端、师生双音色方案见 `SKILL.md` 阶段 3 路由 B 表
 - 权重自动取最新 epoch；参数 `--takes 3 --temperature 1.0 --gap 0.4 --device cpu`
 - **必加 `--no-cleanup`**（否则逐句 `os.remove` 触发沙箱 bulk-delete 守卫，进程被杀 EXIT=1）
 - 单句成句判定阈值必须 `>=1`（旧 `>=4` 会整句丢掉「苹果！」这类 1–3 字童声，表现为"学生句消失"而非报错）
@@ -135,15 +134,27 @@ node $SK/scripts/capture.js "$W"
 
 产出 `$W/shots/shot_0000.png …` + `durations.txt`。竖版指向 `standalone_portrait.html` 同理。抽查：最小 png >32KB（空白帧会 <10KB），随机 diff 相邻帧确认互异。动效版用 `capture_anim.js`（逐 1/30s tick 驱动 `applyTime` + 虚拟时钟，JPEG 落盘，约 10 帧/s），见 `SKILL.md` 阶段 4a 说明。
 
-### 4c 合成（两步法，关键）
+### 4c 合成（已脚本化，勿手打 ffmpeg）
+
+**静帧版**（capture.js 产物）直接跑 `make_video.sh`——内部封装了唯一实测不失步的路径（校验数量 → 按 durations.txt 硬链接帧序列 round(dur×30) 次 → 严格 CFR 30fps 编码 → 二次混流音轨 → 自检打印）：
 
 ```bash
-ffmpeg -y -framerate 30 -i "$W/shots/shot_%04d.png" -c:v libx264 -pix_fmt yuv420p -crf 20 -r 30 "$W/video_silent.mp4"
-ffmpeg -y -i "$W/video_silent.mp4" -i "$W/audio/_merged.wav" -map 0:v:0 -map 1:a:0 \
+bash $SK/scripts/make_video.sh "$W" "$H/视频课/<课程名>_双音色成片.mp4"
+```
+
+**已实测三种错误路径，全部音画失步，禁止手打**：① `-framerate 30 -i shots/shot_%04d.png` 把每区间当 1/30s；② concat demuxer（-f concat + duration）输出 VFR，时间戳漂移实测 t=50 处错位一个区间；③ 在 concat 输入上加 `-r 30` 或 `fps=30` 滤镜，漂移更大（415s vs 398s）。唯一可靠 = 硬链接帧序列（已在脚本内）。
+
+**动效版**（capture_anim.js 产出 `f%05d.jpg`，本身均匀 30fps，无需硬链接）：
+
+```bash
+ffmpeg -y -framerate 30 -i "$W/frames/f%05d.jpg" -c:v libx264 -pix_fmt yuv420p -crf 20 -r 30 "$W/video_anim.mp4"
+ffmpeg -y -i "$W/video_anim.mp4" -i "$W/audio/_merged.wav" -map 0:v:0 -map 1:a:0 \
   -c:v copy -c:a aac -b:a 192k -ar 44100 -ac 2 -shortest "$H/视频课/<课程名>_双音色成片.mp4"
 ```
 
-- 静帧版须先按 30fps **硬链接帧序列**（区间时长不同，禁止 `-framerate` 直读 shots）：脚本见 `SKILL.md` 阶段 4c；三种错误路径（直接 `-framerate 30 -i shots` / concat demuxer VFR / 加 `-r 30`）全部会音画失步，唯一可靠是硬链接帧序列
+- **concat PNG 时不能同时加 `-c:a`**（会被静默忽略，成片无音轨）；音轨必须第二步 `-c:v copy` 混流（脚本已按此实现）
+- 体积：静态画面 + 纸纹噪点在真实 30fps 下 crf20 约 30MB+（VFR 单帧估算 14–15MB 已不适用）；微信轻量版可 `-crf 26 -vf scale=1280:-2`
+- **画面内有真实音效时（如放映版内嵌的儿歌），成片必须额外混一层**：双音色 `_merged.wav` 里只有对白。做法：`ffmpeg -i video_cfr.mp4 -i _merged.wav -i 儿歌.mp3 -filter_complex "[2:a]volume=0.32,adelay=<帧起点ms>|<帧起点ms>[r];[1:a][r]amix=inputs=2:duration=first:normalize=0[a]" -map 0:v -map "[a]" -c:v copy ...`（儿歌起点 = 第 2 帧 gstart×1000，可从 schedule.json 算）。别指望放映版内嵌 `<audio>` 出声（standalone 已默认剥掉）
 - QC（PSNR，须对齐同一全局时刻）：
 
 ```bash
@@ -152,7 +163,13 @@ cp "$W/shots/shot_00XX.png" /tmp/ab_b.png
 ffmpeg -y -i /tmp/ab_a.png -i /tmp/ab_b.png -filter_complex psnr -f null -   # ≥45dB 合格
 ```
 
-- 真实音效混层（双音色 `_merged.wav` 只有对白）、无声版归档（换音色后悔药）、体积/轻量版、concat PNG 不能同加 `-c:a` 等坑：见 `SKILL.md` 阶段 4c
+- 与 schedule 抽 3 个时刻比对显示的是哪张 shot；音频抽查首/中/尾
+- **【必做】无声版归档（换音色重合成的后悔药，2026-10-03 用户要求）**：成片后立刻把中间产物复制到 `$H/视频课/`，别留在 /tmp（系统会清）：
+  - `video_cfr.mp4` → `L*_无声画面版.mp4`（无声、含烧录字幕）
+  - `durations.txt` → `时间轴_durations.txt`；`schedule.json` → `时间轴_schedule.json`
+  - `$A/report.json` → `音频时长_report.json`（每句真实时长，换音色后对齐用）
+  - `standalone.html` → `渲染用_standalone.html`
+  - ⚠️ 无声版里字幕时间是按**当前音色**时长烧进画面的：新音色若每句时长变化，直接混流会字幕错位。**正确重合成路径**：新音色跑 dialog2audio → 用新 report.json/durations 重跑 make_standalone → 重截图 → `make_video.sh` → 混流（全链脚本化，仅时长变化无需改画面内容）；无声版视频只用于预览/对比，或新音色时长与旧版几乎一致时直接混流
 
 ---
 
@@ -161,13 +178,30 @@ ffmpeg -y -i /tmp/ab_a.png -i /tmp/ab_b.png -filter_complex psnr -f null -   # �
 - 视觉沿用已定稿蜡笔风模板；固定要素、双模板（横版 1920×1080 / 竖版视频号 1080×1260）、风格铁律、1:1 裁切安全区：见 `SKILL.md` 阶段 5
 - 取向 = both 时横竖封面都出
 - 截屏用 `qc_frames.js` 同源的 puppeteer 能力（Chrome + 自动找 puppeteer-core）
-- ⚠️ 视频号信息流 1:1 居中裁切自查：
+- ⚠️ 视频号信息流 **1:1 居中裁切**自查（1080×1260 → 取 y=90~1170）：
 
 ```bash
-ffmpeg -y -i 封面.jpg -vf crop=1080:1080:0:420 -q:v 3 预览_信息流裁切.jpg
+ffmpeg -y -i "$H/视频课/封面/封面_竖版_*.png" -vf crop=1080:1080:0:90 -q:v 3 "$H/视频课/封面/自查_1比1裁切_竖版.png"
 ```
 
-- 产出：`$H/视频课/封面/视频号封面_*.jpg` + `预览_信息流裁切_*.jpg`
+- 产出（口径与 `SKILL.md` 阶段 5 一致）：`$H/视频课/封面/封面_横版_*.png`（1920×1080）+ `封面_竖版_*.png`（1080×1260）+ `自查_1比1裁切_*.png`
+
+---
+
+## 阶段 6 · 切片引流（可选，发布运营工具，不属于五阶段主线）
+
+从成片按帧号切 30–60s 引流短视频（钩子/对位/预告三型）：
+
+```bash
+python3 $SK/scripts/make_clips.py \
+  --final "$H/视频课/<课程名>_双音色成片.mp4" \
+  --report "$H/视频课/音频时长_report.json" \
+  --outdir "$H/视频课/clips" --clips clips.json
+```
+
+- `clips.json` 格式见 `scripts/make_clips.py` 文件头注释（帧号取剧本【第 N 帧】的 N；`hook` 为 1920×1080 钩子卡 PNG，模板 `assets/clip_cards_template.html`；片尾自动找同目录 `endcard.png`）
+- 帧时间换算内置 gap=0.9（与 `_merged.wav` 一致）；报告用阶段 4c 归档的 `音频时长_report.json`
+- 实例：L6 切出 3 条（54.6s / 44.9s / 33.3s）+ 切片文案
 
 ---
 
@@ -181,11 +215,15 @@ $H/视频课/
   素材_*.jpg                  # 阶段2 收集的真照片
   预览_*帧总览.png / 逐步.png  # 阶段2 QC 留档
   <课程名>_双音色成片.mp4      # 阶段4 最终交付
-  封面/视频号封面_*.jpg        # 阶段5
+  L*_无声画面版.mp4 / 时间轴_*.txt|json / 音频时长_report.json / 渲染用_standalone.html
+                              # 阶段4c 无声版归档（换音色后悔药，必做）
+  封面/封面_横版_*.png  封面_竖版_*.png  自查_1比1裁切_*.png   # 阶段5
+  clips/*.mp4 + 切片文案      # 阶段6（可选）
 
 $W/                            # 例 /tmp/l1
   audio/  frame_NN.wav  _merged.wav  report.json
   standalone.html  standalone_portrait.html  schedule.json  schedule_portrait.json
   shots/shot_0000.png …  durations.txt
-  video_silent.mp4
+  seq/                         # make_video.sh 硬链接帧序列（可删）
+  video_cfr.mp4                # make_video.sh 无声 CFR 中间产物
 ```

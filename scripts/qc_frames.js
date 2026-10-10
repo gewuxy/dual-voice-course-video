@@ -12,22 +12,13 @@
 // ⚠️ 关键坑：截「逐步」图前必须先移除**所有**帧的 .active，否则上一帧内容会残影叠加。
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
-
-function loadPuppeteer() {
-  try { return require('puppeteer-core'); } catch (e) {}
-  try {
-    for (const d of fs.readdirSync(path.join(os.homedir(), '.npm', '_npx'))) {
-      const p = path.join(os.homedir(), '.npm', '_npx', d, 'node_modules', 'puppeteer-core');
-      if (fs.existsSync(p)) return require(p);
-    }
-  } catch (e) {}
-  console.error('找不到 puppeteer-core');
-  process.exit(2);
-}
+const { loadPuppeteer } = require('./pptr.js');
+const { resolve } = require('./read_config.js');
 
 const puppeteer = loadPuppeteer();
-const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+// Chrome：env CHROME_BIN > config.paths.chrome_bin > macOS 默认
+const CHROME = resolve('chrome_bin') ||
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const SRC = process.argv[2];
 const OUT = process.argv[3] || '/tmp/qc_frames';
 const AUDIO_ID = process.argv[4] || null;

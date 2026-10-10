@@ -11,11 +11,11 @@
 """
 import os, re, sys
 
-# 剧本里老师角色标签固定为通用「老师：」（与显示名解耦）；兼容旧「小贤老师：」与自定义 TEACHER_NAME。
-TEACHER_PREFIXES = ["老师", "小贤老师"]
-_custom_tn = os.environ.get("TEACHER_NAME")
-if _custom_tn and _custom_tn not in TEACHER_PREFIXES:
-    TEACHER_PREFIXES.append(_custom_tn)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from load_config import teacher_prefixes
+
+# 剧本老师角色标签（通用「老师：」+ 旧「小贤老师：」+ 可选 TEACHER_NAME），统一定义在 load_config
+TEACHER_PREFIXES = teacher_prefixes()
 
 H = sys.argv[1] if len(sys.argv) > 1 else "."
 SCRIPT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(H, "视频课", "script_v2_dialog.txt")

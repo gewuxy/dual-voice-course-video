@@ -1,4 +1,4 @@
-\---  
+---  
 name: dual-voice-course-video  
 version: 1.1.0  
 display_name: 主题一键成课：互动课件+讲解视频  
@@ -6,7 +6,7 @@ display_name_en: Topic-to-Course — Interactive Slides and Narrated Video
 description_en: Give it a topic (or an old PPT) and get a full lesson package automatically — narration script -> interactive step-by-step HTML slides -> dual-voice (teacher + student) narrated video with frame-accurate alignment and subtitles -> matching cover images. Built for teachers, content creators, corporate trainers, course teams, and parents. Voice route is auto-detected — GPT-SoVITS cloned voices when available, otherwise local system TTS (macOS/Windows/Linux) — with a seamless re-synthesis path for later voice upgrades.  
 description: 主题一键成课：用户给一个课程主题（或已有课件/PPT），自动产出演讲稿、互动放映版 HTML 课件、老师/学生双音色配音讲解视频（逐帧音画对齐 + 字幕）与配套封面。制作顺序为「先写演讲稿并确认 → 再做 HTML 放映版并确认 → 按稿生成双音色音频 → 把音频和 HTML 整合成最终视频 → 最后生成配套封面」。适合教师、知识博主、企业培训师、课程产品团队、家长等任何需要把知识点变成互动课件或视频课的人。配音路由自动判定：有 GPT-SoVITS 用克隆音色（音质最佳），没有则落本地系统 TTS（macOS/Windows/Linux 全平台兜底），后续可无缝换音色重合成。当用户要求"为一节课/一个主题生成 互动课件或带配音的视频""做双音色课程视频""演讲稿转视频"时使用。  
 agent_created: true  
-\---
+---
 
 # 双音色课程视频制作流水线
 
@@ -28,7 +28,7 @@ bash $SK/scripts/preflight.sh "$H"
 # 3) 双音色音频 →  $W/audio/_merged.wav + report.json       （确认 gate：抽查 2–3 帧）
 # 4) 整合出片  →  $H/视频课/<课程名>_双音色成片.mp4         （子确认点 4a→4b→4c→4d）
 # 5) 封面      →  $H/视频课/封面/                          （确认 gate：取向确认后出图）
-# 6) 切片引流  →  $H/视频课/clips/                          （视频号 30–60s 短视频 2~3 条）
+# 6) 切片引流  →  $H/视频课/clips/                          （可选；发布运营工具，非五阶段主线，见 pipeline.md 阶段 6）
 ```
 
 ## 路径变量（换机 / 换人只需改这里）
@@ -50,7 +50,7 @@ bash $SK/scripts/preflight.sh "$H"
 
 所有机器相关路径、音色模型名、`gap`、老师显示名只在一处定义，脚本/流水线不再写死。共两层：
 
-- **环境配置（skill 级，机器相关）**：复制 `config.example.json` → `config.local.json`（gitignore），改 `paths.voice_clone_dir` 等为你的机器值；`voices` 节是音色唯一真相源（改模型只改这里）。
+- **环境配置（skill 级，机器相关）**：复制 `config.example.json` → `config.local.json`（gitignore），改 `paths.voice_clone_dir` 等为你的机器值。`voices` 节是 **preflight 自检源 + 路由 B 参考**；⚠️ 路由 A（GPT-SoVITS）的**实际音色定义在 `$VC/dialog2audio.py`**（`EXPS` + 情绪路由表）——换音色先改那边，再同步 config 让自检跟上（后续可把路由 A 接到 config 消除双源）。
 - **课程配置（每课一份，`$H/视频课/course_config.json`）**：取向确认 gate 时由 agent 写入，记录本课 `orientation` / `teacher_display_name` / `gap` / `keywords`；阶段 2/3/4/5 直接读它。
 - **合并优先级**：环境变量 > 课程配置 > 环境配置（`scripts/load_config.py` 统一加载；CLI `python3 load_config.py --get paths.voice_clone_dir` / `--course "$H/视频课" --json`）。
 
@@ -68,9 +68,12 @@ bash $SK/scripts/preflight.sh "$H"
 | `scripts/capture.js`            | 按时间轴逐区间截图（自动找 puppeteer-core）                                                               | `node capture.js <工作目录>`                                                      |
 | `scripts/capture_anim.js`       | **动效版成片渲染**（--animate 配套；逐 1/30s tick 驱动 applyTime + getAnimations 虚拟时钟同步，JPEG 落盘，约 10 帧/s） | `node capture_anim.js <standalone.html> <帧目录> [总秒数]`                          |
 | `scripts/qc_frames.js`          | 放映版逐帧 QC：全展开截图 + 溢出检测 + 可选音频探测/逐 step 图                                                     | `node qc_frames.js <index_present.html> <出图目录> [audioId] [step帧号]`            |
-| `scripts/contact_sheet.py`      | 截图拼总览图（需系统 python + PIL）                                                                    | `python3 contact_sheet.py <shots目录> <出图.png> 4 4`                             |
+| `scripts/make_video.sh`         | **阶段 4c 静帧版合成（唯一实测不失步路径）**：校验 → 硬链接帧序列 → CFR 编码 → 二次混流 → 自检                      | `bash make_video.sh <工作目录> <输出.mp4> [merged音频]`                            |
 | `scripts/make_intro.sh`         | **蜡笔风动态片头一键生成**（令牌替换 → capture_anim 渲染 → 配乐 → 编码；默认 5.0s，模板见 assets/intro/，说明见「阶段 4d」）      | `bash make_intro.sh --out out.mp4 --title "第 3 课 · <em>事物的特征</em>"`           |
 | `scripts/make_intro_music.py`   | 片头配乐生成（100BPM / C 大调 I–V/V–vi–IV 琶音+铺底+沙锤+混响；参数化、可复现；需 numpy+scipy）                         | `python make_intro_music.py --out m.wav --duration 5.0 [--bpm 100] [--bells]` |
+| `scripts/make_intro_outro.py`   | 片尾三段式拼接（**尺寸自适应**，正片不再被压扁；动态片头已由 make_intro.sh 取代，其 16:9 片头卡资产为 legacy）                | `python make_intro_outro.py --video 正片.mp4 --out 成片.mp4`                  |
+| `scripts/make_clips.py`         | **可选 · 阶段 6 切片引流**（发布运营工具，非五阶段主线）：按帧号切 30–60s 短视频 + 钩子卡                              | `python make_clips.py --final 成片.mp4 --report report.json --outdir clips/ --clips clips.json` |
+| `scripts/read_config.js` + `scripts/pptr.js` | node 侧内部模块：统一配置读取（env>config.local>example）/ 共享 puppeteer 加载器（被 3 个截图脚本引用）                  | 被引用，不单独调用                                                          |
 
 ## 核心约束：分阶段、每步可控（⛔ 门禁是硬停止，不是建议）
 
@@ -161,7 +164,7 @@ bash $SK/scripts/preflight.sh "$H"
 - 开工前 / 交付前各对照一遍 `$SK/assets/templates/anim-snippets/README.md`「三、六种做坏方式」（翻页式PPT、照搬上一课、没有具体的物、死背景空画面、有真实素材却用代码画、一眼AI味拼贴）。
 - 做完一支新课，效果好的动效组合**回流**进 README 第二节决策表；动效坑写进 `references/known_pitfalls.md`（§5 动效）。同课型用同一套动效完全正确，只有课型变了才换。
 
-**QC 循环（必做）**：命令见 `references/pipeline.md` 阶段 2（`qc_frames.js` + `contact_sheet.py`）。逐帧看 png，溢出帧（`⚠️ 溢出帧`）按上述贴纸/卡片压高度手法修，直到 `✅ 全部帧无溢出` + 目视构图 OK。
+**QC 循环（必做）**：命令见 `references/pipeline.md` 阶段 2（`qc_frames.js`）。逐帧看 png，溢出帧（`⚠️ 溢出帧`）按上述贴纸/卡片压高度手法修，直到 `✅ 全部帧无溢出` + 目视构图 OK。
 
 **确认点**：用户看 HTML 预览/截图确认构图与节奏；同时 `verify_steps.py` 必须通过。
 
@@ -173,7 +176,7 @@ bash $SK/scripts/preflight.sh "$H"
 
 **路由 A · GPT-SoVITS 克隆音色（首选，音质最佳）** —— 在 `$VC` 下跑（脚本内 `EXPS` 自动取最新权重，参考音在 `dataset/` 下，**不要手写权重路径**）。命令见 `references/pipeline.md` 阶段 3 路由 A（`dialog2audio.py --script … --outdir $W/audio --no-cleanup`，`--only 4,7,11` 重跑坏句）。
 
-- 音色见 `config.local.json` 的 `voices` 节（默认 老师 `xiaoxian_v2` 定稿 e20/e12_s288、含 v2 情绪路由表；学生 `macie`）；改模型只改配置，不用动这里
+- 音色**实际定义在 `$VC/dialog2audio.py`**（老师 `xiaoxian_v2` 定稿 e20/e12_s288、含 v2 情绪路由表；学生 `macie`）；`config.local.json` 的 `voices` 节是 preflight 自检源——换音色先改 dialog2audio.py，再同步 config
 - 参数：`--takes 3`、`--temperature 1.0`、`--gap 0.4`（帧内行距）、`--device cpu`（默认，稳）
 - **必须加 `--no-cleanup`**：否则逐句 `os.remove` 会触发沙箱 bulk-delete 守卫，进程被杀（EXIT=1）
 - 产出：`$W/audio/frame_NN.wav`（每帧）、`$W/audio/_merged.wav`（全课，帧间 0.9s）、**`$W/audio/report.json`**（每帧 `units:[{speaker,text,pause,dur,start}]`，`start` 是句内起始秒 —— 阶段 4 直接吃它）
@@ -220,22 +223,16 @@ bash $SK/scripts/preflight.sh "$H"
 
 *子确认点*：抽查 3–5 张（含贴纸/真照片/字幕的帧），确认无空白帧、无字体回退。
 
-**4c 合成（区间时长不同，禁止 -framerate 直读 shots）**
+**4c 合成（已脚本化，勿手打 ffmpeg）**
 
-命令见 `references/pipeline.md` 阶段 4c（两步法 ffmpeg + 静帧版硬链接帧序列 + PSNR 质检）。
+静帧版直接跑 `bash $SK/scripts/make_video.sh "$W" "$H/视频课/<课程名>_双音色成片.mp4"`——内部 = 硬链接帧序列 → 严格 CFR 30fps 编码 → 二次混流 → 自检打印。动效版（capture_anim 产物，均匀 30fps）命令不同：见 `references/pipeline.md` 阶段 4c。
 
-- **已实测三种错误路径，全部会音画失步**：① `-framerate 30 -i shots/shot_%04d.png` 把每区间当 1/30s；② concat demuxer（-f concat + duration）输出 VFR，时间戳漂移实测 t=50 处错位一个区间；③ 在 concat 输入上加 `-r 30` 或 `fps=30` 滤镜，漂移更大（415s vs 398s）。**唯一可靠：硬链接帧序列**（校验方法：与 schedule 抽 3 个时刻比对显示的是哪张 shot）
-- **concat PNG 时不能同时加 `-c:a`**（会被静默忽略，成片无音轨）；音轨必须第二步 `-c:v copy` 混流
-- 体积：静态画面 + 纸纹噪点在真实 30fps 下 crf20 约 30MB+（VFR 单帧估算 14–15MB 已不适用）；微信轻量版可 `-crf 26 -vf scale=1280:-2`
-- **画面内有真实音效时（如放映版内嵌的儿歌），成片必须额外混一层**：双音色 `_merged.wav` 里只有对白。做法：`ffmpeg -i video_cfr.mp4 -i _merged.wav -i 儿歌.mp3 -filter_complex "[2:a]volume=0.32,adelay=<帧起点ms>|<帧起点ms>[r];[1:a][r]amix=inputs=2:duration=first:normalize=0[a]" -map 0:v -map "[a]" -c:v copy ...`（儿歌起点 = 第 2 帧 gstart×1000，可从 schedule.json 算）。别指望放映版内嵌 `<audio>` 出声（standalone 已默认剥掉）。
-- QC：与 schedule 抽时刻比对 shot；音频抽查首/中/尾
-- **【必做】无声版归档（换音色重合成的后悔药，2026-10-03 用户要求）**：成片后立刻把中间产物复制到 `$H/视频课/`，别留在 /tmp（系统会清）：
-  - `video_cfr3.mp4` → `L*_无声画面版.mp4`（无声、含烧录字幕）
-  - `durations.txt` → `时间轴_durations.txt`；`schedule.json` → `时间轴_schedule.json`
-  - `$A/report.json` → `音频时长_report.json`（每句真实时长，换音色后对齐用）
-  - `standalone.html` → `渲染用_standalone.html`
-  - ⚠️ 无声版里字幕时间是按**当前音色**时长烧进画面的：新音色若每句时长变化，直接混流会字幕错位。**正确重合成路径**：新音色跑 dialog2audio → 用新 report.json/durations 重跑 make_standalone → 重截图 → 硬链接帧 → 编码 → 混流（全链脚本化，仅时长变化无需改画面内容）；无声版视频只用于预览/对比，或新音色时长与旧版几乎一致时直接混流  
-    *子确认点*：用户预览成片，确认音画同步、字幕、双音色清晰；可另出轻量版。
+- **三种错误路径全部实测音画失步，禁止手打**：`-framerate` 直读 shots / concat demuxer / concat 上加 `-r`·`fps` 滤镜。唯一可靠 = 硬链接帧序列（脚本已封装）
+- concat PNG 时不能同加 `-c:a`（被静默忽略）；音轨必须第二步 `-c:v copy` 混流
+- 画面内有真实音效（如内嵌儿歌）须额外混层；体积/轻量版参数；**【必做】无声版归档清单与换音色重合成路径**：均见 `references/pipeline.md` 阶段 4c
+- QC：与 schedule 抽时刻比对 shot（PSNR ≥45dB）；音频抽查首/中/尾
+
+*子确认点*：用户预览成片，确认音画同步、字幕、双音色清晰；可另出轻量版。
 
 **4d 片头与片尾（蜡笔风动态片头，2026-10-08 定稿）**
 
@@ -254,7 +251,7 @@ bash $SK/scripts/preflight.sh "$H"
 
 > ⛔ **4d 门禁（硬停止）**：片头渲染完**停下**，用 `AskUserQuestion` 向用户呈现抽 4 帧 + 请完整听一遍 +「片头是否定稿？定稿后再开正片渲染」。用户明确回"继续"前，**不得开始正片（阶段 4a→4c）的渲染**。
 
-> 片尾仍用 `assets/intro_outro/endcard.png`（静态卡 + 告别词，告别词按正片同倍速 atempo）；  
+> 片尾用 `scripts/make_intro_outro.py` 的三段式（**尺寸自适应**，正片不再被强制压成 1920×1080；其 16:9 片头卡资产为 legacy，动态片头已由 make_intro.sh 取代）+ 告别词按正片同倍速 atempo；  
 > 三段拼接（片头 / 正片 / 片尾）的采样率坑见 `references/known_pitfalls.md` §6。
 
 ### 阶段 5 · 配套封面【确认 gate】
