@@ -23,64 +23,13 @@ W=/tmp/$(basename "$H" | tr ' ' '_')                              # 工作目录
 # 0) 环境自检（缺件会明确报错，不要在缺件下硬跑）
 bash $SK/scripts/preflight.sh "$H"
 
-# 1) 演讲稿  →  $H/视频课/script_v2_dialog.txt         （人工确认 gate）
-# 2) 放映版  →  $H/视频课/index_present.html           （人工确认 gate）
-#    取向含竖版时另产 $H/视频课/index_present_portrait.html（1080×1440，详见「取向确认」）
-python3 $SK/scripts/verify_steps.py "$H"        # 铁律校验：每帧 .step 数 == 该帧台词句数
-
-# 3) 双音色音频 —— 两条路由二选一（preflight 自动判定，见阶段 3）
-#    路由 A：GPT-SoVITS 克隆音色（音质最佳）
-cd "$VC" && PYTORCH_ENABLE_MPS_FALLBACK=1 ./venv/bin/python ./dialog2audio.py \
-  --script "$H/视频课/script_v2_dialog.txt" --outdir $W/audio --no-cleanup
-#    路由 B（无 GPT-SoVITS 时）：macOS 本地 TTS，纯标准库零依赖，输出合同完全一致
-python3 $SK/scripts/dialog2audio_local.py --script "$H/视频课/script_v2_dialog.txt" --outdir $W/audio
-
-# 4) 音画对齐 → 截图 → 合成（--gap 必须 = merged 的帧间 0.9s，见阶段 4a）
-python3 $SK/scripts/make_standalone.py --present "$H/视频课/index_present.html" \
-  --report $W/audio/report.json --out $W/standalone.html --sched $W/schedule.json \
-  --gap 0.9 --title "<课程名>" --subtitles --srt $W/subtitles.srt \
-  --keywords "触觉传感器,化学传感器,传感器,摄像头,麦克风,感官"   # 按本课术语定制
-# ── 动效版（用户 2026-10-03 起要求：入场动效进视频）──
-# make_standalone 加 --animate 保留动画，然后用 capture_anim.js 确定性逐帧渲染：
-node $SK/scripts/capture_anim.js $W/standalone.html $W/frames
-# 输出 f%05d.jpg（30fps 严格无漂移），直接 -framerate 30 编码；约 10 帧/s，7 分钟片 ≈ 20 分钟
-# 音效混流时刻 = 帧起点 + unit.start + unit.dur - unit.pause（★dur 含句后停顿，语音实际结束点要减 pause）
-# ── 静帧版（旧管线，无动效）──
-node $SK/scripts/capture.js $W
-# 逐区间时长不同，不能用 -framerate 直读 shots；先按 30fps 生成硬链接帧序列（见阶段 4c）
-python3 - <<'EOF'
-import os
-durs=[float(x) for x in open('/tmp/<课>/durations.txt')]
-os.makedirs('/tmp/<课>/frames', exist_ok=True)
-cum=0
-for i,d in enumerate(durs):
-    for k in range(round(cum*30), round((cum+d)*30)):
-        os.link(f'/tmp/<课>/shots/shot_{i:04d}.png', f'/tmp/<课>/frames/f{k:05d}.png')
-    cum+=d
-EOF
-ffmpeg -y -framerate 30 -i $W/frames/f%05d.png -c:v libx264 -pix_fmt yuv420p -crf 20 $W/video_cfr.mp4
-ffmpeg -y -i $W/video_cfr.mp4 -i $W/audio/_merged_norm.wav -map 0:v:0 -map 1:a:0 \
-  -c:v copy -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "$H/视频课/<课程名>_双音色成片.mp4"
-# ★ _merged_norm.wav = 合成音频先做两遍式 loudnorm（见 references/known_pitfalls.md §6，合成直出仅约 -19 LUFS）
-#   第一遍: ffmpeg -i $W/audio/_merged.wav -af loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json -f null -
-#   第二遍: ffmpeg -y -i _merged.wav -af "loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=<输入I>:measured_TP=<TP>:measured_LRA=<LRA>:measured_thresh=<thresh>:linear=true" -ar 44100 -ac 2 _merged_norm.wav
-
-# 4d) 片头 + 片尾 + 三段拼接（详见阶段 4d；片头不带念稿）
-bash $SK/scripts/make_intro.sh --out $W/seg_intro.mp4 --total 5.0 \
-  --title "第 3 课 · <em>事物的特征</em>"
-#     片尾：$SK/assets/intro_outro/endcard.png + 告别词（与正片同倍速 atempo）
-#     拼接：三段统一 30fps / -video_track_timescale 15360 / -ar 48000 -ac 2 → concat -c copy
-#           → 全片 loudnorm -16 + faststart（采样率不一致的坑见 references/known_pitfalls.md §6）
-
-# 5) 配套封面 →  $H/视频课/封面/
-
-# 6) 切片引流（视频号 30-60s 短视频，长片发布同时产出 2~3 条）
-#    a. 钩子卡/引导卡：改 $SK/assets/clip_cards_template.html（4 页：3 钩子+1 引导卡），puppeteer 截 PNG
-#    b. 写 clips.json（帧号范围见剧本【第 N 帧】）→ 一键切割（句子边界对齐，不会切半句）：
-python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成片.mp4" \
-  --report $W/audio/report.json --outdir "$H/视频课/clips" --clips $W/clips.json
-#    c. 标题≤16字钩子前置 + 描述带话题 + 置顶评论互动（文案模板见 L6 clips/切片文案_标题与描述.md）
-#    选片三标准：自包含（不依赖前文）/ 开场即钩子 / 有过程演示（动画优势段）
+# 制作顺序（★每阶段跑完先停下等用户确认 gate；逐阶段完整命令见 references/pipeline.md）：
+# 1) 演讲稿    →  $H/视频课/script_v2_dialog.txt           （确认 gate：台词/角色/节奏）
+# 2) 放映版    →  $H/视频课/index_present.html             （确认 gate：构图/节奏；取向含竖版另产 index_present_portrait.html）
+# 3) 双音色音频 →  $W/audio/_merged.wav + report.json       （确认 gate：抽查 2–3 帧）
+# 4) 整合出片  →  $H/视频课/<课程名>_双音色成片.mp4         （子确认点 4a→4b→4c→4d）
+# 5) 封面      →  $H/视频课/封面/                          （确认 gate：取向确认后出图）
+# 6) 切片引流  →  $H/视频课/clips/                          （视频号 30–60s 短视频 2~3 条）
 ```
 
 ## 路径变量（换机 / 换人只需改这里）
@@ -169,7 +118,7 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 - **一帧内的角色行数 = 该帧 HTML 的 `.step` 数**（后续 1:1 对齐的唯一依据）
 - 引号内不要出现 `"` `"`，否则解析器会漏句
 - 认知铁律：专业名词和术语（触觉/化学/味觉传感器）只由老师说出，学生只答日常词（摄像头、麦克风）；不确定的用"不知道！/猜不到！"再让老师揭示
-- 视频介质适配：用户原始内容若按线下课堂设计（分组讨论/上台演示/实物传递/动手实验），须改写为视频可呈现形式——① 线下不可执行的动作（闻花、摸木头）改成"看屏幕 + 听真实音频 + 回想"；② 动手/互动环节用 `[[1.5]]` 停顿留操作时间代替"当场做"，不强制出画面，并加一句"小朋友在家也可以跟着做"的邀请（与 `references/pipeline.md` 写作要点一致）
+- 视频介质适配：用户原始内容若按线下课堂设计（分组讨论/上台演示/实物传递/动手实验），须改写为视频可呈现形式——① 线下不可执行的动作（闻花、摸木头）改成"看屏幕 + 听真实音频 + 回想"；② 动手/互动环节用 `[[1.5]]` 停顿留操作时间代替"当场做"，不强制出画面，并加一句"小朋友在家也可以跟着做"的邀请
 
 **产出**：`script_v2_dialog.txt`。
 
@@ -182,7 +131,7 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 - **取向分支**：取向为「横版」→ 基于 `$SK/assets/templates/crayon/preview.html` 做 `index_present.html`；「竖版」→ 基于 `preview_portrait.html`（1080×1440 单栏大字号版式）做 `index_present_portrait.html`；「横竖都要」→ 两套都做（同一剧本，版式各自适配）。竖版 `.stage-frame` 结构、`.step` 数 == 台词句数 的约束与横版完全一致；竖版用 `mo.css` 的 `anim-fade-rise`/`anim-pop` 等 class 与横版同一套动效判断逻辑（见下方「动效」）。
 
 - 视觉**必须**沿用蜡笔手绘风模板：手绘抖动笔触（SVG `feTurbulence`+`feDisplacementMap`）、纸纹噪点、蜡笔 blob、贴纸卡、圆体-简/娃娃体-简；固定品牌要素（左上徽章「AI 启蒙 · 第 X 课」+ 适合年级；底部「小贤 AI 青少年教育 · 体系课程 · 实训项目 · AI 创造力」）
-- 图标优先纯 SVG 简笔画；**用户给了真照片时**，做成「拍立得贴纸」：`<div class="sticker" style="padding:8px;transform:rotate(±2.5deg);position:relative"><img …118px…><span class="tape"></span></div>` + 下方 28px 标签。照片规格：方裁（对准主体/红圈）→ 360px → JPEG q86 → base64 内嵌，单文件自包含
+- 图标优先纯 SVG 简笔画；**用户给了真照片时**，做成「拍立得贴纸」（方裁→360px→JPEG q86→base64 内嵌，118px + 28px 标签，单文件自包含）。完整 base64 配方代码与压高度参数见 `references/pipeline.md` 阶段 2
 - **改超长 base64 行时不要用 Edit 工具**（字符串匹配必然失败），用 Python `str.replace` / 正则
 - 真照片贴纸（118px + 标签）比原 SVG 图标高，卡片易顶到页脚：`vis` 的 `top` 压到 566 左右，`nm` 44、`tx` 一句话不折行
 
@@ -196,14 +145,7 @@ python3 $SK/scripts/make_clips.py --final "$H/视频课/<课程名>_双音色成
 - 做完一支新课，效果好的动效组合**回流**进 README 第二节决策表；动效坑写进 `references/known_pitfalls.md`（§5 动效）。同课型用同一套动效完全正确，只有课型变了才换。
 
 
-**QC 循环（必做）**：
-
-```bash
-node $SK/scripts/qc_frames.js "$H/视频课/index_present.html" /tmp/qc_$(basename "$H") <audioId> <要验证逐步的帧号>
-bash -c '/opt/homebrew/bin/python3 '"$SK"'/scripts/contact_sheet.py /tmp/qc_xxx /tmp/总览.png 4 4'
-```
-
-逐帧看 png，溢出帧（`⚠️ 溢出帧`）按上述手法修，直到 `✅ 全部帧无溢出` + 目视构图 OK。
+**QC 循环（必做）**：命令见 `references/pipeline.md` 阶段 2（`qc_frames.js` + `contact_sheet.py`）。逐帧看 png，溢出帧（`⚠️ 溢出帧`）按上述贴纸/卡片压高度手法修，直到 `✅ 全部帧无溢出` + 目视构图 OK。
 
 **确认点**：用户看 HTML 预览/截图确认构图与节奏；同时 `verify_steps.py` 必须通过。
 
@@ -213,14 +155,7 @@ bash -c '/opt/homebrew/bin/python3 '"$SK"'/scripts/contact_sheet.py /tmp/qc_xxx 
 
 **两条路由，preflight 自动判定，产物合同完全一致**（frame_NN.wav / \_merged.wav 帧间 0.9s / report.json 顶层 list），阶段 4 无需任何改动：
 
-**路由 A · GPT-SoVITS 克隆音色（首选，音质最佳）** —— 在 `$VC` 下跑（脚本内 `EXPS` 自动取最新权重，参考音在 `dataset/` 下，**不要手写权重路径**）：
-
-```bash
-cd "$VC"
-PYTORCH_ENABLE_MPS_FALLBACK=1 ./venv/bin/python ./dialog2audio.py \
-  --script "$H/视频课/script_v2_dialog.txt" --outdir $W/audio --no-cleanup
-# 坏句单独重跑： --only 4,7,11
-```
+**路由 A · GPT-SoVITS 克隆音色（首选，音质最佳）** —— 在 `$VC` 下跑（脚本内 `EXPS` 自动取最新权重，参考音在 `dataset/` 下，**不要手写权重路径**）。命令见 `references/pipeline.md` 阶段 3 路由 A（`dialog2audio.py --script … --outdir $W/audio --no-cleanup`，`--only 4,7,11` 重跑坏句）。
 
 - 老师 `xiaoxian`（ref `dataset/xiaoxian/wavs/xiaoxian_0029.wav`）、学生 `macie`（ref `dataset/macie/wavs/macie_13.wav`）
 - 参数：`--takes 3`、`--temperature 1.0`、`--gap 0.4`（帧内行距）、`--device cpu`（默认，稳）
@@ -232,12 +167,7 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 ./venv/bin/python ./dialog2audio.py \
 
 > ⛔ **阶段 3 门禁（硬停止）**：音频合成完**停下**，用 `AskUserQuestion` 向用户呈现抽查 2–3 帧音频（师生都在、短句没丢、语速自然）+「音频是否确认？确认后进入阶段 4 音画整合」。用户明确回"继续"前，**不得跑阶段 4 的 `make_standalone.py` / `capture.js` / `capture_anim.js` / 合成命令**。
 
-**路由 B · 本地 TTS 兜底（无 GPT-SoVITS 环境时，跨平台）** —— 纯标准库脚本，零第三方依赖，按平台自动选后端：
-
-```bash
-python3 $SK/scripts/dialog2audio_local.py --script "$H/视频课/script_v2_dialog.txt" --outdir $W/audio
-# 坏句单独重跑： --only 4,7,11 （CLI 与路由 A 兼容，--takes/--temperature 等被接受但忽略）
-```
+**路由 B · 本地 TTS 兜底（无 GPT-SoVITS 环境时，跨平台）** —— 纯标准库脚本，零第三方依赖，按平台自动选后端。命令见 `references/pipeline.md` 阶段 3 路由 B（`dialog2audio_local.py --script … --outdir $W/audio`，`--only 4,7,11` 重跑坏句）。
 
 | 平台      | 后端                                         | 师生双音色方案                                                            |
 | ------- | ------------------------------------------ | ------------------------------------------------------------------ |
@@ -255,12 +185,7 @@ python3 $SK/scripts/dialog2audio_local.py --script "$H/视频课/script_v2_dialo
 
 **4a 时间轴对齐**
 
-```bash
-python3 $SK/scripts/make_standalone.py \
-  --present "$H/视频课/index_present.html" --report $W/audio/report.json \
-  --out $W/standalone.html --sched $W/schedule.json --gap 0.9 --nf <帧数> --title "<课程名>" \
-  --subtitles --srt $W/subtitles.srt --keywords "<逗号分隔关键词>"
-```
+命令见 `references/pipeline.md` 阶段 4a（`make_standalone.py --present … --report … --gap 0.9 --title …`；`--subtitles`/`--srt`/`--keywords`/`--animate` 等参数同文件）。
 
 - 输出 `standalone.html`（HTML 结构原样、不删任何字符；CSS 复用原 `<style>`；帧/step 显隐由 `applyTime(t)` 数据驱动）+ `schedule.json`（总时长与截图区间）
 - **竖版 / 横竖都要**：取向含竖版时，对 `$H/视频课/index_present_portrait.html` 再跑一次同样的 `make_standalone.py`（加 `--present ...portrait` `--out $W/standalone_portrait.html` `--sched $W/schedule_portrait.json`），尺寸自动按 1080×1440。`--report` 复用同一份 `report.json`（阶段 3 音频只合成一次，两套共用）。后续 `capture*.js` / `qc_frames.js` 各自指向 `_portrait` 的那份 standalone 即可，无需改任何宽高参数
@@ -275,30 +200,13 @@ python3 $SK/scripts/make_standalone.py \
 
 **4b 逐帧截图**
 
-```bash
-node $SK/scripts/capture.js $W          # 读 $W/schedule.json，输出 $W/shots/shot_0000.png…；写 durations.txt
-```
+命令见 `references/pipeline.md` 阶段 4b（`capture.js $W`，读 `schedule.json` 输出 `shots/` + `durations.txt`；动效版用 `capture_anim.js`）。
 
 *子确认点*：抽查 3–5 张（含贴纸/真照片/字幕的帧），确认无空白帧、无字体回退。
 
 **4c 合成（区间时长不同，禁止 -framerate 直读 shots）**
 
-```bash
-# 1) 按 30fps 生成硬链接帧序列（每个 tick 硬链接到所属区间的 shot，时间零误差）
-python3 - <<'EOF'
-import os
-durs=[float(x) for x in open('durations.txt')]
-os.makedirs('frames', exist_ok=True)
-cum=0
-for i,d in enumerate(durs):
-    for k in range(round(cum*30), round((cum+d)*30)):
-        os.link(f'shots/shot_{i:04d}.png', f'frames/f{k:05d}.png')
-    cum+=d
-EOF
-ffmpeg -y -framerate 30 -i frames/f%05d.png -c:v libx264 -pix_fmt yuv420p -crf 20 video_cfr.mp4
-ffmpeg -y -i video_cfr.mp4 -i audio/_merged.wav -map 0:v:0 -map 1:a:0 \
-  -c:v copy -c:a aac -b:a 192k -ar 44100 -ac 2 -shortest 成片.mp4
-```
+命令见 `references/pipeline.md` 阶段 4c（两步法 ffmpeg + 静帧版硬链接帧序列 + PSNR 质检）。
 
 - **已实测三种错误路径，全部会音画失步**：① `-framerate 30 -i shots/shot_%04d.png` 把每区间当 1/30s；② concat demuxer（-f concat + duration）输出 VFR，时间戳漂移实测 t=50 处错位一个区间；③ 在 concat 输入上加 `-r 30` 或 `fps=30` 滤镜，漂移更大（415s vs 398s）。**唯一可靠：硬链接帧序列**（校验方法：与 schedule 抽 3 个时刻比对显示的是哪张 shot）
 - **concat PNG 时不能同时加 `-c:a`**（会被静默忽略，成片无音轨）；音轨必须第二步 `-c:v copy` 混流
@@ -318,9 +226,7 @@ ffmpeg -y -i video_cfr.mp4 -i audio/_merged.wav -map 0:v:0 -map 1:a:0 \
 
 **片头不带念稿**——只做品牌与价值主张，不念课程内容（用户 2026-10-08 定案）。5.0s / 30fps / 1920×1080。
 
-```bash
-bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3 课 · <em>事物的特征</em>"
-```
+**片头命令**（见 `references/pipeline.md` 阶段 4d）：`bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3 课 · <em>事物的特征</em>"`
 
 - **视觉**：令牌与课件 `index_present.html` 完全一致（奶油纸底 / 点阵 / 噪点 / 藏青描边 / 圆体-简 / 娃娃体-简），末帧擦成纯奶油底，**与正片第 1 帧无缝**
 - **节奏**（照 L2 `sensingandunderstanding.mp4` 前 5 秒）：logo 飞入 0.02–0.85 → 品牌名 0.60–1.25 → 主张句 1.05–1.70 → **配套三件套逐个飞入** 1.62–2.66（左/下/右三个方向、窗口交叠）→ 收尾句 2.62–3.12 → 课名贴纸 3.05–3.85 → 蜡笔擦除 4.35–4.95
@@ -365,6 +271,6 @@ bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3
 
 ## 参考文档
 
-- `references/pipeline.md`：每阶段命令与文件结构笔记
+- `references/pipeline.md`：**逐阶段完整命令与文件结构（how）**——`make_standalone`/`capture`/`ffmpeg`/`dialog2audio` 参数、`report.json` schema、贴纸 base64 配方、文件树都在这里；执行某阶段时按需读取。流程/格式/写作要点/门禁的权威在本文（SKILL.md）
 - `references/known_pitfalls.md`：通用踩坑清单（按根因/主题归类，**与课程内容无关**，动手前必读）。涵盖：吞字类（孤立拉丁字母、破折号单字短片段、童声短句）、双音色 TTS、时间轴对齐、HTML 排版版式、CSS 动效、响度/混流(loudnorm)、切片引流、合成编码、QC、封面、教学设计通用原则、路由 B 跨平台兜底。
 - `references/example_schedule.json`：`schedule.json` 结构示例
