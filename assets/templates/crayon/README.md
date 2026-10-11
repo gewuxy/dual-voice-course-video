@@ -96,7 +96,109 @@
 
 ---
 
-## 五、附：视频号封面（同一风格）要点
+## 五、放映版（阶段 2 产物）· 双版式体系
+
+> 上面一到四节是**课件页**模板（template.html）。这一节是**放映版**（preview*.html，阶段 2 产物）的版式规格。
+
+### 5.1 两层：风格包 vs 版式
+
+- **风格包**（= 本文件夹）= 视觉语言：字体、配色、贴纸、字号体系。**同一风格包下所有版式共用本文档的字号**，禁止衍生版式另起一套字号（L8 竖版曾私自缩 0.75 档被打回）。
+- **版式**（layout）= 信息布局，**逐帧选择，允许同一课内混排**。写在帧属性上供机检识别：
+  ```html
+  <div class="stage-frame" id="f03" data-layout="visual">
+  ```
+- 产物文件名**不按版式拆分**：横版 `index_present.html`、竖版 `index_present_portrait.html`。
+
+### 5.2 参考成品（4 件，照抄其版式骨架）
+
+| 文件 | 取向 | 版式 |
+|---|---|---|
+| `preview.html` | 横版 1920×1080 | dialog 对话优先 |
+| `preview_portrait.html` | 竖版 1080×1440 | dialog 对话优先 |
+| `preview_visual.html` | 横版 1920×1080 | visual 图片优先 |
+| `preview_portrait_visual.html` | 竖版 1080×1440 | visual 图片优先 |
+
+### 5.3 dialog · 对话优先（基准版式，默认）
+
+信息主角是气泡台词；长句没问题（**不要求精简**）。字号体系（竖版实测定档，横版同规格）：
+
+| 元素 | 竖版 1080×1440 | 横版 1920×1080 |
+|---|---|---|
+| 帧标题 `.ftitle .title` | 88px（长标题可降到 62–72） | 88–96px |
+| 气泡正文 `.bub` | 42px / 行高 1.45 | 42px（密集帧可降 36） |
+| 说话人 `.who` | 28px | 28px |
+| 关键词 chip | 40px / padding 12 28 / 边 4px | 40px |
+| 箭头 `.arrow` | 48px | 48px |
+| 照片说明 `.pola .cap` | 27px | 27px |
+| 页眉徽章 / 页脚 | 38 / 30（品牌 32） | 38 / 30 |
+
+呼吸感五条（硬指标）：标题底沿→首元素 ≥48px；块间 ≥36px；内容底沿→品牌行 ≥32px；正文 ≥32 号/行距 ≥1.6；终态密度上限 横版 ≤4 块、竖版单列 ≤5、双列 ≤6。
+
+### 5.4 visual · 图片 / 概念可视化优先
+
+**画面主角是大图、照片或概念卡；对话退居其次，且必须提炼成短气泡（≤15 字/句），完整表达交给字幕**（成片管线已有字幕）。
+
+| # | 规则 | 数值 |
+|---|---|---|
+| 1 | 整屏换景 | 每步主图挂 `.fscene`（见 5.5） |
+| 2 | 字幕安全区 | 竖版 y≥1120、横版 y≥900 只放品牌行，不放任何内容块 |
+| 3 | 关键词锚点卡 | 只放 ≤4 字核心词，90–150px，一帧最多 1 张 |
+| 4 | 主图占屏 | 宽 ≥50%，水平居中 |
+| 5 | 对话（若有） | 短气泡 ≤15 字/句，整帧画面文字 ≤40 字 |
+| 6 | 密度上限 | 单步主视觉元素 1 个（不要同屏塞 2 张主图） |
+
+### 5.5 fscene · 整屏换景机制（三行 CSS）
+
+```css
+.fscene{visibility:hidden}                                   /* 默认隐藏 */
+.step.on .fscene{visibility:visible}                         /* 当前激活步显示 */
+.step.on:has(~ .step.on .fscene) .fscene{visibility:hidden}  /* 后面还有已激活的 fscene → 自己隐藏 */
+```
+
+语义：**后一步挂了 fscene 且被激活时，前一步的图自动清场**。因此——
+
+- 想让某步的图在第 N 步消失，**第 N 步也必须挂 fscene**（漏挂 = 图赖着不走，这是踩过的坑）；
+- 最后一步后面没人了，天然常驻；
+- 想让两张图**并排共存**（不同位置），不要用 fscene，用普通 `div`（fscene 只用于同位替换/换景）。
+
+### 5.6 帧骨架（照抄填空）
+
+```html
+<!-- dialog 帧 -->
+<div class="stage-frame" id="f01" data-layout="dialog">
+<div class="hdr">…</div>
+  <div class="ftitle"><div class="title" style="font-size:88px">__标题__</div></div>
+  <div class="step"><div class="slot say" style="top:300px"><div class="who">小贤老师</div><div class="bub">__台词__</div></div></div>
+  <div class="step"><div class="slot reply" style="top:484px">…</div></div>
+<div class="foot">…</div>
+</div>
+
+<!-- visual 帧：每步一个 fscene，短气泡只作点缀 -->
+<div class="stage-frame" id="f03" data-layout="visual">
+<div class="hdr">…</div>
+  <div class="ftitle"><div class="title" style="font-size:88px">__标题__</div></div>
+  <div class="step"><div class="fscene" style="position:absolute;left:300px;top:340px">__大图/概念卡__</div></div>
+  <div class="step"><div class="fscene" style="position:absolute;left:90px;top:460px;width:900px">__换景图__</div>
+    <div class="slot say" style="top:1150px;width:420px"><div class="bub" style="font-size:36px">__≤15字短句__</div></div></div>
+<div class="foot">…</div>
+</div>
+```
+
+### 5.7 逐帧选型判据
+
+一句话：**这帧的核心信息能不能一图概括？**
+
+| 判断 | 版式 | 典型帧 |
+|---|---|---|
+| 能一图概括（展示、操作演示、分类/找宝、素材图为主） | `visual` | 卡片分组、搜索找宝、实物展示 |
+| 不能，需要语言定义或推理（问答、概念定义、总结、作业布置） | `dialog` | 概念讲解、比一比、闯关问答、作业 |
+| 判断不了 | `dialog`（默认，已验证基准） | — |
+
+自动推荐：`node/python $SK/scripts/suggest_layout.py <剧本>` 出选型表，**在阶段 2 gate 交用户确认**后可逐帧改。
+
+---
+
+## 六、附：视频号封面（同一风格）要点
 
 - 尺寸 1080×1920（9:16），JPG ≤ 5MB；**安全核心区是中央 1080×1080**（朋友圈分享按 1:1 居中裁切）。
 - 主标题占画面高 1/4 ~ 1/3（实测爆款封面主标题字高 ≈ 30%）。

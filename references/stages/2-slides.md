@@ -21,10 +21,20 @@
 
 ## 模板（视觉基准，勿改结构）
 
-| 取向 | 模板 | 产物 |
+| 取向 | 模板（`$SK/assets/templates/crayon/`） | 产物 |
 | --- | --- | --- |
-| 横版 | `$SK/assets/templates/crayon/preview.html` | `index_present.html` |
-| 竖版 | `$SK/assets/templates/crayon/preview_portrait.html` | `index_present_portrait.html` |
+| 横版 · 对话优先 | `preview.html` | `index_present.html` |
+| 竖版 · 对话优先 | `preview_portrait.html` | `index_present_portrait.html` |
+| 横版 · 图片优先 | `preview_visual.html` | `index_present.html`（混排：visual 帧抄它） |
+| 竖版 · 图片优先 | `preview_portrait_visual.html` | `index_present_portrait.html`（混排：visual 帧抄它） |
+
+## 版式选择（逐帧，允许同课混排）
+
+- **判据一句话：这帧的核心信息能不能一图概括？** 能（展示/操作演示/分类找宝/素材图为主）→ `visual`；不能（问答/概念定义/总结/作业）→ `dialog`（默认）。台词长短**不决定**版式——dialog 版允许长句。
+- 自动推荐：`python3 $SK/scripts/suggest_layout.py <剧本>`，出选型表 + 每帧台词字数；**gate 时交用户确认，可逐帧改**。
+- 每帧落属性：`<div class="stage-frame" id="f03" data-layout="visual">`（`qc_frames.js` 按此分管机检）。
+- 规格与帧骨架：`$SK/assets/templates/crayon/README.md` §5（两版式共用同一套字号体系，**禁止衍生版式另起字号**）。
+- **visual 帧硬规则**：每步主图挂 `.fscene` 整屏换景（每步都要挂，漏挂前图不清场）；对话提炼 **≤15 字/句**（完整表达交给字幕）；整帧画面文字 **≤40 字**；关键词锚点卡 ≤4 字、90–150px、一帧 1 张；主图占屏宽 ≥50%；字幕安全区（竖版 y≥1120 / 横版 y≥900）只放品牌行。
 
 动效片段库：`$SK/assets/templates/anim-snippets/`（`mo.css` / `mo.gsap.js` / README）。class 一览与「何时用」见 `anim-snippets/README.md`，本文件不复述。
 
@@ -38,7 +48,7 @@
 | 2 | 块间呼吸 | 相邻气泡/卡片块间 **≥36px** | 沿用封面模板 ≥40px 档，放映版更密取 36 |
 | 3 | 底部安全带 | 内容底沿 → 品牌行徽章上沿 **≥32px** | L8 六帧压品牌行教训 |
 | 4 | 字号下限 | 正文气泡 **≥32 号**、行距 ≥1.6 | 系列现用 34–38 |
-| 5 | 密度上限 | 单帧**终态**可视对话块 **≤4 个** | 按前四条推算的舒适容量上限 |
+| 5 | 密度上限 | 单帧**终态**对话块：横版 **≤4**；竖版单列 **≤5**、对话+侧卡双列 **≤6**（同一套间距下限下的推算容量） | 按前四条推算 |
 
 **空间不够时的动作顺序（硬规则）**：砍内容 → 拆帧/拆步 → 字号降一档 → 最后才允许压间距，且**任何一条不得低于下限**。禁止目测估高一次排完——链式排布先跑 qc 实测渲染高再回填 top。
 

@@ -80,7 +80,33 @@ fs.mkdirSync(OUT, { recursive: true });
         if (bottomRel > maxBottom) maxBottom = bottomRel;
         if (bottomRel > refH - 80) over.push(Math.round(bottomRel));
       });
-      return { maxBottom: Math.round(maxBottom), over };
+      // —— visual 帧分管机检：文字预算 + 字幕安全区（dialog 帧不查） ——
+      let visCheck = null;
+      if (f.getAttribute('data-layout') === 'visual') {
+        const safeY = refH >= 1200 ? refH - 320 : refH - 180;   // 竖版 y>=1120 / 横版 y>=900
+        let chars = 0; const intrude = [];
+        f.querySelectorAll('.sticker,.chip,.slot,.magic,.pola,div[style*="background"]').forEach(el => {
+          if (el.closest('.hdr') || el.closest('.foot') || el.closest('.ftitle')) return;
+          const cs = getComputedStyle(el);
+          if (cs.visibility === 'hidden' || cs.display === 'none') return;
+          chars += (el.innerText || '').replace(/\s/g, '').length;
+          const r = el.getBoundingClientRect();
+          if (r.height > 0 && r.bottom - rootRect.top > safeY) intrude.push((el.className || 'div').toString().slice(0, 20));
+        });
+        // 文字元素去重：只统计叶子级（含 innerText 的最小块），父容器会重复计数
+        const leaves = new Set();
+        f.querySelectorAll('.sticker,.chip,.slot,.magic,.pola,div[style*="background"]').forEach(el => {
+          if (el.closest('.hdr') || el.closest('.foot') || el.closest('.ftitle')) return;
+          if (getComputedStyle(el).visibility === 'hidden') return;
+          if (!el.innerText || !el.innerText.trim()) return;
+          let leaf = el;
+          while (leaf.children.length === 1 && leaf.children[0].innerText === leaf.innerText) leaf = leaf.children[0];
+          leaves.add(leaf);
+        });
+        chars = [...leaves].reduce((a, el) => a + el.innerText.replace(/\s/g, '').length, 0);
+        visCheck = { chars, budget: 40, safeY: Math.round(safeY), intrude: [...new Set(intrude)] };
+      }
+      return { maxBottom: Math.round(maxBottom), over, visCheck };
     }, i);
     await new Promise(r => setTimeout(r, 450));
     report.push({ f: i, ...info });
@@ -89,6 +115,13 @@ fs.mkdirSync(OUT, { recursive: true });
   console.log('QC', JSON.stringify(report));
   const bad = report.filter(r => r.over.length);
   console.log(bad.length ? '⚠️ 溢出帧：' + bad.map(r => `f${r.f}(${r.over.join('/')})`).join(' ') : '✅ 全部帧无溢出');
+  const visBad = report.filter(r => r.visCheck && (r.visCheck.chars > r.visCheck.budget || r.visCheck.intrude.length));
+  for (const r of visBad) {
+    const v = r.visCheck;
+    if (v.chars > v.budget) console.log(`⚠️ f${r.f} visual 文字超预算：${v.chars}/${v.budget} 字（提炼短气泡，完整表达交字幕）`);
+    if (v.intrude.length) console.log(`⚠️ f${r.f} visual 内容侵入字幕安全区（y>${v.safeY}）：${v.intrude.join(',')}`);
+  }
+  if (!visBad.length) console.log('✅ visual 帧文字预算与字幕安全区全部达标');
 
   // —— 可选：某一帧的逐 step 截图（验证逐步出现顺序）——
   if (STEP_FRAME) {

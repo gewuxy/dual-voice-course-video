@@ -124,3 +124,23 @@
 - **根因**：动效全挂在 `.step.on` 的**后代选择器**上（`.step.on .slot.say` / `.step.on .chips>*` …），standalone 冻结块只覆盖 `.step`/`.stage-frame`/`#subtitle`/`#subbar` 容器自身——animation 不继承，子元素动画照跑；capture 在 applyTime 切类后仅等 90ms，0.45–0.68s 的入场动画全被拍在半路，而该截图要静止挂满整个区间（数秒）。
 - **为什么后来才爆**：冻结块与 90ms 自 skill 打包初始版就有；L7 出片在打包之前（其存档 standalone 无冻结块可证），L8 是第一个全流程走打包版流水线的课。不是 2026-10-11 两次重构引入（均未碰 capture.js/OVERRIDE_CSS）。
 - **修法（勿回退）**：OVERRIDE_CSS 冻结选择器必须连后代一起冻：`.step *, .stage-frame *`。安全性依据：所有入场动画 fill-mode:both 且 100% 关键帧=自然末态，基态=末态（唯一基态 opacity:0 的是 `.step` 包装层自身，显隐仍由 `.on` 控制）；`--animate` 实时渲染管线不受影响（该分支不加冻结块）。
+
+## 14. fscene 换景：每步都要挂，漏挂前图不清场（L8 实翻车）
+
+- 机制：`.fscene{visibility:hidden}` + `.step.on .fscene{visible}` + `.step.on:has(~ .step.on .fscene) .fscene{hidden}`——**后一步挂了 fscene 且激活时，前一步的图才消失**。
+- 坑 1：想让第 N 步的图在第 M 步消失，**第 M 步也必须挂 fscene**；漏挂 = 图赖着不走（F9 两张插画没挂，该消失时不消失）。
+- 坑 2：想**并排共存**的两张图别用 fscene（它只管同位替换/换景），用普通 div。
+- 坑 3：最后一步天然常驻（后面没人触发隐藏），别再给它叠隐藏逻辑。
+
+## 15. base64 照片提取：按 cap 文本建 map，别按文档序对位
+
+- 提取 `<img src="data:image/jpeg;base64,…">` 时：丢闭合引号会产出损坏标签（渲染侥幸正常、DOM 已坏）；按文档序对位到 cap 会**错位**（发光卡可能排第一）。
+- 正确姿势：正则只取 `[A-Za-z0-9+/=]` 字符集，按其后 `class="cap">文本<` 建 dict 再取；重建标签时写完整 `<img src="data:image/jpeg;base64,…">`。
+- 注入仍只走 Python `str.replace`（见 2-slides.md 真照片配方）。
+
+## 16. visual 帧：字幕安全区与文字预算（机检按 data-layout 分管）
+
+- visual 帧的画面主角是大图/概念卡，**对话必须提炼 ≤15 字/句**，完整表达交给字幕；整帧画面文字 ≤40 字（不含标题/页眉页脚）。
+- 字幕安全区：竖版 y≥1120、横版 y≥900 **只放品牌行**，内容块压进来会被字幕盖住。
+- 每帧必须写 `data-layout="visual|dialog"`，`qc_frames.js` 才能分管检查；漏写按 dialog 处理（不查文字预算）。
+- 关键词锚点卡 ≤4 字、一帧最多 1 张——锚点卡里塞整句 = 又回到文字过载。
