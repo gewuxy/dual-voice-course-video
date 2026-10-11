@@ -10,16 +10,20 @@ clips.json 格式（帧号取剧本【第 N 帧】的 N）:
   {"name": "切片1_积木分家家", "fstart": 4, "fend": 5, "hook": "hook1.png"},
   {"name": "切片2_决策树",     "fstart": 7, "fend": 8, "hook": "hook2.png"}
 ]
-- 切片范围 = 帧fstart起点 → 帧fend起点前(去掉帧间0.9s gap)，与句子边界对齐，不会切半句。
+- 切片范围 = 帧fstart起点 → 帧fend起点前(去掉帧间 gap，取 frame_gap())，与句子边界对齐，不会切半句。
 - hook 为 1920x1080 PNG 钩子卡（蜡笔风模板见 assets/clip_cards_template.html）；
   片尾统一使用 outdir 同级的 endcard.png，没有则跳过。
 - 时长核对: fstart/fend 也可直接用 "start"/"end" 秒数覆盖帧号。
 
-要点: 帧时间 = sum(前面各帧 dur) + 0.9*帧序(gap 与 make_standalone --gap 0.9 一致)。
+要点: 帧时间 = sum(前面各帧 dur) + GAP*帧序；GAP 取 load_config.frame_gap()，
+与阶段 3 拼 _merged.wav、阶段 4 standalone 时间轴同源，改 config 即可改节奏。
 """
 import argparse, json, os, subprocess, sys
 
-GAP = 0.9
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from load_config import frame_gap   # 帧间静音唯一来源（勿在此写字面量）
+
+GAP = frame_gap()
 
 def frame_starts(report):
     t, starts = 0.0, {}

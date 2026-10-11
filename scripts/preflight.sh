@@ -4,7 +4,7 @@
 # 用法：
 #   bash preflight.sh [课程目录]      # 课程目录可选，给了就顺便校验 $H/视频课/index_present.html
 #
-# 配置（统一来源，见 SKILL.md「本地配置」）：
+# 配置（统一来源，见 SKILL.md「路径与配置」）：
 #   - 机器相关路径/音色优先读 config.local.json（由 config.example.json 复制而来，gitignore）
 #   - 环境变量 VOICE_CLONE/CHROME_BIN/FFMPEG/SYS_PY 可临时覆盖，优先级最高
 #   不再写死任何绝对路径；换机只改 config.local.json 或 export 环境变量
@@ -28,14 +28,27 @@ fi
 _chrome() { python3 "$CFG_PY" --get paths.chrome_bin 2>/dev/null; }
 CHROME_BIN="${CHROME_BIN:-$(_chrome)}"
 CHROME_BIN="${CHROME_BIN:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
+# 说明：config 里的值可能是裸命令名（如 "ffmpeg"）也可能是绝对路径。
+# 裸命令名必须用 command -v 解析，不能用 [ -x ]（-x 不查 PATH，裸名必然为假 → 假阴性）。
 _ff() { python3 "$CFG_PY" --get paths.ffmpeg 2>/dev/null; }
 FFMPEG="${FFMPEG:-$(_ff)}"
-FFMPEG="${FFMPEG:-/opt/homebrew/bin/ffmpeg}"
+FFMPEG="${FFMPEG:-$(command -v ffmpeg || echo ffmpeg)}"
 _sp() { python3 "$CFG_PY" --get paths.sys_py 2>/dev/null; }
 SYS_PY="${SYS_PY:-$(_sp)}"
-SYS_PY="${SYS_PY:-/opt/homebrew/bin/python3}"
+SYS_PY="${SYS_PY:-$(command -v python3 || echo python3)}"
 H="${1:-}"
 TPL="${TPL:-$SKILL_DIR/assets/templates/crayon/preview.html}"
+
+# 打印本次实际解析到的路径（路径不该靠文档记忆，靠脚本说出来）
+echo "解析到的路径："
+printf "  SKILL_DIR    %s\n" "$SKILL_DIR"
+printf "  VOICE_CLONE  %s\n" "${VOICE_CLONE:-（未配置）}"
+printf "  FFMPEG       %s\n" "$FFMPEG"
+printf "  SYS_PY       %s\n" "$SYS_PY"
+printf "  CHROME_BIN   %s\n" "$CHROME_BIN"
+printf "  模板          %s\n" "$TPL"
+printf "  H            %s\n" "${H:-（未传课程目录）}"
+echo
 
 ok=0; bad=0
 chk() { # chk "说明" "命令" [提示]
@@ -86,12 +99,12 @@ fi
 
 echo "== 2. 画面/截图/合成（阶段2、4、5 必需）=="
 chk "Google Chrome：$CHROME_BIN" "[ -x '$CHROME_BIN' ]" "装 Chrome，或设 CHROME_BIN=<路径>"
-chk "ffmpeg：$FFMPEG" "[ -x '$FFMPEG' ]" "brew install ffmpeg"
+chk "ffmpeg：$FFMPEG" "command -v '$FFMPEG' >/dev/null 2>&1 || [ -x '$FFMPEG' ]" "brew install ffmpeg，或设 FFMPEG=<路径>"
 chk "puppeteer-core（npx 缓存或 node_modules）" "ls ~/.npm/_npx/*/node_modules/puppeteer-core >/dev/null 2>&1 || node -e \"require.resolve('puppeteer-core')\"" \
     "cd ~/.workbuddy/binaries/node/workspace && npm i puppeteer-core"
-chk "系统 python 带 PIL：$SYS_PY" "'$SYS_PY' -c 'import PIL'"
+chk "系统 python 带 PIL：$SYS_PY" "command -v '$SYS_PY' >/dev/null 2>&1 && '$SYS_PY' -c 'import PIL'" "$SYS_PY 装 Pillow：'<py> -m pip install Pillow'，或设 SYS_PY=<带PIL的python>"
 chk "蜡笔风模板 preview.html" "[ -f '$TPL' ]" "确认共享模板路径"
-chk "node（22.x）" "node -v"
+chk "node（建议 22.x；只校验可用）" "node -v" "装 Node.js 22"
 
 if [ -n "$H" ]; then
   echo "== 3. 本节课程目录 =="

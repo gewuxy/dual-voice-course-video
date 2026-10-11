@@ -1,10 +1,15 @@
 {
+  "_comment": "复制为 config.local.json 后填写（gitignore）。所有机器相关路径与音色只在这里定义，脚本与文档都不写死。取值：python3 scripts/load_config.py --get paths.ffmpeg；同名大写环境变量可覆盖，优先级最高。",
+
+  "_comment_paths": "voice_clone_dir=GPT-SoVITS 项目根（路由 A 才需要，留空则自动走路由 B 本地 TTS）；chrome_bin/ffmpeg/sys_py 可填绝对路径或裸命令名（裸名自动按 PATH 解析），留空则自动探测。",
   "paths": {
     "voice_clone_dir": "",
     "chrome_bin": "",
-    "ffmpeg": "ffmpeg",
-    "sys_py": "/opt/homebrew/bin/python3"
+    "ffmpeg": "",
+    "sys_py": ""
   },
+
+  "_comment_voices": "路由 A（GPT-SoVITS）的实际音色定义在 $VC/dialog2audio.py（EXPS + 情绪路由表）；本节仅用于 preflight 自检。换音色先改那边，再同步这里让自检跟上。ref 为参考音，用于情绪与音色引导。",
   "voices": {
     "teacher": {
       "exp": "xiaoxian_v2",
@@ -18,8 +23,10 @@
       "ref_text": "我叫 Macie，今年八岁，我最喜欢画画和搭积木。"
     }
   },
+
+  "_comment_defaults": "frame_gap=帧间静音秒，全流水线唯一来源（阶段3 拼 _merged.wav / 阶段4 standalone 时间轴 / 阶段6 切片切点三方共用），脚本一律调 load_config.frame_gap()，不要在命令行或脚本里另写值。注意 dialog2audio 的 --gap 是另一个东西：帧内行距，默认 0.4。teacher_display_name 只改 HTML 气泡署名，剧本角色行固定「老师：」——TTS 只认标签判声线。",
   "defaults": {
-    "gap": 0.9,
+    "frame_gap": 0.9,
     "teacher_display_name": "老师"
   }
 }

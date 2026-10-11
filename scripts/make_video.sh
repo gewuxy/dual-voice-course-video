@@ -18,7 +18,7 @@
 #   <输出.mp4>（最终成片）
 #
 # 动效版（capture_anim.js 产出 f%05d.jpg，本身就是均匀 30fps）不需要本脚本，
-# 直接：ffmpeg -framerate 30 -i frames/f%05d.jpg …（见 references/pipeline.md 4c）。
+# 直接：ffmpeg -framerate 30 -i frames/f%05d.jpg …（见 references/stages/4-compose.md 4c）。
 #
 # 环境变量：FFMPEG 覆盖 ffmpeg 路径（默认 env > PATH > /opt/homebrew）
 set -euo pipefail
@@ -65,7 +65,7 @@ echo "编码完成: $W/video_cfr.mp4"
   -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 192k -ar 44100 -ac 2 -shortest "$OUT"
 echo "成片: $OUT"
 
-# 4) 自检打印（对照 schedule 抽时刻 QC 由 agent 执行，见 references/pipeline.md 4c）
+# 4) 自检打印（对照 schedule 抽时刻 QC 由 agent 执行，见 references/stages/4-compose.md 4c）
 VD="$(command -v ffprobe >/dev/null 2>&1 && ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUT" || echo '?')"
 AD="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$MERGED")"
 echo "自检: 成片 ${VD}s / 音源 ${AD}s（相差应 <1s）"

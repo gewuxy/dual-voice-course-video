@@ -21,6 +21,15 @@ H = sys.argv[1] if len(sys.argv) > 1 else "."
 SCRIPT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(H, "视频课", "script_v2_dialog.txt")
 HTML = sys.argv[3] if len(sys.argv) > 3 else os.path.join(H, "视频课", "index_present.html")
 
+for p in (SCRIPT, HTML):
+    if not os.path.isfile(p):
+        sys.exit("❌ 找不到 %s\n   用法：python3 verify_steps.py <课目录> [剧本] [放映版HTML]"
+                 "\n   （默认读 <课目录>/视频课/script_v2_dialog.txt + index_present.html）" % p)
+
+# step 匹配：按 class 分词，兼容 <div class="step"> 与 <div class="step anim-pop">。
+# 必须与 make_standalone.py 的 STEP_RE 保持同一口径，否则「校验通过」但成片漏画面。
+STEP_RE = re.compile(r'<div\b[^>]*\bclass\s*=\s*"[^"]*(?<![-\w])step(?![-\w])[^"]*"[^>]*>', re.I)
+
 # 角色行：老师（可配置名）或学生；兼容全角/半角冒号
 ROLE_RE = re.compile(
     r'^(?:' + "|".join(re.escape(p) for p in TEACHER_PREFIXES) + r'|学生)\s*[:：]\s*'
@@ -38,7 +47,7 @@ for ln in open(SCRIPT, encoding="utf-8"):
 exp = [len(f) for f in frames]
 
 html = open(HTML, encoding="utf-8").read()
-counts = [len(re.findall(r'<div class="step"', p))
+counts = [len(STEP_RE.findall(p))
           for p in re.split(r'<div[^>]*class="[^"]*stage-frame[^"]*"', html)[1:]]
 
 print(f"剧本：{len(exp)} 帧 / {sum(exp)} 句    HTML：{len(counts)} 帧 / {sum(counts)} 步")

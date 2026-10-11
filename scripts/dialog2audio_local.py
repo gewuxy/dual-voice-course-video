@@ -11,7 +11,7 @@
 
 输出与 dialog2audio.py（GPT-SoVITS 路由）完全一致的合同：
   outdir/frame_NN.wav   每帧音频（帧内行距 --gap，默认 0.4s）
-  outdir/_merged.wav    全课合并（帧间硬编码 0.9s，与 make_standalone --gap 0.9 对应）
+  outdir/_merged.wav    全课合并（帧间静音取 frame_gap()，默认 0.9s）
   outdir/report.json    顶层 list：[{frame, dur, units:[{speaker,text,pause,pre,dur,start}]}]
 统一 32000 Hz / Int16 / 单声道（后端输出采样率不符时自动用 ffmpeg 重采样），阶段 4 零改动。
 
@@ -28,7 +28,11 @@ CLI 与 dialog2audio.py 兼容：--takes/--temperature/--no-cleanup/--device 会
 import argparse, base64, json, os, re, shutil, subprocess, sys, tempfile, wave
 from array import array
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from load_config import frame_gap   # 帧间静音唯一来源（勿在此写字面量）
+
 SR = 32000
+FRAME_GAP = frame_gap()
 FF = os.environ.get("FFMPEG", "ffmpeg")  # 各平台均要求 ffmpeg 已装（后续阶段本来就必需）
 PLATFORM = sys.platform  # darwin / win32 / linux
 
@@ -347,7 +351,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--script", required=True)
     ap.add_argument("--outdir", required=True)
-    ap.add_argument("--only", default=None, help="只做某几帧，如 1,9")
+    ap.add_argument("--only", default=None,
+                    help="只重做某几帧（坏句），如 1,9；结果会合并回既有 report.json，"
+                         "不会覆盖其它帧的时间轴")
     ap.add_argument("--gap", type=float, default=0.4, help="帧内行间间隔秒")
     # 兼容 GPT-SoVITS 路由的参数（接受但忽略）
     ap.add_argument("--takes", type=int, default=3)
@@ -409,14 +415,39 @@ def main():
         report.append({"frame": fi, "dur": round(dur_of(out), 2), "units": units_tl})
         print(f"  -> {out}  {dur_of(out):.1f}s")
 
-    json.dump(report, open(os.path.join(args.outdir, "report.json"), "w", encoding="utf-8"),
+    # --only 重跑坏句时必须与既有 report.json 合并，不能直接整体覆盖：
+    # 覆盖后整课时间轴只剩重跑的那几帧，阶段 4 的 dur_map 大面积缺失 → 音画全线错位。
+    report_path = os.path.join(args.outdir, "report.json")
+    merged_report = {}
+    if only:
+        try:
+            with open(report_path, encoding="utf-8") as f:
+                for e in json.load(f):
+                    merged_report[e["frame"]] = e
+        except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError):
+            merged_report = {}
+        print(f"\n--only：已载入既有 report.json {len(merged_report)} 帧，准备合并")
+    had_existing = bool(merged_report)
+    for e in report:
+        merged_report[e["frame"]] = e
+    report = [merged_report[k] for k in sorted(merged_report)]
+
+    json.dump(report, open(report_path, "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
+    if only:
+        redone = sorted(e["frame"] for e in report if e["frame"] in only)
+        if had_existing:
+            print(f"已合并写回 report.json：本次重跑 {redone}，"
+                  f"时间轴共 {len(report)} 帧（其余帧时间轴原样保留）")
+        else:
+            print(f"⚠️ 该 outdir 没有既有 report.json，本次只写入重跑帧 {redone}；"
+                  f"阶段 4 需要全量时间轴，请先用不带 --only 的完整跑法生成一次")
     if len(report) > 1:
         merged = os.path.join(args.outdir, "_merged.wav")
         chunks = []
         for r in report:
             chunks.append(read_wav(os.path.join(args.outdir, f"frame_{r['frame']:02d}.wav")))
-            chunks.append(array("h", bytes(int(0.9 * SR) * 2)))
+            chunks.append(array("h", bytes(int(FRAME_GAP * SR) * 2)))
         write_wav(merged, _concat(chunks[:-1]))
         print(f"\n合并 -> {merged}  {dur_of(merged):.1f}s")
     print("完成。（本地 TTS 兜底路由：音质为系统级合成，可按 SKILL.md『换音色重合成』流程随时升级到 GPT-SoVITS 路由 A）")

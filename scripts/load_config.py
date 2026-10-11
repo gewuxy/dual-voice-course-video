@@ -7,7 +7,8 @@
   3. 环境配置  config.local.json              （机器相关，gitignore；缺失回退 config.example.json）
 
 设计目标（对齐最佳实践「配置与代码分离、禁止 voodoo 常量」）：
-  - 所有机器相关路径、音色模型名、gap、老师显示名都只在配置里出现一次
+  - 所有机器相关路径、音色模型名、帧间 gap、老师显示名都只在配置里出现一次
+    （帧间 gap 走 frame_gap()，脚本里不许再出现字面量 0.9）
   - 脚本不写死任何绝对路径；换机只改 config.local.json 或 export 环境变量
 
 用法（作为模块）：
@@ -16,7 +17,7 @@
     cfg["voice_clone_dir"]                         # 绝对路径（env 或 config）
     cfg["voices"]["teacher"]["exp"]                # "xiaoxian_v2"
     cfg["teacher_display_name"]                    # 展示层老师名（course 覆盖 defaults）
-    cfg["gap"]                                     # 帧间静音秒
+    frame_gap()                                    # 帧间静音秒（三方共用的唯一来源）
 
 用法（CLI，供 bash 脚本取单值）：
     python3 load_config.py --get paths.voice_clone_dir
@@ -29,6 +30,11 @@ import json
 import argparse
 
 SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# 帧间静音秒（阶段3 拼 _merged.wav、阶段4 standalone 时间轴、阶段6 切片切点三方共用）。
+# 三者必须严格相等，否则末帧漂移数秒、音画失步（历史上写 0.25 漂移近 10s）。
+# 全流水线唯一来源：脚本一律调 frame_gap()，禁止再写字面量 0.9。
+DEFAULT_FRAME_GAP = 0.9
 
 
 def _load_json(path):
@@ -75,8 +81,28 @@ def load_config(course_dir=None):
     merged["voice_clone_dir"] = paths.get("voice_clone_dir", "")
     merged["teacher_display_name"] = merged.get("teacher_display_name") \
         or defaults.get("teacher_display_name", "老师")
-    merged["gap"] = merged.get("gap", defaults.get("gap", 0.9))
+    merged["frame_gap"] = _as_float(
+        merged.get("frame_gap", defaults.get("frame_gap", DEFAULT_FRAME_GAP)),
+        DEFAULT_FRAME_GAP)
+    merged["gap"] = merged["frame_gap"]      # 兼容旧键名
     return merged
+
+
+def _as_float(v, fallback):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def frame_gap(course_dir=None):
+    """帧间静音秒——全流水线唯一来源。
+
+    音频侧（_merged.wav）与画面侧（standalone 时间轴 / make_clips 切点）都取这个值，
+    任何一方另写字面量都会造成音画失步。要改节奏请改 config 的 defaults.frame_gap，
+    不要改脚本。（注：dialog2audio 的 --gap 是另一个东西——帧内行距，默认 0.4。）
+    """
+    return load_config(course_dir)["frame_gap"]
 
 
 def voice_clone_dir():

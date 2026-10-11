@@ -8,11 +8,11 @@
       --report  /tmp/<课>/audio/report.json \
       --out     /tmp/<课>/standalone.html \
       --sched   /tmp/<课>/schedule.json \
-      [--gap 0.9] [--nf 16] [--title "课程名"] [--keep-audio]
+      [--nf 16] [--title "课程名"] [--keep-audio]
 
---gap 默认读 config（defaults.gap = 0.9）：与 dialog2audio（路由 A/B）拼 _merged.wav
-时帧间硬编码的 0.9s 静音一致。漏配/错配会使末帧漂移数秒、音画失步——除非明确知道
-自己在做什么，否则不要改这个值。
+帧间静音秒不再是命令行参数：由 load_config.frame_gap() 唯一决定（默认 0.9，改
+config 的 defaults.frame_gap）。阶段 3 拼 _merged.wav 用的是同一个值，所以不可能
+错配。脚本末尾还会拿 _merged.wav 实测时长对一遍，漂移 >0.15s 直接报错退出。
 
 关键设计（踩坑后固化）：
   1. **HTML 结构原样输出，一个字符都不删**。旧版用正则把 step 从 frame 里删掉当 static，
@@ -24,10 +24,10 @@
   5. bind_delays：step 数 == 对话行数时 1:1 锚定每句起始秒（`units[i].start`）；
      不相等则帧内均匀分布——绝不能让所有 step 都堆在 0s，否则画面提前泄题。
 """
-import argparse, json, os, re, sys
+import argparse, contextlib, json, os, re, sys, wave
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from load_config import load_config   # gap 默认值走统一配置（defaults.gap = 0.9）
+from load_config import frame_gap     # 帧间静音唯一来源（勿在此写字面量）
 
 
 def highlight(text, kws):
@@ -74,6 +74,14 @@ def chunk_text(text, hard=30, soft=18):
     return parts
 
 
+# step 匹配：按 class 分词匹配（兼容 <div class="step"> 与 <div class="step anim-pop">）。
+# ⛔ 不要改回精确串 `class="step"` —— 阶段 2 要求给 step 挂动效 class（anim-pop/anim-slam/
+#    anim-fade-rise…），精确串会静默漏掉这些 step：JS 侧 querySelectorAll('.step') 认得它们，
+#    Python 侧却不算数，结果是这些 step 拿不到 .on、被 CSS 的 .step{opacity:0} 永久隐藏，
+#    成片里画面凭空消失且不报错。
+STEP_RE = re.compile(r'<div\b[^>]*\bclass\s*=\s*"[^"]*(?<![-\w])step(?![-\w])[^"]*"[^>]*>', re.I)
+
+
 def extract_frames(html):
     """按 stage-frame 标签配对切出每帧 inner HTML（原样，不删任何字符）。"""
     frames, order = {}, []
@@ -102,14 +110,26 @@ def strip_audio(html):
     return html
 
 
+def wav_duration(path):
+    """纯 stdlib 读 WAV 时长；不是 WAV 或读不了时返回 None（不因此阻断出片）。"""
+    try:
+        with contextlib.closing(wave.open(path, "rb")) as w:
+            return w.getnframes() / float(w.getframerate())
+    except Exception:
+        return None
+
+
 def main():
+    # 旧命令/旧文档会传 `--gap 0.9` 或 `--gap 0.25`。现在帧间 gap 由 config 唯一决定，
+    # 传这个值必然是照旧文档抄的，与其让 argparse 报 unrecognized，不如说清去哪改。
+    if any(a == "--gap" or a.startswith("--gap=") for a in sys.argv[1:]):
+        sys.exit("❌ --gap 已移除：帧间静音由 config 的 defaults.frame_gap 唯一决定"
+                 f"（当前 {frame_gap()}s），命令行不接受。要改节奏改 config.local.json。")
     ap = argparse.ArgumentParser()
     ap.add_argument("--present", required=True, help="index_present.html 路径")
     ap.add_argument("--report", required=True, help="阶段3 产出的 report.json")
     ap.add_argument("--out", required=True, help="输出 standalone.html")
     ap.add_argument("--sched", required=True, help="输出 schedule.json")
-    ap.add_argument("--gap", type=float, default=None,
-                    help="帧间静音秒；默认读 config（0.9，须与 _merged.wav 帧间一致，勿改）")
     ap.add_argument("--nf", type=int, default=None, help="帧数；缺省按 HTML 自动识别")
     ap.add_argument("--title", default="课程双音色成片")
     ap.add_argument("--keep-audio", action="store_true", help="保留内嵌 <audio>（默认剥掉）")
@@ -119,7 +139,7 @@ def main():
     ap.add_argument("--srt", default=None, help="同时输出 .srt 字幕文件路径")
     args = ap.parse_args()
     kws = [k.strip() for k in args.keywords.split(",") if k.strip()]
-    gap = args.gap if args.gap is not None else float(load_config().get("gap", 0.9))
+    gap = frame_gap()
 
     html = open(args.present, encoding="utf-8").read()
     styles = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
@@ -147,6 +167,23 @@ def main():
         cum += dur_map.get(fi, 0.0) + gap
     total = round(cum - gap, 3)
 
+    # 音画总时长对账：任何一侧用了不同的帧间 gap，末帧就会漂移数秒、成片报废。
+    # 与其在文档里写「--gap 必须 0.9」，不如让脚本自己拿 _merged.wav 实测一遍。
+    merged_wav = os.path.join(os.path.dirname(os.path.abspath(args.report)), "_merged.wav")
+    adur = wav_duration(merged_wav) if os.path.exists(merged_wav) else None
+    if adur is not None:
+        diff = total - adur
+        if abs(diff) > 0.15:
+            sys.exit(
+                f"❌ 音画总时长对不上：时间轴 {total:.2f}s vs {os.path.basename(merged_wav)} "
+                f"{adur:.2f}s（差 {diff:+.2f}s）。常见原因：report.json 缺帧/多帧、"
+                f"--nf 与音频帧数不符、或音频侧与画面侧帧间 gap 不一致"
+                f"（帧间 gap 唯一来源 = config defaults.frame_gap，当前 {gap}s）。")
+        print(f"音画时长对账: 时间轴 {total:.2f}s vs 音频 {adur:.2f}s（差 {diff:+.3f}s）✅")
+    else:
+        print("⚠️ 未找到 _merged.wav 与之对账，跳过时长校验"
+              f"（期望路径 {merged_wav}）")
+
     def bind_delays(n_steps, units, fdur):
         if n_steps == 0:
             return []
@@ -169,12 +206,12 @@ def main():
         gstart = starts[fi]
         gend = round(gstart + fdur + gap, 3)   # 显示到下一帧前，避免白屏闪烁
 
-        steps = list(re.finditer(r'<div class="step"([^>]*)>', inner))
+        steps = list(STEP_RE.finditer(inner))
         delays = bind_delays(len(steps), units_map.get(fi, []), fdur)
         steps_data = []
         for i, sm in enumerate(steps):
             appear = round(gstart + (delays[i] if i < len(delays) else 0), 3)
-            hm = re.search(r'data-hide-at="(\d+)"', sm.group(1))
+            hm = re.search(r'data-hide-at="(\d+)"', sm.group(0))
             if hm:
                 idx = int(hm.group(1)) - 1
                 disappear = round(gstart + (delays[idx] if idx < len(delays) else fdur), 3)
@@ -311,6 +348,15 @@ def main():
     print("step 总数:", sum(len(v["steps"]) for v in DATA.values()))
     bad = [("f%02d" % fi) for fi in sorted(frames) if fi <= NF and frames[fi].count("<div") != frames[fi].count("</div>")]
     print("div 不配平(应为空):", bad if bad else "无")
+    # step 数 vs 台词句数：不一致时该帧走「帧内均匀分布」兜底，音画不再 1:1 锚定。
+    # 门禁由 verify_steps.py 把关（它会 exit 1），这里只做显式提示，避免静默降级。
+    mism = ["f%02d(step%d/台词%d)" % (fi, len(DATA["f%02d" % fi]["steps"]), len(units_map.get(fi, [])))
+            for fi in sorted(frames) if fi <= NF and "f%02d" % fi in DATA
+            and len(DATA["f%02d" % fi]["steps"]) != len(units_map.get(fi, []))]
+    print("step 数 vs 台词句数 不一致(应为空):", mism if mism else "无")
+    if mism:
+        print("⚠️ 以上帧会退化为「帧内均匀分布」，画面不再逐句锚定；"
+              "先跑 verify_steps.py <课目录> 修到一致再出片")
 
 
 if __name__ == "__main__":
