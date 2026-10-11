@@ -720,6 +720,8 @@ body{background:#EAE4D6;font-family:var(--font-body);color:var(--ink);overflow:h
     var f = frames[fi];
     f.classList.add('active');
     f.querySelectorAll('.step').forEach(function(s){ s.classList.remove('on','gone'); });
+    var s1 = f.querySelector('.step');
+    if (s1){ si = 1; s1.classList.add('on'); }   // 进入帧自动点亮第一步，画面不空场
     updateHud();
   }
   function revealNext(){
