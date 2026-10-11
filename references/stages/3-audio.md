@@ -31,6 +31,18 @@ python3 $SK/scripts/dialog2audio_local.py --script "$H/视频课/script_v2_dialo
 - Windows 中文语音包缺失时：设置 → 时间和语言 → 语言和区域 → 添加「中文(简体)」并勾选语音
 - Windows / Linux 上其余阶段需用环境变量指定 `CHROME_BIN` / `FFMPEG`
 
+## 变速（可选，倍率 = 阶段 3 gate 用户决策点）
+
+```bash
+cd "$VC" && ./venv/bin/python speed_up.py --src "$W/audio" --speed 1.25
+mv "$W/audio_fast" "$W/音频_v2_125"    # 命名惯例：音频_v2_<倍率去掉点>，如 音频_v2_125 / 音频_v2_11
+```
+
+- 帧内语速 ×倍速（atempo 保音高），**帧间 0.9s 间隙不变速**（保留场景切换呼吸感）
+- 产物 `report.json` 的帧长已按实测 wav 回写（脚本内置 2b 步骤；atempo 编码每帧比理论短 ~24ms，不回写会累计漂移撞 4a 的 0.15s 对账红线）
+- **阶段 4 之后一律读变速后的 `report.json` 与 `_merged.wav`**，读原速的会音画错位
+- **倍率不是技术默认值**：K-2 受众（5-8 岁）偏慢，1.0x 原速也完全可交；同倍率给用户出 2–3 帧对比样本再定
+
 ## 参数与坑（两条路由通用）
 
 - 音色**实际定义在 `$VC/dialog2audio.py`**（老师 `xiaoxian_v2` 定稿 e20/e12_s288、含 v2 情绪路由；学生 `macie`）；`config.local.json` 的 `voices` 节是 preflight 自检源——换音色先改 `dialog2audio.py`，再同步 config 让自检跟上
