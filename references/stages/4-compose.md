@@ -26,12 +26,14 @@ python3 $SK/scripts/make_standalone.py \
 
 ## 4b 截图
 
+**管线选型是用户决策点，必须过 gate（L8 教训：静默选静帧版 → 动画全消失被用户打回）**。课件有入场动效（`.step.on` 后代选择器上的 animation）→ 一律动效版（L7 即此管线）；课件纯静态/用户明确要静帧版才走静帧版。
+
 ```bash
-node $SK/scripts/capture.js "$W"
+node $SK/scripts/capture.js "$W"        # 静帧版（需 make_standalone 不加 --animate）
 ```
 
 产出 `$W/shots/shot_0000.png …` + `durations.txt`。抽查：最小 png >32KB（空白帧会 <10KB），随机 diff 相邻帧确认互异。
-动效版用 `capture_anim.js "$W/standalone.html" "$W/frames" [总秒数]`（逐 1/30s tick 驱动 `applyTime` + `getAnimations` 虚拟时钟，JPEG 落盘，约 10 帧/s）。
+动效版用 `capture_anim.js "$W/standalone.html" "$W/frames" [总秒数]`（`make_standalone` 必须加 `--animate`；逐 1/30s tick 驱动 `applyTime` + `getAnimations` 虚拟时钟，JPEG 落盘，约 10 帧/s，7 分钟片 ≈ 1.1 万帧 ≈ 15–20 分钟）。
 
 ## 4c 合成（已脚本化，勿手打 ffmpeg）
 
