@@ -7,13 +7,15 @@
 ```bash
 python3 $SK/scripts/make_standalone.py \
   --present "$H/视频课/index_present.html" --report "$W/audio/report.json" \
-  --out "$W/standalone.html" --sched "$W/schedule.json" --title "<课程名>"
+  --out "$W/standalone.html" --sched "$W/schedule.json" --title "<课程名>" --animate
 ```
+
+- ⛔ **`--animate` 是默认必带项，不是可选参数**：成片一律动效版（虚拟时钟逐帧渲染，HTML 动效完整进片）。只有课件完全无动效**且用户明确要求**才允许去掉它走静帧版——静帧版会把 `.step.on` 后代上的入场动画拍在半路定格整段区间（L8 打回实锤，见 known_pitfalls #13）
 
 - **帧间静音不是参数**：`make_standalone` 不接 `--gap`，直接读 `load_config.frame_gap()`（默认 0.9，改 `config.local.json` 的 `defaults.frame_gap`），与阶段 3 拼 `_merged.wav` 同源，不可能错配。脚本结尾自动拿 `_merged.wav` 实测对账，漂移 >0.15s 报错退出——不用人工校验。
   （坑史：旧文档教人传 `--gap 0.25`，末帧漂移近 10s。另注 `dialog2audio --gap` 是另一个东西：帧内行距 0.4）
 - **竖版 / 横竖都要**：对 `index_present_portrait.html` 再跑一次（加 `--present …portrait` `--out $W/standalone_portrait.html` `--sched $W/schedule_portrait.json`），尺寸自动按 1080×1440；`--report` 复用同一份 `report.json`（阶段 3 音频只合成一次，两套共用）。后续 `capture*.js` / `qc_frames.js` 各自指向 `_portrait` 那份即可
-- 其它参数：`--subtitles`（蜡笔风字幕条，师生分色，长句按标点切 ≤30 字；字幕条 bottom:104px，只改 standalone 不动放映版）、`--srt`、--`keywords`（黄底橙字高亮）、`--animate`（动效版）
+- 其它参数：`--subtitles`（蜡笔风字幕条，师生分色，长句按标点切 ≤30 字；字幕条 bottom:104px，只改 standalone 不动放映版）、`--srt`、--`keywords`（黄底橙字高亮）
 - 脚本兼容两种 frame 写法（`class` 在前或 `id` 在前），自动剥掉内嵌 `<audio>`（成片音轨由 ffmpeg 单独混，留着会重复出声）
 - `bind_delays`：step 数 == 对话行数时 1:1 锚定每句 `start`；不相等则帧内均匀分布并打印提示
 - ⚠️ 不要用 `scripts/compose.py`（hyperframes 中间格式，脆正则 + 240s 流式限制，已弃用，仅存档）
@@ -26,14 +28,21 @@ python3 $SK/scripts/make_standalone.py \
 
 ## 4b 截图
 
-**管线选型是用户决策点，必须过 gate（L8 教训：静默选静帧版 → 动画全消失被用户打回）**。课件有入场动效（`.step.on` 后代选择器上的 animation）→ 一律动效版（L7 即此管线）；课件纯静态/用户明确要静帧版才走静帧版。
+**成片一律动效版（默认，无需询问）**：4a 已带 `--animate`，此处直接：
 
 ```bash
-node $SK/scripts/capture.js "$W"        # 静帧版（需 make_standalone 不加 --animate）
+node $SK/scripts/capture_anim.js "$W/standalone.html" "$W/frames" [总秒数]
+```
+
+（逐 1/30s tick 驱动 `applyTime` + `getAnimations` 虚拟时钟，JPEG 落盘，约 10 帧/s，7 分钟片 ≈ 1.1 万帧 ≈ 15–20 分钟。）4a 后抽中间帧确认动画在播：任选一句台词边界 +0.1~0.3s 的帧，元素应呈半透明/位移入场中——全就位 = 动画没进片。
+
+**静帧版是显式降级**，仅当课件完全无动效**且用户明确要求**才走；4a 需去掉 `--animate` 重生成：
+
+```bash
+node $SK/scripts/capture.js "$W"
 ```
 
 产出 `$W/shots/shot_0000.png …` + `durations.txt`。抽查：最小 png >32KB（空白帧会 <10KB），随机 diff 相邻帧确认互异。
-动效版用 `capture_anim.js "$W/standalone.html" "$W/frames" [总秒数]`（`make_standalone` 必须加 `--animate`；逐 1/30s tick 驱动 `applyTime` + `getAnimations` 虚拟时钟，JPEG 落盘，约 10 帧/s，7 分钟片 ≈ 1.1 万帧 ≈ 15–20 分钟）。
 
 ## 4c 合成（已脚本化，勿手打 ffmpeg）
 

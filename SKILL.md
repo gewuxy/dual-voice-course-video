@@ -110,13 +110,13 @@ bash $SK/scripts/preflight.sh "$H"                   # 0) 环境自检，缺件�
 
 判断要点：有 GPT-SoVITS 走路由 A（克隆音色，音质最佳），没有则落路由 B（本地系统 TTS，跨平台零依赖，先出片交付、装好环境后按「无声版后悔药」流程重合成）。
 
-⛔ 停下，抽查 2–3 帧（师生都在、短句没丢、语速自然）+ 问「音频是否确认」。
+⛔ 停下，把 2–3 帧试听音频文件交给用户点开听（师生都在、短句没丢、语速自然），`AskUserQuestion` 问「音频是否确认 + **变速倍率**」。**倍率必须用户选，不得默认沿用上一课**（L8 教训：静默抄 L7 的 1.25x 被用户打回）。变速命令与产物命名见 `references/stages/3-audio.md` 变速节。
 
 ### 4 · 整合出片【4a 时轴 → 4b 截图 → 4c 合成 → 4d 片头片尾】
 
 命令与已知失步路径全部在 `references/stages/4-compose.md`，**勿手打 ffmpeg**。
 
-判断要点：**片头不带念稿**（只做品牌与价值主张，2026-10-08 定案），默认 7.5s；片尾用 `make_intro_outro.py` 三段式。
+判断要点：**成片一律动效版**——`make_standalone` 必带 `--animate`、4b 用 `capture_anim.js` 虚拟时钟逐帧渲染（L1/L2 静帧版时代动画全丢，L8 误走静帧版被打回；静帧版仅当课件完全无动效**且用户明确要求**才可用）。**片头不带念稿**（只做品牌与价值主张，2026-10-08 定案），默认 7.5s；片尾用 `make_intro_outro.py` 三段式。
 
 - *4a 后*：本地打开 `standalone.html` 拖 `applyTime(t)`，确认每个 step 出现时刻与音频语义对得上。
 - *4b 后*：抽查 3–5 张（含贴纸/真照片/字幕的帧），无空白帧、无字体回退。
@@ -150,10 +150,10 @@ python3 $SK/scripts/load_config.py --json                  # 完整合并结果
 ```bash
 bash  $SK/scripts/preflight.sh "$H"                 # 环境自检（缺件明确报错）
 python3 $SK/scripts/verify_steps.py "$H"            # 帧/步 vs 帧/句 一致性（exit 1 拦截）
-bash  $SK/scripts/make_video.sh "$W" "<成片>.mp4"    # 阶段 4c 唯一实测不失步路径
+node  $SK/scripts/capture_anim.js "$W/standalone.html" "$W/frames"  # 阶段 4b 动效版（默认管线）
 ```
 
-其余脚本（`make_standalone` / `capture` / `capture_anim` / `qc_frames` / `dialog2audio_local` / `make_intro` / `make_intro_music` / `make_intro_outro` / `make_clips`）在各阶段文件里给完整命令；参数以 `--help` 为准。
+动效版 4c 用 `ffmpeg -framerate 30 -i f%05d.jpg`（命令见 4-compose.md）；`make_video.sh` 仅静帧版降级用。其余脚本（`make_standalone` / `capture` / `qc_frames` / `dialog2audio_local` / `make_intro` / `make_intro_music` / `make_intro_outro` / `make_clips`）在各阶段文件里给完整命令；参数以 `--help` 为准。
 
 ## Response Style
 
