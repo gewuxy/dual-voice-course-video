@@ -117,3 +117,10 @@
 - **师生双声差异化（三平台）**：macOS 两个声音 + 抬调；Windows 枚举中文声音取两个不同 voice，仅一个时 SSML pitch+25%；espeak 学生 -p 80 vs 老师 -p 50。
 - **采样率合同**：统一重采样到 32k（ffmpeg 是流水线硬依赖）。
 - **实测状态**：macOS 分支已真机实测；**Windows SAPI 与 Linux espeak 分支尚未真机实测**，首个对应平台用户反馈时优先排查中文语音包是否安装。preflight 路由 B 检测也要按平台分支（uname -s）。
+
+## 13. 静帧截图拍到入场动画中间态（L8 实翻车）
+
+- **现象**：成片里元素半透明+位移定格整段区间（say 气泡悬在半空盖住徽章/标题、chips 级联延迟的后几颗几乎不可见），且机检全绿（PSNR 对的是同源 shots，抓不住）。
+- **根因**：动效全挂在 `.step.on` 的**后代选择器**上（`.step.on .slot.say` / `.step.on .chips>*` …），standalone 冻结块只覆盖 `.step`/`.stage-frame`/`#subtitle`/`#subbar` 容器自身——animation 不继承，子元素动画照跑；capture 在 applyTime 切类后仅等 90ms，0.45–0.68s 的入场动画全被拍在半路，而该截图要静止挂满整个区间（数秒）。
+- **为什么后来才爆**：冻结块与 90ms 自 skill 打包初始版就有；L7 出片在打包之前（其存档 standalone 无冻结块可证），L8 是第一个全流程走打包版流水线的课。不是 2026-10-11 两次重构引入（均未碰 capture.js/OVERRIDE_CSS）。
+- **修法（勿回退）**：OVERRIDE_CSS 冻结选择器必须连后代一起冻：`.step *, .stage-frame *`。安全性依据：所有入场动画 fill-mode:both 且 100% 关键帧=自然末态，基态=末态（唯一基态 opacity:0 的是 `.step` 包装层自身，显隐仍由 `.on` 控制）；`--animate` 实时渲染管线不受影响（该分支不加冻结块）。

@@ -262,8 +262,13 @@ def main():
 """ + ("" if args.animate else """
   /* 冻结所有过渡动画：静帧截图管线在 applyTime 后仅等 ~90ms，
      课件原生的 .45s 渐入会被拍在半路（半透明"置灰"帧）。
-     --animate 模式（实时渲染管线）保留动效，由 CSS 动画接管入场。 */
-  .step, .step.on, .step.gone, .stage-frame, #subtitle, #subbar {
+     ⛔ 必须连子元素一起冻：动效全挂在 .step.on 的后代选择器上
+     （.step.on .slot.say / .step.on .chips>* …），只冻 .step 自身时
+     子元素动画照跑，截图定格在入场中间态（半透明+位移），且该帧
+     要静止挂满整个区间——成片出现"布局偏移"。animation 基配
+     fill-mode:both，去掉动画即呈现末态（基样式=末态），冻结安全。 */
+  .step, .step.on, .step.gone, .stage-frame, #subtitle, #subbar,
+  .step *, .stage-frame * {
           transition:none !important; animation:none !important; }
 """)
     OVERRIDE_CSS = OVERRIDE_CSS % (W, H)   # 注入舞台尺寸（竖版/横版自适应）

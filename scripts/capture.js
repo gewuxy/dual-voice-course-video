@@ -55,7 +55,7 @@ const SIZE = readSize(path.join(DIR, 'standalone.html'));
     durations.push(dur);
     if (i % 20 === 0) console.log('captured', i + 1, '/', intervals.length, 't=', t);
   }
-  fs.writeFileSync(path.join(DIR, 'durations.txt'), durations.map(d => d.toFixed(3)).join('\n'));
+  fs.writeFileSync(path.join(DIR, 'durations.txt'), durations.map(d => d.toFixed(3)).join('\n') + '\n');
   await browser.close();
   console.log('DONE shots=', intervals.length, 'total=', sched.total);
 })().catch(e => { console.error('CAPTURE ERROR', e); process.exit(1); });
