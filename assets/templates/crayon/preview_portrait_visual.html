@@ -385,5 +385,104 @@ body{background:#EAE4D6;font-family:var(--font-body);color:var(--ink);overflow:h
 <div class="foot"><span class="brand">小贤 AI 青少年教育</span><span>体系课程 · 实训项目 · AI 创造力</span></div>
 </div>
 </div>
+
+<div id="hud"></div>
+<div id="hint">点击 / 空格 继续 ▶<small>每点一下，出现下一段内容</small></div>
+
+<div id="intro">
+  <div class="card2">
+    <h1>🎬 竖版 visual 参考成品 · 使用说明</h1>
+    <p>《分类与搜索》· 图片/概念可视化优先 · 6 帧</p>
+    <p><span class="k">点击</span><span class="k">空格</span><span class="k">→</span> 出现下一段内容</p>
+    <p><span class="k">←</span> 回到上一帧　<span class="k">R</span> 重头开始　<span class="k">F</span> 全屏</p>
+    <button id="introBtn">开始放映</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var STAGE_W = 1080, STAGE_H = 1440;
+  var frames = Array.prototype.slice.call(document.querySelectorAll('.stage-frame'));
+  var fi = 0, si = 0;
+  var hud = document.getElementById('hud');
+  var hint = document.getElementById('hint');
+  var intro = document.getElementById('intro');
+  var root = document.getElementById('stageWrap');
+
+  function fit(){
+    var s = Math.min(window.innerWidth/STAGE_W, window.innerHeight/STAGE_H);
+    root.style.transform = 'scale(' + s + ')';
+  }
+  function updateHud(){
+    var n = frames[fi].querySelectorAll('.step').length;
+    hud.innerHTML = '第 <b>' + (fi+1) + '</b> / ' + frames.length + ' 帧　·　第 <b>' + si + '</b> / ' + n + ' 步' +
+                    '　<span style="opacity:.7">（空格/→ 继续 · ← 返回 · F 全屏）</span>';
+  }
+  function showFrame(i){
+    frames.forEach(function(f){ f.classList.remove('active'); });
+    fi = i; si = 0;
+    var f = frames[fi];
+    f.classList.add('active');
+    f.querySelectorAll('.step').forEach(function(s){ s.classList.remove('on','gone'); });
+    updateHud();
+  }
+  function revealNext(){
+    var f = frames[fi];
+    var steps = Array.prototype.slice.call(f.querySelectorAll('.step'));
+    if (si < steps.length){
+      si++;
+      var s = steps[si-1];
+      s.classList.add('on'); s.classList.remove('gone');
+      updateHud();
+    } else if (fi < frames.length - 1){
+      showFrame(fi + 1);
+    }
+  }
+  function prev(){ if (fi > 0) showFrame(fi - 1); }
+  function toggleFs(){
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+  function dismissHint(){ if (hint) hint.style.opacity = '0'; }
+
+  window.addEventListener('keydown', function(e){
+    if (intro && intro.style.display !== 'none') return;
+    if (e.code === 'Space' || e.code === 'ArrowRight' || e.code === 'ArrowDown' || e.code === 'Enter'){
+      e.preventDefault(); dismissHint(); revealNext();
+    } else if (e.code === 'ArrowLeft' || e.code === 'ArrowUp'){
+      e.preventDefault(); prev();
+    } else if (e.key === 'r' || e.key === 'R'){ showFrame(0); }
+    else if (e.key === 'f' || e.key === 'F'){ toggleFs(); }
+  });
+  root.addEventListener('click', function(){
+    if (intro && intro.style.display !== 'none') return;
+    dismissHint(); revealNext();
+  });
+  document.getElementById('introBtn').addEventListener('click', function(){
+    intro.style.display = 'none'; dismissHint(); showFrame(0);
+  });
+  window.addEventListener('resize', fit);
+  fit(); showFrame(0); updateHud();
+})();
+</script>
+<style>
+#hud{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);font-family:"PingFang SC",sans-serif;
+  color:#fff;font-size:19px;pointer-events:none;user-select:none;background:rgba(0,0,0,.5);
+  border-radius:999px;padding:7px 24px;white-space:nowrap;z-index:8}
+#hud b{color:#FFD98A}
+#hint{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);font-family:"PingFang SC",sans-serif;
+  color:#fff;font-size:32px;font-weight:700;text-align:center;background:rgba(0,0,0,.6);padding:18px 38px;
+  border-radius:22px;pointer-events:none;transition:opacity .4s ease;z-index:9}
+#hint small{display:block;font-size:21px;font-weight:400;margin-top:8px;color:#e8e4d8}
+#intro{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:20;display:flex;align-items:center;justify-content:center}
+#intro .card2{width:780px;max-width:88vw;background:#FFF7EC;color:#2C2C2A;border-radius:28px;padding:46px 52px;
+  text-align:center;font-family:"PingFang SC",sans-serif}
+#intro h1{font-size:38px;margin:0 0 16px}
+#intro p{font-size:25px;line-height:1.7;margin:9px 0;color:#5F5E5A}
+#intro .k{display:inline-block;background:#534AB7;color:#fff;border-radius:10px;padding:4px 14px;font-weight:700;margin:0 4px}
+#intro button{margin-top:24px;font-size:29px;font-weight:700;color:#fff;background:#534AB7;border:none;
+  border-radius:16px;padding:15px 44px;cursor:pointer}
+</style>
+
 </body>
 </html>
