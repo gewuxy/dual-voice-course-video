@@ -232,12 +232,10 @@ body{background:#EAE4D6;font-family:var(--font-body);color:var(--ink);overflow:h
     <div class="fscene" style="position:absolute;left:90px;top:480px;width:900px;z-index:6">
 <div style="position:absolute;left:150px;top:0px;gap:40px"><span class="chip" style="font-size:48px;padding:16px 38px;background:#E9F6E4">玩具箱</span><span class="chip" style="font-size:48px;padding:16px 38px;background:#EAF3FB">停车场</span><span class="chip" style="font-size:48px;padding:16px 38px;background:#FFECEC">球架</span></div></div>
     </div>
-  </div>
   <div class="step">
     <div class="fscene" style="position:absolute;left:90px;top:480px;width:900px;z-index:6">
 <div style="position:absolute;left:150px;top:0px;gap:40px"><span class="chip" style="font-size:48px;padding:16px 38px;background:#FFF7E0">毛茸茸</span><span class="chip" style="font-size:48px;padding:16px 38px;background:#EAF3FB">长长的</span><span class="chip" style="font-size:48px;padding:16px 38px;background:#FFECEC">圆圆的</span></div></div>
     </div>
-  </div>
   <div class="step">
     <div class="fscene" style="position:absolute;left:90px;top:480px;width:900px;z-index:6">
 <div class="title" style="position:absolute;left:0;right:0;top:120px;text-align:center;font-size:150px">特征</div>
@@ -438,10 +436,17 @@ body{background:#EAE4D6;font-family:var(--font-body);color:var(--ink);overflow:h
   }
   function dismissHint(){ if (hint) hint.style.opacity = '0'; }
 
+  // HUD 控制条闲时自动淡出（避免压住底部品牌行；按任意键/点击即恢复）
+  var idleT;
+  function pokeHud(){
+    hud.style.opacity = '1';
+    clearTimeout(idleT);
+    idleT = setTimeout(function(){ hud.style.opacity = '0'; }, 2500);
+  }
   window.addEventListener('keydown', function(e){
     if (intro && intro.style.display !== 'none') return;
     if (e.code === 'Space' || e.code === 'ArrowRight' || e.code === 'ArrowDown' || e.code === 'Enter'){
-      e.preventDefault(); dismissHint(); revealNext();
+      e.preventDefault(); pokeHud(); dismissHint(); revealNext();
     } else if (e.code === 'ArrowLeft' || e.code === 'ArrowUp'){
       e.preventDefault(); prev();
     } else if (e.key === 'r' || e.key === 'R'){ showFrame(0); }
@@ -449,19 +454,19 @@ body{background:#EAE4D6;font-family:var(--font-body);color:var(--ink);overflow:h
   });
   root.addEventListener('click', function(){
     if (intro && intro.style.display !== 'none') return;
-    dismissHint(); revealNext();
+    pokeHud(); dismissHint(); revealNext();
   });
   document.getElementById('introBtn').addEventListener('click', function(){
-    intro.style.display = 'none'; dismissHint(); showFrame(0);
+    intro.style.display = 'none'; pokeHud(); dismissHint(); showFrame(0);
   });
   window.addEventListener('resize', fit);
-  fit(); showFrame(0); updateHud();
+  fit(); showFrame(0); updateHud(); pokeHud();
 })();
 </script>
 <style>
 #hud{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);font-family:"PingFang SC",sans-serif;
   color:#fff;font-size:19px;pointer-events:none;user-select:none;background:rgba(0,0,0,.5);
-  border-radius:999px;padding:7px 24px;white-space:nowrap;z-index:8}
+  border-radius:999px;padding:7px 24px;white-space:nowrap;z-index:8;transition:opacity .4s ease}
 #hud b{color:#FFD98A}
 #hint{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);font-family:"PingFang SC",sans-serif;
   color:#fff;font-size:32px;font-weight:700;text-align:center;background:rgba(0,0,0,.6);padding:18px 38px;

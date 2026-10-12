@@ -124,14 +124,16 @@
 
 自动推荐：`node/python $SK/scripts/suggest_layout.py <剧本>` 出选型表，**在阶段 2 gate 交用户确认**后可逐帧改。
 
-### 3.8 排完必跑的机检（两条命令）
+### 3.8 排完必跑的机检（三条命令）
 
 ```bash
 node $SK/scripts/qc_frames.js   <index_present*.html> /tmp/qc    # 溢出 + visual 文字预算/安全区
 node $SK/scripts/qc_overlap.js  <index_present*.html>            # 块重叠 + 块间<36px + 压品牌行
+python3 $SK/scripts/qc_divs.py   <index_present*.html> ...       # div 嵌套平衡（帧提前闭合检测）
 ```
 
 - `qc_overlap` 在**关动画、舞台原尺寸**下量真实包围盒；同一步内的叠放算设计手段不报，**跨步重叠必报**。
+- `qc_divs` 查每帧 foot 内嵌深度=1、帧内 div 开闭差=0（末帧允许 -1 的 stageWrap 闭合）。帧提前闭合时后续帧会掉出 stageWrap 失去缩放，foot 变视口宽（折行、压 HUD），而 qc_frames/qc_overlap 未必能报出来——**必须三条都跑**。
 - **塞不下时的动作顺序（硬规则）**：砍内容 → 拆帧/拆步 → 字号降一档 → 最后才允许压间距，且不得低于下限。
 - 「砍内容」在放映版的落地方式：**该句留空 `<div class="step"></div>`（保留步数与音段对齐），画面不新增卡片，完整表达交给字幕**——附和句、与 chips/阶梯图重复的回答、纯欢呼句优先隐藏。隐藏处留 HTML 注释说明是哪句。
 - 禁止目测估高一次排完：绝对 top 手摆的帧，必须跑 `qc_overlap` 实测渲染高，再回填 top。

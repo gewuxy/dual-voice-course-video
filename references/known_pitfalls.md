@@ -154,3 +154,19 @@
   `node $SK/scripts/qc_overlap.js <html>`（跨步重叠 / 同列块间 <36px / 压品牌行呼吸区）。
 - 塞不下时的正解（用户定档）：**hide 掉冗余对话**——该句留空 `<div class="step"></div>`（步数不变、音段对齐），完整表达交给字幕；优先隐藏附和句、与 chips/阶梯图重复的回答、纯欢呼句。**不改字号、不改左右双列对话流、不压间距硬塞。**
 - 与图重复的文字优先隐藏图那一侧：chips / 线索阶梯 / 标签墙已经表达的内容，气泡再念一遍就是双份。
+
+## 18. 返修时先确认用户看的是哪个文件；成品修复的三条工程教训
+
+- **先定位文件再动手**：参考件（$SK/assets/templates/crayon/preview*.html）与成品（课程目录 index_present*.html）是两套文件。L8 返修前两轮只修了参考件，用户看的是成品——白干两轮。用户报「第 N 帧有问题」时先问/查他打开的是哪套（成品 13 帧 vs 参考 6 帧）。
+- **测量必须用 offsetTop/offsetHeight**：成品页面带 fit-scale transform，getBoundingClientRect 受缩放污染（style top:470 量出 426）；offset* 不受 transform 影响，且与 qc_overlap 口径一致。
+- **源码级 hide 的结构安全**：①「清空步」必须保留 step 的闭合 </div>，否则 div 失衡、后续帧全部嵌套进前帧（机检表现为跨帧 slot 串台）；②帧内**最后一个 step** 里删视觉块时，绝不能吞掉 `.foot` 与帧闭合；③删完必跑 div 平衡自检 + 浏览器逐帧验证。
+- **hide 后做全量链式重排**（首气泡保持原位，后续每个 = 前底 + 36px，可上移可下移），比只推重叠对更能利用 hide 腾出的空间；重排只动左列 slot（offsetLeft < 右列界），右列贴纸/chips 不跟动。
+- fscene 帧的终态截图上半空是正常的（前步换景被隐藏），别当 bug 修。
+
+## 19. 生成器 chips 行内联双闭合：帧提前闭合掉出 stageWrap（参考件打回第 N 轮的真凶）
+
+- 症状：某帧起画面失去缩放（按视口宽渲染）、底部品牌行折行、HUD 控制条压住品牌行——但出问题的帧本身内容看起来"差不多对"，极难目检发现。
+- 根因：生成器写 chips 行时把 `</div></div>`（内层 div + fscene）内联闭合了，模板又保留后两行 `</div>`（fscene + step 闭合）——**每个 chips 步多出一个 `</div>`**。HTML 解析器照单全收：f03 的多余闭合把帧和 stageWrap 提前关掉，f04 起整帧掉到 body 层，`.stage-frame` 的 `inset:0` 变成相对视口 → foot 宽=视口宽。
+- 诊断金标准：**量 foot 的 offsetWidth，不等于 STAGE_W 就是嵌套断了**（参考件 660 vs 1080 一眼定位）。逐行跑 div 深度能精确到行。
+- 机检已固化：`python3 $SK/scripts/qc_divs.py <html>...`（foot 深度=1 + 开闭差=0），与 qc_frames/qc_overlap 并列第三条，排完必跑。注意 qc_frames/qc_overlap **报不出这个 bug**（掉出舞台的帧其内容互不重叠、不溢出）。
+- 末帧段会连带 stageWrap 闭合一起统计（差=-1 属正常），机检已放行；另注意 dialog 13 帧版 f13 末尾同类多余闭合（被解析器忽略，无害但要清）。
