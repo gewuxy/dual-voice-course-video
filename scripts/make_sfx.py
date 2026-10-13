@@ -39,7 +39,8 @@ def parse_script(path):
 
 
 def speech_segments(wav):
-    """silencedetect 实测有声段 [(start, end)]。"""
+    """silencedetect 细切有声段 [(start, end)]。句内自然停顿会把它切得比台词行数多，
+    由 merge_by_gap 按需合并。"""
     p = subprocess.run(
         ["ffmpeg", "-i", wav, "-af", "silencedetect=noise=-35dB:d=0.15", "-f", "null", "-"],
         capture_output=True, text=True)
@@ -56,7 +57,20 @@ def speech_segments(wav):
         cur = max(cur, e)
     if total - cur >= MIN_SPEECH:
         segs.append((cur, total))
-    return segs
+    return segs, sil
+
+
+def merge_by_gap(segs, sil, thr):
+    """把被短于 thr 的静音隔开的有声段合并（thr=0 不合并）。"""
+    if not segs:
+        return segs
+    merged = [list(segs[0])]
+    for i, (s, e) in enumerate(sil[:len(segs) - 1]):
+        if e - s < thr:
+            merged[-1][1] = segs[i + 1][1]
+        else:
+            merged.append(list(segs[i + 1]))
+    return merged
 
 
 def main():
@@ -97,8 +111,21 @@ def main():
         lines = script[fno]
         if not (1 <= lno <= len(lines)):
             errors.append(f"帧 {fno} 行 {lno}: 超出范围（该帧共 {len(lines)} 行）"); continue
-        segs = speech_segments(wav)
+        raw, sil = speech_segments(wav)
         spoken = [i for i, s in enumerate(lines) if not s]  # 有声行下标
+        # 自适应合并：句内自然停顿会多切，按间隙阈值阶梯合并到台词行数；对不齐即失败
+        target = len(spoken)
+        segs = None
+        for thr in (0.0, 0.5, 0.75, 0.9, 1.1, 1.3):
+            cand = merge_by_gap(raw, sil, thr)
+            if len(cand) == target:
+                if thr:
+                    print(f"帧 {fno}: 细切 {len(raw)} 段 → 合并阈值 {thr}s 对齐 {target} 行")
+                segs = cand
+                break
+        if segs is None:
+            errors.append(f"帧 {fno}: 任何合并阈值都对不齐 {target} 个台词段（细切 {len(raw)} 段），请人工检查音频")
+            continue
         # 该帧台词前缀校验（从剧本原文取该行前 8 字）
         full = open(args.script, encoding="utf-8").read()
         fm = re.search(rf"【第\s*{fno}\s*帧】([\s\S]*?)(?=【第\s*\d+\s*帧】|$)", full)
@@ -108,8 +135,6 @@ def main():
             if prefix and not head.startswith(prefix):
                 errors.append(f"帧 {fno} 行 {lno}: 前缀不符（剧本该句是「{head[:12]}…」）"); continue
         k = spoken.index(lno - 1) + 1  # 该行是帧内第几个有声段
-        if len(segs) != len(spoken):
-            print(f"⚠️ 帧 {fno}: 实测有声段 {len(segs)} 个 ≠ 剧本有声行 {len(spoken)} 行，按序映射，请人工复核该帧", file=sys.stderr)
         if k > len(segs):
             errors.append(f"帧 {fno} 行 {lno}: 只实测到 {len(segs)} 个有声段"); continue
         pos = starts[fno] + segs[k - 1][1] + SFX_DELAY

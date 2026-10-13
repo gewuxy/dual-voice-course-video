@@ -75,7 +75,7 @@ python3 $SK/scripts/make_sfx.py --script "$H/视频课/script_v2_dialog.txt" \
   --sfx-dir "$SK/assets/sfx" --intro 7.5 --out "$H/视频课/音效时刻.txt"
 ```
 
-  工具内部：帧起点查 report.json（Σ前帧 dur + 0.9，帧级 dur 可靠）、帧内 silencedetect 实测句尾（units 时刻偏差 6s+ 不可信，工具已规避）、表情行自动跳过、台词前缀校验不符即 exit 1。**必须对最终采用的变速版本音频跑**
+  工具内部：帧起点查 report.json（Σ前帧 dur + 0.9，帧级 dur 可靠）、帧内 silencedetect 细切后**自适应合并到台词行数**（句内自然停顿会多切，按间隙阈值 0.5–1.3s 阶梯合并，对不齐即 exit 1——真实 TTS 音频实测必需，L9 六帧 9–14 细切段全部对齐 4 行）、表情行自动跳过、台词前缀校验不符即 exit 1。**必须对最终采用的变速版本音频跑**
 - **混流**（多音效，在 4c 第二步混流命令上加输入与链）：
 
 ```bash
