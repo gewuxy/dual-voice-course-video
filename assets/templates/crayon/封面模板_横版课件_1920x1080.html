@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>蜡笔风 · 横版课件封面模板 1920×1080</title>
+<!--
+  横版课件封面（1920×1080），与《封面模板_竖版视频号_1080x1260.html》成对使用。
+  换课只改 3 处（搜索 【替换】）：
+    ① 顶部徽章：课号 + 年级
+    ② 主标题（荧光笔高亮词）+ 副标题 + 手绘波浪线
+    ③ 三张贴纸卡：SVG 简笔画 + 卡下说明词（内容跟随本课主题）
+  底部品牌行固定不改。截图出图：对 #stage 元素截图（1920×1080）。
+-->
+<style>
+/* ============ 蜡笔色板 ============ */
+:root{
+  --paper:#FFFDF4;
+  --paper-2:#FFF6E2;
+  --ink:#3A3226;
+  --ink-2:#7A6E5C;
+  --c-yellow:#FFD84D;
+  --c-orange:#FF9F45;
+  --c-red:#FF6B6B;
+  --c-pink:#FFB3C7;
+  --c-green:#7BC96F;
+  --c-teal:#4CC9B0;
+  --c-blue:#5AB0F5;
+  --c-purple:#B088F9;
+  --c-brown:#C89B6A;
+  --line:#3A3226;
+  --font-title:"圆体-简","Yuanti SC","站酷快乐体2016修订版","PingFang SC",sans-serif;
+  --font-hand:"娃娃体-简","仓耳渔阳体","HanziPen SC","PingFang SC",sans-serif;
+  --font-body:"圆体-简","Yuanti SC","PingFang SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:#EAE4D6;
+  font-family:var(--font-body);
+  color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;overflow:hidden;
+}
+
+/* ============ 舞台：1920x1080 等比缩放 ============ */
+#stageWrap{width:1920px;height:1080px;transform-origin:center center;flex:none}
+.stage{
+  position:relative;width:1920px;height:1080px;overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 12% 8%, #FFFDF6 0%, #FFF9EC 45%, #FFF4E0 100%);
+  box-shadow:0 18px 50px rgba(58,50,38,.28);
+}
+/* 纸纹噪点 */
+.stage::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:60;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23g)'/></svg>");
+  opacity:.10;mix-blend-mode:multiply;
+}
+/* 淡点阵（作业本感） */
+.stage::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(58,50,38,.09) 1.6px, transparent 1.7px);
+  background-size:40px 40px;opacity:.5;
+}
+
+/* ============ 封面元件 ============ */
+/* 贴纸卡：白边 + 硬阴影 + 微旋转 */
+.sticker{
+  position:relative;background:#FFFDF8;
+  border-radius:26px 30px 26px 32px;
+  box-shadow:9px 11px 0 rgba(58,50,38,.13), 0 3px 0 rgba(58,50,38,.05);
+  padding:22px;
+}
+.sticker::before{ /* 白色贴纸外沿 */
+  content:"";position:absolute;inset:-7px;border-radius:32px 36px 32px 38px;
+  background:#FFFDF8;z-index:-1;
+}
+
+/* 手绘标题 */
+.title{
+  font-family:var(--font-title);font-weight:700;color:var(--ink);
+  letter-spacing:.02em;line-height:1.06;
+}
+/* 荧光笔高亮（文字下层） */
+.hl{position:relative;z-index:0;display:inline-block;padding:0 .04em}
+.hl>i{
+  position:absolute;z-index:-1;left:-.05em;right:-.05em;bottom:.06em;height:.40em;
+  background:var(--hl,var(--c-yellow));opacity:.92;
+  border-radius:58% 42% 47% 53% / 70% 55% 45% 60%;
+  transform:rotate(-1.4deg);
+}
+.hl>u{ /* 第二层更淡的蜡笔痕 */
+  position:absolute;z-index:-1;left:.02em;right:-.08em;bottom:.14em;height:.30em;
+  background:var(--hl,var(--c-yellow));opacity:.35;
+  border-radius:45% 55% 60% 40% / 55% 50% 50% 45%;
+  transform:rotate(1.2deg);text-decoration:none;
+}
+
+/* 页眉 / 页脚 */
+.hdr{position:absolute;left:76px;top:58px;display:flex;align-items:center;gap:20px}
+.hdr .badge{
+  font-family:var(--font-hand);font-size:40px;color:#8A5A2B;
+  background:var(--c-yellow);padding:10px 30px;border-radius:999px;
+  transform:rotate(-2deg);box-shadow:4px 5px 0 rgba(58,50,38,.14);
+}
+.hdr .pno{
+  font-family:var(--font-hand);font-size:36px;color:var(--ink-2);
+}
+.foot{
+  position:absolute;left:0;right:0;bottom:44px;
+  display:flex;align-items:center;justify-content:center;gap:26px;
+  font-family:var(--font-hand);font-size:31px;color:var(--ink-2);
+}
+.foot .brand{
+  font-family:var(--font-title);font-weight:700;font-size:34px;color:var(--ink);
+  background:#FFF;border:3px solid var(--ink);border-radius:999px;
+  padding:6px 26px;box-shadow:4px 5px 0 rgba(58,50,38,.16);transform:rotate(-1deg);
+}
+</style>
+</head>
+<body>
+<div id="stageWrap">
+<div class="stage" id="stage">
+
+<!-- ===== 手绘滤镜定义 ===== -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="wobble" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="9" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="wobble2" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="4" seed="21" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+  <!-- 背景装饰 -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;z-index:1" viewBox="0 0 1920 1080">
+    <g filter="url(#wobble)" fill="none" stroke-linecap="round">
+      <!-- 左上太阳 -->
+      <circle cx="150" cy="150" r="62" fill="#FFD84D" stroke="#3A3226" stroke-width="5"/>
+      <g stroke="#3A3226" stroke-width="5">
+        <path d="M150 58 v-24"/><path d="M150 266 v24"/><path d="M58 150 H34"/><path d="M242 150 h24"/>
+        <path d="M85 85 L68 68"/><path d="M215 215 l17 17"/><path d="M215 85 l17-17"/><path d="M85 215 l-17 17"/>
+      </g>
+      <!-- 右上云 -->
+      <path d="M1690 150 q-8-42 34-44 q16-38 62-22 q40 4 44 40 q34 6 22 40 h-172 q-24 0 -16-28 z"
+            fill="#FFFFFF" stroke="#3A3226" stroke-width="5"/>
+      <!-- 底部小草 -->
+      <g stroke="#7BC96F" stroke-width="7">
+        <path d="M120 1030 q16-46 6-72"/><path d="M180 1030 q-18-40 -4-66"/>
+        <path d="M1760 1030 q16-46 6-72"/><path d="M1820 1030 q-18-40 -4-66"/>
+        <path d="M940 1036 q22-40 8-62"/>
+      </g>
+    </g>
+  </svg>
+
+  <!-- 【替换①】顶部徽章：课号 + 年级 -->
+  <div class="hdr" style="left:262px">
+    <span class="badge">AI 启蒙 · 第 12 课</span>
+    <span class="pno">适合 小学 1–2 年级</span>
+  </div>
+
+  <!-- 【替换②】主标题（每词一个 .hl 高亮）+ 副标题 + 手绘波浪线 -->
+  <div style="position:absolute;left:0;right:0;top:196px;text-align:center;z-index:4">
+    <div class="title" style="font-size:206px">
+      <span class="hl" style="--hl:var(--c-yellow)">数据<i></i><u></u></span><span class="hl" style="--hl:var(--c-green)">集<i></i><u></u></span>
+    </div>
+    <div style="margin-top:30px;position:relative;display:inline-block">
+      <span class="title" style="font-size:76px">教电脑认识世界</span>
+      <svg style="position:absolute;left:-10px;right:-10px;bottom:-34px;width:calc(100% + 20px);height:26px"
+           viewBox="0 0 600 26" preserveAspectRatio="none">
+        <path d="M4 16 q40-14 82 0 t82 0 t82 0 t82 0 t82 0 t82 0"
+              fill="none" stroke="#4CC9B0" stroke-width="7" stroke-linecap="round" filter="url(#wobble2)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 【替换③】三张贴纸卡：SVG 简笔画 + 卡下说明词 -->
+  <div style="position:absolute;left:0;right:0;top:596px;display:flex;justify-content:center;
+              align-items:flex-end;gap:58px;z-index:4">
+    <!-- 猫 -->
+    <div class="sticker" style="width:266px;height:294px;transform:rotate(-6deg)">
+      <svg viewBox="0 0 160 160" style="width:152px;height:152px;display:block;margin:6px auto 0">
+        <g filter="url(#wobble)" stroke="#3A3226" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M40 64 L32 18 L80 46 Z" fill="#FF9F45"/>
+          <path d="M120 64 L128 18 L80 46 Z" fill="#FF9F45"/>
+          <ellipse cx="80" cy="86" rx="52" ry="44" fill="#FFB865"/>
+          <ellipse cx="62" cy="80" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="98" cy="80" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <path d="M74 98 h12 l-6 8 z" fill="#FF6B6B"/>
+          <path d="M80 106 q-8 9 -15 3" fill="none"/>
+          <path d="M80 106 q8 9 15 3" fill="none"/>
+          <path d="M22 90 h20 M22 100 h20 M138 90 h-20 M138 100 h-20"/>
+        </g>
+      </svg>
+      <div style="text-align:center;font-family:var(--font-hand);font-size:37px;color:var(--ink);margin-top:2px">一堆猫</div>
+    </div>
+    <!-- 加号 -->
+    <svg viewBox="0 0 80 80" style="width:58px;height:58px;margin-bottom:104px">
+      <path d="M12 40 h56 M40 12 v56" stroke="#FF6B6B" stroke-width="13" stroke-linecap="round" filter="url(#wobble)"/>
+    </svg>
+    <!-- 狗 -->
+    <div class="sticker" style="width:298px;height:330px;transform:rotate(1.5deg);z-index:2">
+      <svg viewBox="0 0 160 160" style="width:170px;height:170px;display:block;margin:8px auto 0">
+        <g filter="url(#wobble)" stroke="#3A3226" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+          <ellipse cx="34" cy="66" rx="16" ry="34" fill="#A87A4E" transform="rotate(-16 34 66)"/>
+          <ellipse cx="126" cy="66" rx="16" ry="34" fill="#A87A4E" transform="rotate(16 126 66)"/>
+          <ellipse cx="80" cy="90" rx="50" ry="42" fill="#C89B6A"/>
+          <ellipse cx="62" cy="84" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="98" cy="84" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="80" cy="104" rx="12" ry="9" fill="#3A3226"/>
+          <path d="M80 113 v7" fill="none"/>
+          <path d="M80 113 q-10 10 -17 4" fill="none"/>
+          <path d="M80 113 q10 10 17 4" fill="none"/>
+          <path d="M80 120 q8 13 0 20 q-8 -7 0 -20 z" fill="#FF6B6B"/>
+        </g>
+      </svg>
+      <div style="text-align:center;font-family:var(--font-hand);font-size:37px;color:var(--ink);margin-top:2px">一堆狗</div>
+    </div>
+    <!-- 加号 -->
+    <svg viewBox="0 0 80 80" style="width:58px;height:58px;margin-bottom:104px">
+      <path d="M12 40 h56 M40 12 v56" stroke="#FF6B6B" stroke-width="13" stroke-linecap="round" filter="url(#wobble)"/>
+    </svg>
+    <!-- 兔 -->
+    <div class="sticker" style="width:266px;height:294px;transform:rotate(6deg)">
+      <svg viewBox="0 0 160 160" style="width:152px;height:152px;display:block;margin:6px auto 0">
+        <g filter="url(#wobble)" stroke="#3A3226" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+          <ellipse cx="56" cy="34" rx="14" ry="40" fill="#FFFFFF" transform="rotate(-9 56 34)"/>
+          <ellipse cx="104" cy="34" rx="14" ry="40" fill="#FFFFFF" transform="rotate(9 104 34)"/>
+          <ellipse cx="56" cy="36" rx="6" ry="26" fill="#FFB3C7" stroke="none" transform="rotate(-9 56 36)"/>
+          <ellipse cx="104" cy="36" rx="6" ry="26" fill="#FFB3C7" stroke="none" transform="rotate(9 104 36)"/>
+          <ellipse cx="80" cy="98" rx="46" ry="38" fill="#FFFFFF"/>
+          <ellipse cx="64" cy="94" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <ellipse cx="96" cy="94" rx="5" ry="7" fill="#3A3226" stroke="none"/>
+          <path d="M76 108 h8 l-4 6 z" fill="#FFB3C7"/>
+          <path d="M80 114 q-7 8 -13 3" fill="none"/>
+          <path d="M80 114 q7 8 13 3" fill="none"/>
+          <path d="M26 100 h18 M26 110 h18 M134 100 h-18 M134 110 h-18"/>
+        </g>
+      </svg>
+      <div style="text-align:center;font-family:var(--font-hand);font-size:37px;color:var(--ink);margin-top:2px">一堆兔子</div>
+    </div>
+  </div>
+
+  <!-- 品牌行：固定，不改 -->
+  <div class="foot">
+    <span class="brand">小贤 AI 青少年教育</span>
+    <span>体系课程 · 实训项目 · AI 创造力</span>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  function fit(){
+    var pad = 90;
+    var s = Math.min((window.innerWidth - 40) / 1920, (window.innerHeight - pad) / 1080);
+    document.getElementById('stageWrap').style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+})();
+</script>
+</body>
+</html>

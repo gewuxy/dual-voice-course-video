@@ -37,7 +37,7 @@ _sp() { python3 "$CFG_PY" --get paths.sys_py 2>/dev/null; }
 SYS_PY="${SYS_PY:-$(_sp)}"
 SYS_PY="${SYS_PY:-$(command -v python3 || echo python3)}"
 H="${1:-}"
-TPL="${TPL:-$SKILL_DIR/assets/templates/crayon/preview.html}"
+TPL="${TPL:-$SKILL_DIR/assets/templates/crayon/封面模板_横版课件_1920x1080.html}"
 
 # 打印本次实际解析到的路径（路径不该靠文档记忆，靠脚本说出来）
 echo "解析到的路径："
@@ -103,7 +103,7 @@ chk "ffmpeg：$FFMPEG" "command -v '$FFMPEG' >/dev/null 2>&1 || [ -x '$FFMPEG' ]
 chk "puppeteer-core（npx 缓存或 node_modules）" "ls ~/.npm/_npx/*/node_modules/puppeteer-core >/dev/null 2>&1 || node -e \"require.resolve('puppeteer-core')\"" \
     "cd ~/.workbuddy/binaries/node/workspace && npm i puppeteer-core"
 chk "系统 python 带 PIL：$SYS_PY" "command -v '$SYS_PY' >/dev/null 2>&1 && '$SYS_PY' -c 'import PIL'" "$SYS_PY 装 Pillow：'<py> -m pip install Pillow'，或设 SYS_PY=<带PIL的python>"
-chk "蜡笔风模板 preview.html" "[ -f '$TPL' ]" "确认共享模板路径"
+chk "蜡笔风封面模板" "[ -f '$TPL' ]" "确认共享模板路径"
 chk "node（建议 22.x；只校验可用）" "node -v" "装 Node.js 22"
 
 if [ -n "$H" ]; then

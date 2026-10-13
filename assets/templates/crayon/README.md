@@ -43,7 +43,7 @@
 | `preview_landscape_visual.html` | 横版 1920×1080 | visual 图片优先 |
 | `preview_portrait_visual.html` | 竖版 1080×1440 | visual 图片优先 |
 
-（`preview.html` 是旧翻页式课件 demo，仅第 1 页封面 slide 作横版课件封面源使用，见阶段 5；不属于放映版参考件。`preview_landscape.html` 源自 L8 横版成品，f01/f02/f04/f11 四处 top 微调以过机检。）
+（`preview_landscape.html` 源自 L8 横版成品，f01/f02/f04/f11 四处 top 微调以过机检。横版课件封面用独立模板 `封面模板_横版课件_1920x1080.html`，与竖版封面模板成对，见阶段 5。）
 
 四件都自带放映控制器（点击/空格步进、←返回、R 重播、F 全屏），直接打开即可翻看。
 
