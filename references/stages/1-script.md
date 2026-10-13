@@ -43,7 +43,7 @@ python3 $SK/scripts/verify_steps.py "$H"
 | 惊讶发现 | `wow` |
 
 - 克制原则：**每帧 ≤1 处、全片 3–6 处、只挂情绪高点**；拿不准就不加——音效密了等于卡点铃铛（known_pitfalls「不要卡点铃铛」）
-- 素材在 `$SK/assets/sfx/`（现只有 `laugh`）；缺的音效报给用户找素材，**禁止用 TTS 念拟声词代替**（克隆音色念笑声尴尬）
+- 素材在 `$SK/assets/sfx/`（`laugh`/`ding`/`cheer`/`boing`/`wow` 五件齐）；仍缺的音效报给用户找素材，**禁止用 TTS 念拟声词代替**（克隆音色念笑声尴尬）
 - 时机不用管：阶段 4 `make_sfx.py` 自动实测落位。阶段 1 只定「哪句加什么」
 
 `sfx_plan.txt` 格式（与剧本同目录，每行一条）：
