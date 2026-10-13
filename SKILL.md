@@ -72,7 +72,7 @@ bash $SK/scripts/preflight.sh "$H"                   # 0) 环境自检，缺件�
 
 产出 `$H/视频课/script_v2_dialog.txt`（驱动 HTML 帧结构与 TTS 的唯一真相源）。格式、校验命令与判断要点（角色分配铁律、视频介质改写）见 `references/stages/1-script.md`。
 
-⛔ 停下，呈现完整剧本 + 本课关键词表（提炼规则见 `stages/1-script.md`；字幕高亮用、横竖版共用一份）+ 问「台词/关键词表是否确认」；关键词表确认后写入 `course_config.json` 的 `subtitle_keywords`。
+⛔ 停下，呈现完整剧本 + 本课关键词表 + 音效提案 `sfx_plan.txt`（判定表见 `stages/1-script.md`；关键词表字幕高亮用、横竖版共用一份）+ 问「台词/关键词表/音效是否确认」；关键词表确认后写入 `course_config.json` 的 `subtitle_keywords`。
 
 ### 2 · HTML 放映版【gate】
 
