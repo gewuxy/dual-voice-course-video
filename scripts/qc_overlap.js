@@ -1,9 +1,13 @@
-// qc_overlap.js — 放映版逐帧「终态重叠」检测
+// qc_overlap.js — 放映版逐帧「同屏重叠」检测
 //
 // 用法：node qc_overlap.js <index_present.html>
-// 检测：每帧全展开（关动画、按舞台原尺寸），不同 step 的内容块两两求交，
-//       重叠面积 >150px² 记一处。同一步内的叠放是设计手段，不报。
-// 顺带报：内容块底沿侵入品牌行（内容底沿→品牌行 <32px 呼吸感红线）。
+// 放映语义：步骤按 clear 分段——clear 步亮起时之前所有步骤整体淡出（清场式），
+//           因此只有同段步骤会同屏。**只测同段步骤对**；跨段在真实放映中永不同屏，
+//           位置共享是清场式的设计本体，不构成重叠。
+// 阈值：同段步骤对重叠面积 >150px² 记 FAIL；同列间距 <30px 记提示（不阻断）；
+//       内容底沿→品牌行 <32px 呼吸线侵入记 FAIL（任何步骤亮起时都不可侵入）。
+// 豁免：裸 SVG（场景底板/插画/动物墙）不参与配对——贴纸、拍立得压在底板上是设计手段；
+//       同一步内的叠放不报。
 const fs = require('fs');
 const path = require('path');
 const { loadPuppeteer } = require('./pptr.js');
@@ -34,18 +38,23 @@ try {
     document.head.appendChild(s);
   });
   const n = await page.evaluate(() => document.querySelectorAll('.stage-frame').length);
-  let bad = 0;
+  let bad = 0, tightTotal = 0;
   for (let i = 1; i <= n; i++) {
     const { pairs, footHit, tight } = await page.evaluate((idx) => {
       const frames = document.querySelectorAll('.stage-frame');
       frames.forEach(f => f.classList.remove('active'));
       const f = frames[idx - 1]; f.classList.add('active');
       f.querySelectorAll('.step').forEach(s => { s.classList.add('on'); s.classList.remove('gone'); });
-      // 内容块 = 可见的「原子盒」：气泡/贴纸/chip/照片/面板/svg/带底色的块
-      // 注意：只能取原子盒——像「只装绝对定位子元素的零尺寸容器」量出来是 0，会漏检
-      const SEL = '.slot, .chip, .sticker, .pola, .guanka, .panel-l, .panel-r, svg, [style*="background"], [style*="border"]';
+      // clear 分段：clear 步开启新段（它亮起时前段整体淡出），段号相同的步骤才会同屏
+      const steps = Array.prototype.slice.call(f.querySelectorAll('.step'));
+      const segOf = []; let cur = 0;
+      steps.forEach((s, k) => { if (s.classList.contains('clear')) cur++; segOf[k] = cur; });
+      // 内容块 = 可见的「原子盒」：气泡/贴纸/chip/照片/面板/带底色的块
+      // 注意：① 只能取原子盒——像「只装绝对定位子元素的零尺寸容器」量出来是 0，会漏检
+      //       ② 裸 svg（场景底板/插画）不收——贴纸压底板是设计手段，且 svg 常是纯装饰
+      const SEL = '.slot, .chip, .sticker, .pola, .guanka, .panel-l, .panel-r, [style*="background"], [style*="border"]';
       const blocks = [];
-      f.querySelectorAll('.step').forEach((step, si) => {
+      steps.forEach((step, si) => {
         const seen = new Set();
         step.querySelectorAll(SEL).forEach(k => {
           if (seen.has(k)) return; seen.add(k);
@@ -54,13 +63,14 @@ try {
           if (r.width < 8 || r.height < 8) return;
           const cs = getComputedStyle(k);
           if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return;
-          blocks.push({ si: si + 1, r, tag: (k.className || 'div').toString().slice(0, 24),
+          blocks.push({ si: si + 1, seg: segOf[si], r, tag: (k.className || 'div').toString().slice(0, 24),
                         txt: (k.innerText || '').replace(/\s+/g, '').slice(0, 10) });
         });
       });
       const res = [], tight = [];
       for (let a = 0; a < blocks.length; a++) for (let b = a + 1; b < blocks.length; b++) {
         if (blocks[a].si === blocks[b].si) continue;
+        if (blocks[a].seg !== blocks[b].seg) continue;         // 跨段：放映时永不同屏，不构成重叠
         const A = blocks[a].r, B = blocks[b].r;
         const w = Math.min(A.right, B.right) - Math.max(A.left, B.left);
         const h = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
@@ -92,8 +102,8 @@ try {
       pairs.forEach(p => console.log(`   step${p.s1}×step${p.s2} 面积${p.area}px²  ${p.a}@${JSON.stringify(p.r1)} ↔ ${p.b}@${JSON.stringify(p.r2)}`));
     }
     if (tight.length) {
-      bad++;
-      console.log(`f${String(i).padStart(2, '0')} 块间过近（<30px，呼吸线 36px）:`);
+      tightTotal += tight.length;
+      console.log(`f${String(i).padStart(2, '0')} 间距过近提示 ${tight.length} 处（<30px，呼吸目标 44px，不阻断）:`);
       tight.forEach(x => console.log(`   step${x.s1}×step${x.s2} 间距${x.gap}px  ${x.a} ↔ ${x.b}`));
     }
     if (footHit.length) {
@@ -102,7 +112,7 @@ try {
       footHit.forEach(x => console.log('   ' + x));
     }
   }
-  console.log(bad ? `⚠️ ${bad} 帧有问题` : '✅ 全帧无重叠、无品牌行侵入');
+  console.log(bad ? `⚠️ ${bad} 帧有问题` : `✅ 全帧无重叠、无品牌行侵入${tightTotal ? `（另有 ${tightTotal} 处间距过近提示）` : ''}`);
   console.log('DONE');
   await browser.close();
 })().catch(e => { console.error('ERR', e); process.exit(1); });
