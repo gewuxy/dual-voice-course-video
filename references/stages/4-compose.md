@@ -67,7 +67,15 @@ ffmpeg -y -i "$W/video_anim.mp4" -i "$W/audio/_merged.wav" -map 0:v:0 -map 1:a:0
 **可选：音效层**——`_merged.wav` 里只有对白。画面事件需要声音强调时（笑声、雷声、环境音、内嵌儿歌），在 4c 混流时叠加音效：
 
 - **素材**：通用音效放 `$SK/assets/sfx/`（`<名>.wav`）；课程专属素材放课程目录。放映版内嵌 `<audio>` 不会出声（standalone 已默认剥掉），必须走混流
-- **落位**：写 `$H/视频课/音效时刻.txt`，每行一条：`音效名 + 正片秒 + 成片秒`。时刻**必须用 silencedetect 实测帧音频静音窗口**（`ffmpeg -i _merged.wav -af silencedetect=noise=-35dB:d=0.5 -f null -`）；report.json 的 units 时刻偏差可达 6s+（把句后停顿计入），只可粗定位，见 known_pitfalls「音效落位」条
+- **落位（自动）**：跑 `make_sfx.py`，输入阶段 1 确认的 `sfx_plan.txt`，自动输出时刻表与混流命令：
+
+```bash
+python3 $SK/scripts/make_sfx.py --script "$H/视频课/script_v2_dialog.txt" \
+  --plan "$H/视频课/sfx_plan.txt" --audio "$W/音频_v2_125" \
+  --sfx-dir "$SK/assets/sfx" --intro 7.5 --out "$H/视频课/音效时刻.txt"
+```
+
+  工具内部：帧起点查 report.json（Σ前帧 dur + 0.9，帧级 dur 可靠）、帧内 silencedetect 实测句尾（units 时刻偏差 6s+ 不可信，工具已规避）、表情行自动跳过、台词前缀校验不符即 exit 1。**必须对最终采用的变速版本音频跑**
 - **混流**（多音效，在 4c 第二步混流命令上加输入与链）：
 
 ```bash
