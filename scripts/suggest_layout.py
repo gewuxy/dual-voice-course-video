@@ -6,7 +6,7 @@
     python3 suggest_layout.py <剧本.txt>
     python3 suggest_layout.py <剧本.txt> --json out.json
 
-判据（crayon/README.md §3.7）：这帧的核心信息能不能一图概括？
+判据（crayon/README.md §2.7）：这帧的核心信息能不能一图概括？
   能一图概括（展示/操作/分类找宝/素材图为主）        → visual
   需要语言定义或推理（问答/概念定义/总结/作业）      → dialog（默认）
 

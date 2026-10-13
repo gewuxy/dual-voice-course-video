@@ -33,7 +33,7 @@
 - **判据一句话：这帧的核心信息能不能一图概括？** 能（展示/操作演示/分类找宝/素材图为主）→ `visual`；不能（问答/概念定义/总结/作业）→ `dialog`（默认）。台词长短**不决定**版式——dialog 版允许长句。
 - 自动推荐：`python3 $SK/scripts/suggest_layout.py <剧本>`，出选型表 + 每帧台词字数；**gate 时交用户确认，可逐帧改**。
 - 每帧落属性：`<div class="stage-frame" id="f03" data-layout="visual">`（`qc_frames.js` 按此分管机检）。
-- 规格与帧骨架：`$SK/assets/templates/crayon/README.md` §3（两版式共用同一套字号体系，**禁止衍生版式另起字号**）。
+- 规格与帧骨架：`$SK/assets/templates/crayon/README.md` §2（两版式共用同一套字号体系，**禁止衍生版式另起字号**）。
 - **visual 帧硬规则**：每步主图挂 `.fscene` 整屏换景（每步都要挂，漏挂前图不清场）；对话提炼 **≤15 字/句**（完整表达交给字幕）；整帧画面文字 **≤40 字**；关键词锚点卡 ≤4 字、90–150px、一帧 1 张；主图占屏宽 ≥50%；字幕安全区（竖版 y≥1120 / 横版 y≥900）只放品牌行。
 
 动效片段库：`$SK/assets/templates/anim-snippets/`（`mo.css` / `mo.gsap.js` / README）。class 一览与「何时用」见 `anim-snippets/README.md`，本文件不复述。
