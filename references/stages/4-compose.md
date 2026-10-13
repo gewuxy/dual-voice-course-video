@@ -1,6 +1,6 @@
 # 阶段 4 · 音画整合出片（命令与已知失步路径）
 
-子确认点顺序 4a 时轴 → 4b 截图 → 4c 合成 → 4d 片头片尾；各确认点与「片头不带念稿」等判断：见 `SKILL.md` 阶段 4。
+子确认点顺序 4a 时轴 → 4b 截图 → 4c 合成 → 4d 片头与拼接；各确认点与「片头不带念稿」等判断：见 `SKILL.md` 阶段 4。
 
 ## 4a 时间轴对齐
 
@@ -10,7 +10,7 @@ python3 $SK/scripts/make_standalone.py \
   --out "$W/standalone.html" --sched "$W/schedule.json" --title "<课程名>" --animate
 ```
 
-- ⛔ **`--animate` 是默认必带项，不是可选参数**：成片一律动效版（虚拟时钟逐帧渲染，HTML 动效完整进片）。只有课件完全无动效**且用户明确要求**才允许去掉它走静帧版——静帧版会把 `.step.on` 后代上的入场动画拍在半路定格整段区间（L8 打回实锤，见 known_pitfalls #13）
+- ⛔ **`--animate` 是默认必带项，不是可选参数**：成片一律动效版（虚拟时钟逐帧渲染，HTML 动效完整进片）。只有课件完全无动效**且用户明确要求**才允许去掉它走静帧版——静帧版会把 `.step.on` 后代上的入场动画拍在半路定格整段区间。
 
 - **帧间静音不是参数**：`make_standalone` 不接 `--gap`，直接读 `load_config.frame_gap()`（默认 0.9，改 `config.local.json` 的 `defaults.frame_gap`），与阶段 3 拼 `_merged.wav` 同源，不可能错配。脚本结尾自动拿 `_merged.wav` 实测对账，漂移 >0.15s 报错退出——不用人工校验。
   （坑史：旧文档教人传 `--gap 0.25`，末帧漂移近 10s。另注 `dialog2audio --gap` 是另一个东西：帧内行距 0.4）
@@ -81,7 +81,7 @@ cp "$W/shots/shot_00XX.png" /tmp/ab_b.png
 ffmpeg -y -i /tmp/ab_a.png -i /tmp/ab_b.png -filter_complex psnr -f null -   # ≥45dB 合格
 ```
 
-### 【必做】无声版归档（换音色重合成的后悔药，2026-10-03 用户要求）
+### 【必做】无声版归档（换音色重合成的后悔药）
 
 成片后立刻把中间产物复制到 `$H/视频课/`，别留在 /tmp（系统会清）：
 
@@ -93,7 +93,7 @@ ffmpeg -y -i /tmp/ab_a.png -i /tmp/ab_b.png -filter_complex psnr -f null -   # �
 ⚠️ 无声版里字幕时间是按**当前音色**时长烧进画面的：新音色若每句时长变化，直接混流会字幕错位。
 **正确重合成路径**：新音色跑 dialog2audio → 用新 `report.json`/durations 重跑 `make_standalone` → 重截图 → `make_video.sh` → 混流（全链脚本化，仅时长变化无需改画面内容）。无声版只用于预览/对比，或新音色时长与旧版几乎一致时直接混流。
 
-## 4d 片头与片尾
+## 4d 片头拼接
 
 **动态片头一键生成**（默认 7.5s / 30fps / 1920×1080）：
 
@@ -103,7 +103,23 @@ bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3
 
 - 文案全走 CLI：`--brand / --claim / --lead / --k1 / --k2 / --k3 / --noplug / --title`（`--title` 里的 `<em>关键词</em>` 自动加黄色高亮胶囊）
 - 时长改 `--total`：模板内所有时间点过 `K(x)=x*TOTAL/7.5` 等比缩放，不用改 JS
-- **节拍表、视觉令牌、配乐参数、设计约束的权威在 `assets/intro/README.md`**（分屏时间轴 / 已定案的设计约束），改之前必读，本文件不复述
-- 配乐：`python3 $SK/scripts/make_intro_music.py --out m.wav --duration 7.5 [--bpm 100] [--bells]`（默认不加卡点铃铛，用户定案）
+- **片头已定稿**：出片头只跑上面的命令，不要改模板与配乐参数（模板 `intro_crayon_template.html`、配乐器 `make_intro_music.py`、`logo.svg` 官网原件均在 `assets/intro/`）
+- 配乐：`python3 $SK/scripts/make_intro_music.py --out m.wav --duration 7.5 [--bpm 100] [--bells]`（默认不加卡点铃铛）
 
-**片尾**：`python3 $SK/scripts/make_intro_outro.py --video 正片.mp4 --out 成片.mp4`（三段式，尺寸自适应，正片不再被压成 1920×1080；告别词按正片同倍速 atempo）。其 16:9 片头卡资产为 legacy，动态片头已由 `make_intro.sh` 取代。三段拼接（片头/正片/片尾）的采样率坑见 `known_pitfalls.md` §6。
+**片头与正片拼接**：两段编码参数必须统一（30fps + video_track_timescale 15360 + 48kHz），否则 `concat -c copy` 静默截断/失步（见 known_pitfalls §6）：
+
+```bash
+# 1) 两段统一编码（片头出自 make_intro.sh 已对齐，正片 4c 音轨是 44.1kHz 必须重编码）
+ffmpeg -y -i 片头.mp4 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" \
+  -r 30 -video_track_timescale 15360 -c:v libx264 -crf 20 -preset medium \
+  -ar 48000 -ac 2 -c:a aac -b:a 192k /tmp/intro_u.mp4
+ffmpeg -y -i 正片.mp4 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" \
+  -r 30 -video_track_timescale 15360 -c:v libx264 -crf 20 -preset medium \
+  -ar 48000 -ac 2 -c:a aac -b:a 192k /tmp/body_u.mp4
+# 2) 无损拼接 + loudnorm + faststart
+printf "file '/tmp/intro_u.mp4'\nfile '/tmp/body_u.mp4'\n" > /tmp/list.txt
+ffmpeg -y -f concat -safe 0 -i /tmp/list.txt -c copy /tmp/joined.mp4
+ffmpeg -y -i /tmp/joined.mp4 -af "loudnorm=I=-16:TP=-1.5:LRA=11" -ar 48000 -ac 2 \
+  -c:v copy -c:a aac -b:a 192k -movflags +faststart 成片.mp4
+```
+

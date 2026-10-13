@@ -1,6 +1,6 @@
 # 阶段 3 · 双音色音频（命令与产物 schema）
 
-**两条路由，preflight 自动判定，产物合同完全一致**（`frame_NN.wav` / `_merged.wav` 帧间 0.9s / `report.json` 顶层 list），阶段 4 无需任何改动。路由选择原则与确认点：见 `SKILL.md` 阶段 3。
+**两条路由，preflight 自动判定，产物合同完全一致**（`frame_NN.wav` / `_merged.wav` 帧间 0.9s / `report.json` 顶层 list），阶段 4 无需任何改动。有 GPT-SoVITS 环境走路由 A（克隆音色，音质最佳），没有则落路由 B：**先出片交付**，装好环境后按 `4-compose.md`「无声版归档（换音色后悔药）」流程重合成。
 
 ## 路由 A · GPT-SoVITS 克隆音色（首选）
 
