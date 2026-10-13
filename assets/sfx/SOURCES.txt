@@ -1,0 +1,9 @@
+音效素材来源与许可
+==================
+
+cartoon_laugh.wav
+- 来源: Mixkit "Cartoon voice laugh" (sfx id 343)
+- 页面: https://mixkit.co/free-sound-effects/laugh/
+- 许可: Mixkit License（免费商用，无需署名）https://mixkit.co/license/
+- 处理: 2026-10-13 由 preview mp3 转 48kHz/16bit 单声道，silenceremove 掐首尾静音（1.26s -> 0.70s）
+- 首次使用: L9《推理 · 算法》第 3 帧「牙膏会掉一地！」笑点
