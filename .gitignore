@@ -16,3 +16,6 @@ HANDOFF.md
 config.local.json
 config.local.yaml
 config.local.toml
+
+# 用户定稿清单（颜色/模板/教学原则等个性化规则，不对外发布）
+references/known_pitfalls.local.md

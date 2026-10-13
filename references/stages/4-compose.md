@@ -15,7 +15,7 @@ python3 $SK/scripts/make_standalone.py \
 - **帧间静音不是参数**：`make_standalone` 不接 `--gap`，直接读 `load_config.frame_gap()`（默认 0.9，改 `config.local.json` 的 `defaults.frame_gap`），与阶段 3 拼 `_merged.wav` 同源，不可能错配。脚本结尾自动拿 `_merged.wav` 实测对账，漂移 >0.15s 报错退出——不用人工校验。
   （坑史：旧文档教人传 `--gap 0.25`，末帧漂移近 10s。另注 `dialog2audio --gap` 是另一个东西：帧内行距 0.4）
 - **竖版 / 横竖都要**：对 `index_present_portrait.html` 再跑一次（加 `--present …portrait` `--out $W/standalone_portrait.html` `--sched $W/schedule_portrait.json`），尺寸自动按 1080×1440；`--report` 复用同一份 `report.json`（阶段 3 音频只合成一次，两套共用）。后续 `capture*.js` / `qc_frames.js` 各自指向 `_portrait` 那份即可
-- 其它参数：`--subtitles`（蜡笔风字幕条，师生分色，长句按标点切 ≤30 字；字幕条 bottom:104px，只改 standalone 不动放映版）、`--srt`、--`keywords`（黄底橙字高亮）
+- 其它参数：`--subtitles`（蜡笔风字幕条，师生分色，单行不折行不缩字；长句按标点分段，上限 26 字=竖版可用宽决定、硬断回退弱标点防切词，见 known_pitfalls §8）、`--srt`、`--keywords`（**一般不用传**：词表唯一权威来源是 `course_config.json` 的 `subtitle_keywords`，横竖版自动共用一份；CLI 传参仅作临时覆盖。每次生成会追加实际生效参数到 `视频课/build_log.jsonl`，横竖版是否同参一目了然）
 - 脚本兼容两种 frame 写法（`class` 在前或 `id` 在前），自动剥掉内嵌 `<audio>`（成片音轨由 ffmpeg 单独混，留着会重复出声）
 - `bind_delays`：step 数 == 对话行数时 1:1 锚定每句 `start`；不相等则帧内均匀分布并打印提示
 - ⚠️ 不要用 `scripts/compose.py`（hyperframes 中间格式，脆正则 + 240s 流式限制，已弃用，仅存档）

@@ -27,7 +27,7 @@ config 的 defaults.frame_gap）。阶段 3 拼 _merged.wav 用的是同一个�
 import argparse, contextlib, json, os, re, sys, wave
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from load_config import frame_gap     # 帧间静音唯一来源（勿在此写字面量）
+from load_config import frame_gap, load_config  # 帧间静音/课程配置唯一来源（勿在此写字面量）
 
 
 def highlight(text, kws):
@@ -46,10 +46,13 @@ def srt_ts(sec):
     return "%02d:%02d:%02d,%03d" % (h, m, s, ms)
 
 
-def chunk_text(text, hard=30, soft=18):
+def chunk_text(text, hard=26, soft=18):
     """把长句按标点切成字幕条片段：强标点（。？！）在 len>=soft 后断，
-    超过 hard 硬断；尾巴太短并回上一段。返回片段列表。"""
+    超过 hard 硬断（优先回退到最近的弱标点「，、：；」处切，不切词中间）；
+    尾巴太短并回上一段。hard=26 保证 26 字 × 34px = 884px < 竖版可用宽 960px，
+    单行永不超宽（L8 竖版实测 34 字 nowrap 被裁，见日志）。"""
     strong = "。？！?!?"
+    weak = "，、：；,;:"
     parts, buf = [], ""
     i = 0
     while i < len(text):
@@ -62,12 +65,27 @@ def chunk_text(text, hard=30, soft=18):
             if len(buf) >= soft:
                 parts.append(buf)
                 buf = ""
-        elif (ch in strong and len(buf) >= soft) or len(buf) >= hard:
+        elif ch in strong and len(buf) >= soft:
             parts.append(buf)
             buf = ""
+        elif len(buf) >= hard:
+            # 到达硬上限：优先回退到最近的弱标点处断句（尾巴至少留 2 字）；
+            # 回退窗口从 buf 末尾一路扫到开头，26 字内最近标点可能在任意位置
+            cut = None
+            for j in range(len(buf) - 2, 3, -1):
+                if buf[j] in weak and len(buf) - (j + 1) >= 2:
+                    cut = j + 1
+                    break
+            if cut:
+                parts.append(buf[:cut])
+                buf = buf[cut:]
+            else:
+                parts.append(buf)
+                buf = ""
         i += 1
     if buf:
-        if parts and len(buf) <= 5:
+        # 尾巴太短才并回上一段；并回后上一段超 hard 的话宁可保留短段（超宽是硬伤）
+        if parts and len(buf) <= 5 and len(parts[-1]) + len(buf) <= hard:
             parts[-1] += buf
         else:
             parts.append(buf)
@@ -135,11 +153,30 @@ def main():
     ap.add_argument("--keep-audio", action="store_true", help="保留内嵌 <audio>（默认剥掉）")
     ap.add_argument("--subtitles", action="store_true", help="在 standalone 里加底部字幕条（师生分色+关键词高亮）")
     ap.add_argument("--animate", action="store_true", help="保留入场动效（实时渲染管线用；默认冻结动画供静帧截图）")
-    ap.add_argument("--keywords", default="", help="逗号分隔的关键词表，字幕中高亮")
+    ap.add_argument("--keywords", default="", help="逗号分隔的关键词表，覆盖 course_config.json 的 subtitle_keywords（一般不用传）")
     ap.add_argument("--srt", default=None, help="同时输出 .srt 字幕文件路径")
     args = ap.parse_args()
-    kws = [k.strip() for k in args.keywords.split(",") if k.strip()]
-    gap = frame_gap()
+
+    # 定位课程目录（course_config.json 所在的 视频课/）：report 可能在 视频课/ 或 视频课/audio/，
+    # 放映版 HTML 一定在 视频课/。依次探测。
+    course_dir = None
+    for cand in (os.path.dirname(os.path.abspath(args.report)),
+                 os.path.dirname(os.path.dirname(os.path.abspath(args.report))),
+                 os.path.dirname(os.path.abspath(args.present))):
+        if os.path.isfile(os.path.join(cand, "course_config.json")):
+            course_dir = cand
+            break
+
+    # 关键词词表唯一权威来源 = course_config.json 的 subtitle_keywords（横竖版自动共用一份，
+    # 杜绝两次生成各编一套）；CLI --keywords 仅作临时覆盖。
+    if args.keywords.strip():
+        kws = [k.strip() for k in args.keywords.split(",") if k.strip()]
+        kw_src = "cli"
+    else:
+        course_cfg = load_config(course_dir) if course_dir else {}
+        kws = [str(k).strip() for k in course_cfg.get("subtitle_keywords", []) if str(k).strip()]
+        kw_src = "course_config" if kws else "none"
+    gap = frame_gap(course_dir)
 
     html = open(args.present, encoding="utf-8").read()
     styles = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
@@ -272,8 +309,28 @@ def main():
           transition:none !important; animation:none !important; }
 """)
     OVERRIDE_CSS = OVERRIDE_CSS % (W, H)   # 注入舞台尺寸（竖版/横版自适应）
+    # 四角布局只适用横版：1920 宽才放得下「右上标语」。
+    # 竖版（H>W）保持放映版页脚（标语+品牌胶囊居中一行，bottom:36，用户已定稿），
+    # 字幕条上移到 bottom:104 避让页脚——否则右上标语与 .hdr 的「适合…小朋友」重叠、
+    # 字幕与品牌胶囊打架（L8 竖版实测翻车，见 known_pitfalls）。
     SUB_CSS = """
-  /* ===== 视频版四角布局：左上徽章(不动) / 右上标语 / 底部居中字幕 / 右下品牌 ===== */
+  /* ===== 底部字幕条（居中单行、师生分色 + 关键词高亮；长句由 SUB_SPLIT 预分段，永不折行/缩字） ===== */
+  #subbar { position:fixed; left:50%; transform:translateX(-50%); bottom:__SUBBOT__px; z-index:999;
+            display:none; }
+  #subbar.on { display:block; }
+  #subtitle { font-family:var(--font-title,'圆体-简','Yuanti SC',sans-serif); font-weight:400;
+              font-size:34px; line-height:1.4; text-align:center; white-space:nowrap;
+              padding:0 12px; background:none;
+              color:#C17F59;
+              text-shadow:0 0 6px rgba(255,250,238,.95),0 0 14px rgba(255,250,238,.85),
+                          0 2px 3px rgba(193,127,89,.25); }
+  #subtitle.stu { color:#C2255C; }
+  #subtitle .kw { color:#D9480F; background:#F6E360; border-radius:10px; padding:0 7px;
+                  font-size:1.12em; }
+""".replace("__SUBBOT__", str(104 if H > W else 26))
+    if H <= W:
+        SUB_CSS = """
+  /* ===== 视频版四角布局（仅横版）：左上徽章(不动) / 右上标语 / 底部居中字幕 / 右下品牌 ===== */
   #f01 .hdr { left:76px !important; }   /* 第1帧徽章行贴左上，与其他帧一致 */
   .foot { position:absolute; inset:0; display:block; gap:0; justify-content:normal;
           padding:0; background:none; pointer-events:none; }
@@ -281,20 +338,7 @@ def main():
           font-size:34px; color:#5F5E5A; letter-spacing:2px; }
   .foot .brand { position:absolute; right:44px; bottom:26px; font-size:26px;
           padding:8px 26px; border-radius:999px; border:3px solid #1D2D49; }
-  /* ===== 底部字幕条（单行、无边框、师生分色 + 关键词高亮） ===== */
-  #subbar { position:fixed; left:50%; transform:translateX(-50%); bottom:26px; z-index:999;
-            display:none; }
-  #subbar.on { display:block; }
-  #subtitle { font-family:var(--font-title,'圆体-简','Yuanti SC',sans-serif); font-weight:700;
-              font-size:34px; line-height:1.35; text-align:center; white-space:nowrap;
-              padding:0 12px; background:none;
-              color:#1D2D49;
-              text-shadow:0 0 6px rgba(255,250,238,.95),0 0 14px rgba(255,250,238,.85),
-                          0 2px 3px rgba(29,45,73,.28); }
-  #subtitle.stu { color:#C2255C; }
-  #subtitle .kw { color:#D9480F; background:#F6E360; border-radius:10px; padding:0 7px;
-                  font-size:1.12em; }
-"""
+""" + SUB_CSS
     SUB_HTML = ('<div id="subbar"><div id="subtitle"></div></div>\n') if args.subtitles else ""
     frames_html = ['<div class="stage-frame" id="f%02d">%s</div>' % (fi, DATA and (frames[fi] if args.keep_audio else strip_audio(frames[fi])).rstrip())
                    for fi in sorted(frames) if fi <= NF]
@@ -324,9 +368,19 @@ def main():
               "    el.classList.toggle('on', on);\n"
               "    if(!on) continue;\n"
               "    var ss = el.querySelectorAll('.step');\n"
+              "    var cur = -1;\n"
+              "    for(var i=0;i<ss.length;i++){var s=d.steps[i];\n"
+              "      if(s && t >= s.ap - 0.0005 && t < s.di - 0.0005) cur=i;}\n"
+              # clear 语义（与放映版控制器一致）：cur 步若带 clear，则它之前的步骤
+              # 全部 .gone（内容不删只隐藏）；clear 之后的新步骤正常亮起。
+              # 没有这段，clear 分页帧会所有步骤同时可见、气泡叠罗汉（L8 竖版实测）。
               "    for(var i=0;i<ss.length;i++){\n"
               "      var s = d.steps[i];\n"
-              "      ss[i].classList.toggle('on', !!(s && t >= s.ap - 0.0005 && t < s.di - 0.0005));\n"
+              "      var vis = (i <= cur);\n"
+              "      if(vis){for(var k2=i+1;k2<=cur;k2++){"
+              "        if(ss[k2].classList.contains('clear')){vis=false;break;}}}\n"
+              "      ss[i].classList.toggle('on', !!(s && vis));\n"
+              "      ss[i].classList.toggle('gone', i <= cur && !vis);\n"
               "    }\n"
               "  }\n"
               + ("  applySub(t);\n" if args.subtitles else "") +
@@ -353,6 +407,20 @@ def main():
     print("step 总数:", sum(len(v["steps"]) for v in DATA.values()))
     bad = [("f%02d" % fi) for fi in sorted(frames) if fi <= NF and frames[fi].count("<div") != frames[fi].count("</div>")]
     print("div 不配平(应为空):", bad if bad else "无")
+
+    # 构建留痕：实际生效参数追加到 视频课/build_log.jsonl（词表/时长/帧数可事后追溯，
+    # 横竖版两次生成是否同参一目了然）。course_dir 探测失败时退回输出文件目录。
+    log_dir = course_dir or os.path.dirname(os.path.abspath(args.out))
+    kw_n = sum(s["h"].count('class="kw"') for s in SUBS) if args.subtitles else 0
+    entry = {"ts": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+             "argv": sys.argv[1:],
+             "out": os.path.abspath(args.out), "W": W, "H": H,
+             "title": args.title, "gap": gap, "total": round(total, 3),
+             "frames": len(frames_html), "subtitles": bool(args.subtitles),
+             "keywords": kws, "kw_source": kw_src, "kw_hits": kw_n,
+             "srt": os.path.abspath(args.srt) if args.srt else None}
+    with open(os.path.join(log_dir, "build_log.jsonl"), "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     # step 数 vs 台词句数：不一致时该帧走「帧内均匀分布」兜底，音画不再 1:1 锚定。
     # 门禁由 verify_steps.py 把关（它会 exit 1），这里只做显式提示，避免静默降级。
     mism = ["f%02d(step%d/台词%d)" % (fi, len(DATA["f%02d" % fi]["steps"]), len(units_map.get(fi, [])))

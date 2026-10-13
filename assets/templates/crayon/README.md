@@ -1,8 +1,7 @@
 # HTML 课件模板 · 儿童蜡笔手绘风
 
-> 本目录唯一产物形态是**放映版**（`preview*.html` → `index_present*.html`）。
-> 旧的翻页式课件页模板 `template.html` 已删除（被放映版取代）；封面是独立模板
-> `封面模板_竖版视频号_1080x1260.html`，不在此文件范围。
+> 本目录唯一产物形态是**放映版**：参考成品是 `preview*.html`（见 §3.2），课程产物名是 `index_present*.html`。
+> 封面是独立模板 `封面模板_竖版视频号_1080x1260.html`，不在此文件范围。
 
 ## 一、版位规律（从上往下）
 
@@ -39,26 +38,30 @@
 
 | 文件 | 取向 | 版式 |
 |---|---|---|
-| `preview.html` | 横版 1920×1080 | dialog 对话优先 |
+| `preview_landscape.html` | 横版 1920×1080 | dialog 对话优先 |
 | `preview_portrait.html` | 竖版 1080×1440 | dialog 对话优先 |
-| `preview_visual.html` | 横版 1920×1080 | visual 图片优先 |
+| `preview_landscape_visual.html` | 横版 1920×1080 | visual 图片优先 |
 | `preview_portrait_visual.html` | 竖版 1080×1440 | visual 图片优先 |
+
+（`preview.html` 是旧翻页式课件 demo，仅第 1 页封面 slide 作横版课件封面源使用，见阶段 5；不属于放映版参考件。）
 
 四件都自带放映控制器（点击/空格步进、←返回、R 重播、F 全屏），直接打开即可翻看。
 
 ### 3.3 dialog · 对话优先（基准版式，默认）
 
-信息主角是气泡台词；长句没问题（**不要求精简**）。字号体系（竖版实测定档，横版同规格）：
+信息主角是气泡台词；长句没问题（**不要求精简**）。字号体系（实测定档）：
 
 | 元素 | 竖版 1080×1440 | 横版 1920×1080 |
 |---|---|---|
 | 帧标题 `.ftitle .title` | 88px（长标题可降到 62–72） | 88–96px |
-| 气泡正文 `.bub` | 42px / 行高 1.45 | 42px（密集帧可降 36） |
-| 说话人 `.who` | 28px | 28px |
-| 关键词 chip | 40px / padding 12 28 / 边 4px | 40px |
+| 气泡正文 `.bub` | 42px / 行高 1.45 | 36px / 行高 1.45（密集帧长句可降 34） |
+| 说话人 `.who` | 28px | 25px |
+| 关键词 chip | 40px / padding 12 28 / 边 4px | 40px（链式小 chip 28px） |
 | 箭头 `.arrow` | 48px | 48px |
 | 照片说明 `.pola .cap` | 27px | 27px |
 | 页眉徽章 / 页脚 | 38 / 30（品牌 32） | 38 / 30 |
+
+> 横版比竖版矮 360px，5 步以上的帧排不下 42px 气泡——横版一律按 36px 起排（`preview_landscape.html` 已内置此规格），高度富余的帧才允许升 42。
 
 呼吸感五条（硬指标）：标题底沿→首元素 ≥48px；块间 ≥36px；内容底沿→品牌行 ≥32px；正文 ≥32 号/行距 ≥1.6；终态密度上限 横版 ≤4 块、竖版单列 ≤5、双列 ≤6。
 
@@ -74,6 +77,7 @@
 | 4 | 主图占屏 | 宽 ≥50%，水平居中 |
 | 5 | 对话（若有） | 短气泡 ≤15 字/句，整帧画面文字 ≤40 字 |
 | 6 | 密度上限 | 单步主视觉元素 1 个（不要同屏塞 2 张主图） |
+| 7 | 答案/物品展示一律「黄金贴纸卡」 | 宽 横版 300px / 竖版 280px，卡间距 横 40 / 竖 30，emoji 130px，标签娃娃体 34px，白描边 6px + 微旋转（±2°）。定稿样例：`preview_landscape_visual` f03s4、`preview_portrait_visual` f03s4。**禁止用小 chips（字号 ≤48px）展示关键词/答案**——字太小、页面空；chips 只允许用于流程链（A→B→C）等 ≤6 字短词序列 |
 
 ### 3.5 fscene · 整屏换景机制（三行 CSS）
 
@@ -107,7 +111,7 @@
   <div class="ftitle"><div class="title" style="font-size:88px">__标题__</div></div>
   <div class="step"><div class="fscene" style="position:absolute;left:300px;top:340px">__大图/概念卡__</div></div>
   <div class="step"><div class="fscene" style="position:absolute;left:90px;top:460px;width:900px">__换景图__</div>
-    <div class="slot say" style="top:1150px;width:420px"><div class="bub" style="font-size:36px">__≤15字短句__</div></div></div>
+    <div class="slot say" style="top:1020px;width:420px"><div class="bub" style="font-size:36px">__≤15字短句__</div></div></div>
 <div class="foot">…</div>
 </div>
 ```
@@ -123,6 +127,13 @@
 | 判断不了 | `dialog`（默认，已验证基准） | — |
 
 自动推荐：`node/python $SK/scripts/suggest_layout.py <剧本>` 出选型表，**在阶段 2 gate 交用户确认**后可逐帧改。
+
+**步级自检（visual 帧逐步过一遍，帧级判据管不到这里）**：
+
+1. 每步先问「**这一步的画面主角是什么**」——答不出来（只有一段台词）= 该步实际在用 dialog 排版：要么给它配图，要么整帧改回 dialog。判据错到步级就是假 visual（L8 f08 教训：帧级标 visual，步级却是长气泡链）。
+2. visual 帧内**禁止 dialog 式长气泡链**（多句台词逐条堆叠、上一句还挂着）。visual 帧的每一页 = 一图 + 至多一句 ≤15 字短气泡；上一句要退场就用 clear 清空步。
+3. 同一场景跨步复制（孪生换景）时，各步的 fscene 位置/尺寸必须**逐字一致**——要改就整帧一起改，只改一步场景会在翻页时跳位。
+4. 完整台词不删：缩写气泡时，原句放 HTML 注释（`<!-- 完整台词（字幕/音频用）：… -->`），完整表达交给字幕。
 
 ### 3.8 排完必跑的机检（三条命令）
 

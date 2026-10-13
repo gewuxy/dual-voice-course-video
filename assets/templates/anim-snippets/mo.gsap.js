@@ -7,7 +7,7 @@
  *   MO.transition(tl, kind, at, opts)      加一个帧间转场覆盖层
  *   MO.continuous(sel, kind, opts)         对元素起一个循环微动（落定后停住不用这个）
  *
- * 设计哲学（直接来自 huashu-art-motion 的 MO 库）：
+ * 设计哲学：
  *   - 动效是"时间→数值"的纯函数，确定性，可重复。
  *   - 入场是脉冲：停住 → 一下 → 停住。不用匀速慢推凑运动。
  *   - 每条缓动带"何时用"一句说明，让 Agent 按内容判断，而非为差异化而差异化。
@@ -48,8 +48,8 @@
     fadeRise: { from: { opacity: 0, y: 26 },       to: { opacity: 1, y: 0 },         dur: 0.50, ease: MO.ease.sineInOut },
     blurIn:   { from: { opacity: 0, filter: 'blur(14px)', scale: 1.04 }, to: { opacity: 1, filter: 'blur(0px)', scale: 1 }, dur: 0.60, ease: 'power1.out' },
     irisIn:   { from: { opacity: 0, clipPath: 'circle(0% at 50% 50%)' }, to: { opacity: 1, clipPath: 'circle(75% at 50% 50%)' }, dur: 0.55, ease: MO.ease.sineInOut },
-    flyLeft:  { from: { opacity: 0, x: 120 },      to: { opacity: 1, x: 0 },         dur: 0.50, ease: MO.ease.sineInOut },
-    flyRight: { from: { opacity: 0, x: -120 },     to: { opacity: 1, x: 0 },         dur: 0.50, ease: MO.ease.sineInOut },
+    flyLeft:  { from: { opacity: 0, x: -120 },     to: { opacity: 1, x: 0 },         dur: 0.50, ease: MO.ease.sineInOut },
+    flyRight: { from: { opacity: 0, x: 120 },      to: { opacity: 1, x: 0 },         dur: 0.50, ease: MO.ease.sineInOut },
   };
 
   // 转场：kind → 一个覆盖层元素 + 出现动画。at=转场开始时刻。

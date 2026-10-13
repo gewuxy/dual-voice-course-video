@@ -15,7 +15,7 @@
 
 优先级：环境变量 > 课程配置（`course_config.json`）> `config.local.json`。完整合并结果：`load_config.py --json`。
 
-制作顺序 **① 写稿 → ② 做 HTML → ③ 生成音频 → ④ 整合出片 → ⑤ 配套封面**，顺序不可换（理由见 `SKILL.md` 技术铁律）。
+制作顺序 **① 写稿 → ② 做 HTML → ③ 生成音频 → ④ 整合出片 → ⑤ 配套封面**（为什么不可换是红线，见 `SKILL.md` 技术铁律）。
 
 ## 阶段文件
 
@@ -34,6 +34,7 @@
 
 ```
 $H/视频课/
+  course_config.json          # 阶段0建(orientation/teacher_display_name/gap)+阶段1补(subtitle_keywords)；阶段4只读
   script_v2_dialog.txt        # 阶段1
   index_present.html          # 阶段2（横版）
   index_present_portrait.html # 阶段2（竖版，取向含竖版时）

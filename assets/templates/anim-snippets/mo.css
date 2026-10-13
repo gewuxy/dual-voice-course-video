@@ -58,13 +58,19 @@
 .anim-iris-in { animation: mo-iris-in .55s cubic-bezier(.22,1,.36,1) both; }
 
 /* 飞入：从侧边滑入。左飞/右飞用于"对比"两栏（A 从左、B 从右）。
-   适用：并列比较、两个角色/两选项入场。 */
-@keyframes mo-fly {
+   适用：并列比较、两个角色/两选项入场。
+   注意：两侧必须各自独立 keyframes、都用正方向——曾用 reverse 让 flyRight 倒放，
+   结果元素不是飞入而是飞出并停在 opacity:0（永久消失），且 flyLeft 实际从右侧入。 */
+@keyframes mo-fly-l {
+  0%   { opacity:0; transform: translateX(-120px); }
+  100% { opacity:1; transform: translateX(0); }
+}
+@keyframes mo-fly-r {
   0%   { opacity:0; transform: translateX(120px); }
   100% { opacity:1; transform: translateX(0); }
 }
-.anim-fly-left  { animation: mo-fly .50s cubic-bezier(.22,1,.36,1) both; }
-.anim-fly-right { animation: mo-fly .50s cubic-bezier(.22,1,.36,1) both reverse; }
+.anim-fly-left  { animation: mo-fly-l .50s cubic-bezier(.22,1,.36,1) both; }
+.anim-fly-right { animation: mo-fly-r .50s cubic-bezier(.22,1,.36,1) both; }
 
 /* 逐字上浮：标题/关键词逐字升起（需 JS 把文字拆成 <span>；见 mo.gsap.js 的 charsIn）。
    这里给一个纯 CSS 的整块版本作退化。 */

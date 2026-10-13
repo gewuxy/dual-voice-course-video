@@ -23,9 +23,9 @@
 
 | 取向 | 模板（`$SK/assets/templates/crayon/`） | 产物 |
 | --- | --- | --- |
-| 横版 · 对话优先 | `preview.html` | `index_present.html` |
+| 横版 · 对话优先 | `preview_landscape.html` | `index_present.html` |
 | 竖版 · 对话优先 | `preview_portrait.html` | `index_present_portrait.html` |
-| 横版 · 图片优先 | `preview_visual.html` | `index_present.html`（混排：visual 帧抄它） |
+| 横版 · 图片优先 | `preview_landscape_visual.html` | `index_present.html`（混排：visual 帧抄它） |
 | 竖版 · 图片优先 | `preview_portrait_visual.html` | `index_present_portrait.html`（混排：visual 帧抄它） |
 
 ## 版式选择（逐帧，允许同课混排）

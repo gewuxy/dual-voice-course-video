@@ -24,6 +24,9 @@
   .replay{margin-top:8px;border:none;background:var(--c-green);color:#fff;font-family:var(--font-title);font-size:15px;padding:7px 16px;border-radius:999px;cursor:pointer}
   .replay:hover{filter:brightness(1.05)}
   .note{font-size:12px;color:#9a8f7c;margin-top:6px}
+  /* 转场演示：stage 里放可见"帧内容"，覆盖层扫过→淡出→露出新帧（对齐 GSAP 版语义） */
+  .stage .tf{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 12% 8%,#FFFDF6,#FFF4E0)}
+  .mo-trans.out{opacity:0;transition:opacity .3s ease}
   /* 真实素材示意（截图） */
   .photo{width:150px;height:110px;border-radius:14px;background:linear-gradient(135deg,#5AB0F5,#B088F9);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
   .sticker{background:#FFFDF8;border-radius:18px;box-shadow:6px 7px 0 rgba(58,50,38,.12);padding:16px 22px;font-family:var(--font-title);font-size:22px}
@@ -68,14 +71,14 @@
 
 <div class="group">帧间转场（全屏覆盖层，GSAP 版见 mo.gsap.js）</div>
 <div class="grid" id="tr-grid">
-  <div class="card"><div class="stage dark" id="tr-iris"></div>
-    <div class="meta"><div class="name">iris · 向内溶解</div><div class="when">聚焦/进入下一步，最柔和</div><button class="replay" data-tr="mo-trans-iris">重播</button></div></div>
-  <div class="card"><div class="stage dark" id="tr-blinds"></div>
-    <div class="meta"><div class="name">blinds · 百叶窗</div><div class="when">揭幕感、节奏明快</div><button class="replay" data-tr="mo-trans-blinds" data-strips="8">重播</button></div></div>
-  <div class="card"><div class="stage dark" id="tr-wipe"></div>
-    <div class="meta"><div class="name">wipe · 擦除</div><div class="when">左→右推进，像翻页</div><button class="replay" data-tr="mo-trans-wipe">重播</button></div></div>
-  <div class="card"><div class="stage dark" id="tr-fly"></div>
-    <div class="meta"><div class="name">fly · 飞入</div><div class="when">新画面从下升起</div><button class="replay" data-tr="mo-trans-fly">重播</button></div></div>
+  <div class="card"><div class="stage" id="tr-iris"><div class="tf"><div class="sample">第 3 帧</div></div></div>
+    <div class="meta"><div class="name">iris · 向内溶解</div><div class="when">聚焦/进入下一步，最柔和</div><button class="replay" data-tr="mo-trans-iris" data-dur="500">重播</button></div></div>
+  <div class="card"><div class="stage" id="tr-blinds"><div class="tf"><div class="sample">第 3 帧</div></div></div>
+    <div class="meta"><div class="name">blinds · 百叶窗</div><div class="when">揭幕感、节奏明快</div><button class="replay" data-tr="mo-trans-blinds" data-strips="8" data-dur="700">重播</button></div></div>
+  <div class="card"><div class="stage" id="tr-wipe"><div class="tf"><div class="sample">第 3 帧</div></div></div>
+    <div class="meta"><div class="name">wipe · 擦除</div><div class="when">左→右推进，像翻页</div><button class="replay" data-tr="mo-trans-wipe" data-dur="450">重播</button></div></div>
+  <div class="card"><div class="stage" id="tr-fly"><div class="tf"><div class="sample">第 3 帧</div></div></div>
+    <div class="meta"><div class="name">fly · 飞入</div><div class="when">新画面从下升起</div><button class="replay" data-tr="mo-trans-fly" data-dur="500">重播</button></div></div>
 </div>
 
 <script src="mo.gsap.js"></script>
@@ -94,11 +97,20 @@ document.querySelectorAll('.replay').forEach(b=>{
     }
     if(b.dataset.tr){
       const box=document.getElementById(b.dataset.tr.replace('mo-trans-','tr-'));
+      const dur=+b.dataset.dur||500;
       box.innerHTML='';
+      // 切换底层"帧内容"，模拟帧间切换（第 3 帧 ↔ 第 4 帧）
+      const tf=document.createElement('div');tf.className='tf';
+      const smp=document.createElement('div');smp.className='sample';
+      const n=box.dataset.n==='1'?'2':'1';box.dataset.n=n;
+      smp.textContent=n==='1'?'第 3 帧':'第 4 帧';
+      tf.appendChild(smp);box.appendChild(tf);
       const layer=document.createElement('div');
       layer.className='mo-trans '+b.dataset.tr;
       if(b.dataset.strips){ for(let i=0;i<+b.dataset.strips;i++){const s=document.createElement('i');s.style.animationDelay=(i*0.03)+'s';layer.appendChild(s);} }
       box.appendChild(layer);
+      // 对齐 GSAP 版语义：覆盖完成后淡出并移除，露出新帧
+      setTimeout(()=>{layer.classList.add('out');setTimeout(()=>layer.remove(),320);}, dur);
       return;
     }
     if(b.dataset.dbl){

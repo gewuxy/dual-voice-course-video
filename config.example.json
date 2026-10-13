@@ -28,5 +28,7 @@
   "defaults": {
     "frame_gap": 0.9,
     "teacher_display_name": "老师"
-  }
+  },
+
+  "_comment_course_config": "课程级配置另有一份：$H/视频课/course_config.json（本文件是机器级，两者不同层）。字段：orientation=landscape/portrait/both（阶段0与用户确认后写）；teacher_display_name=HTML 气泡署名；gap=帧间静音秒（默认 0.9，改音频节奏才动）；subtitle_keywords=字幕高亮词表（5 个左右核心概念词，阶段1 与剧本一并交用户确认后写）。优先级：环境变量 > course_config.json > 本文件。make_standalone.py 阶段4 自动读词表，横竖版共用一份——CLI --keywords 只是临时覆盖，别在命令行临场传。"
 }

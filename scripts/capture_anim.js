@@ -28,6 +28,7 @@ const puppeteer = loadPuppeteer();
   const b = await puppeteer.launch({
     executablePath: resolve('chrome_bin') || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     headless: 'new',
+    protocolTimeout: 600000,   // 长 tick（大 SVG filter / 大量动画同步）默认 180s 会误报超时
     args: ['--no-sandbox', '--force-device-scale-factor=1', '--hide-scrollbars',
            '--disable-gpu', '--font-render-hinting=none']
   });
@@ -68,7 +69,7 @@ const puppeteer = loadPuppeteer();
     document.getAnimations().forEach(a => { a.__vstart = 0; try { a.pause(); a.currentTime = 0; } catch (e) {} });
   });
 
-  let lastPct = -10;
+  let lastPct = -10, skipped = 0;
   for (let k = 0; k < N; k++) {
     const t = k / FPS;
     await p.evaluate((t) => {
@@ -88,11 +89,14 @@ const puppeteer = loadPuppeteer();
       }
       window.__vt = t;
     }, t);
+    const fp = path.join(outDir, `f${String(k).padStart(5, '0')}.jpg`);
+    // 断点续跑：已有帧跳过截图，但虚拟时钟照走（__vstart 语义与全程连跑完全一致）
+    if (fs.existsSync(fp) && fs.statSync(fp).size > 0) { skipped++; continue; }
     const shot = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 82 });
-    fs.writeFileSync(path.join(outDir, `f${String(k).padStart(5, '0')}.jpg`), Buffer.from(shot.data, 'base64'));
+    fs.writeFileSync(fp, Buffer.from(shot.data, 'base64'));
     const pct = Math.floor(k / N * 100);
-    if (pct >= lastPct + 10) { lastPct = pct; console.log(`${pct}% (t=${t.toFixed(1)}s)`); }
+    if (pct >= lastPct + 10) { lastPct = pct; console.log(`${pct}% (t=${t.toFixed(1)}s, 续跑补拍中)`); }
   }
   await b.close();
-  console.log(`DONE ${N} 帧 -> ${outDir}`);
+  console.log(`DONE ${N} 帧 -> ${outDir}（本次补拍 ${N - skipped}，跳过已有 ${skipped}）`);
 })().catch(e => { console.error(e); process.exit(1); });
