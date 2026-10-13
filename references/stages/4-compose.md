@@ -64,15 +64,20 @@ ffmpeg -y -i "$W/video_anim.mp4" -i "$W/audio/_merged.wav" -map 0:v:0 -map 1:a:0
 
 - **concat PNG 时不能同时加 `-c:a`**（会被静默忽略，成片无音轨）；音轨必须第二步 `-c:v copy` 混流
 - 体积：静态画面 + 纸纹噪点在真实 30fps 下 crf20 约 30MB+；微信轻量版可 `-crf 26 -vf scale=1280:-2`
-- **画面内有真实音效时（如放映版内嵌儿歌），必须额外混一层**：`_merged.wav` 里只有对白
+**可选：音效层**——`_merged.wav` 里只有对白。画面事件需要声音强调时（笑声、雷声、环境音、内嵌儿歌），在 4c 混流时叠加音效：
+
+- **素材**：通用音效放 `$SK/assets/sfx/`（`<名>.wav`）；课程专属素材放课程目录。放映版内嵌 `<audio>` 不会出声（standalone 已默认剥掉），必须走混流
+- **落位**：写 `$H/视频课/音效时刻.txt`，每行一条：`音效名 + 正片秒 + 成片秒`。时刻**必须用 silencedetect 实测帧音频静音窗口**（`ffmpeg -i _merged.wav -af silencedetect=noise=-35dB:d=0.5 -f null -`）；report.json 的 units 时刻偏差可达 6s+（把句后停顿计入），只可粗定位，见 known_pitfalls「音效落位」条
+- **混流**（多音效，在 4c 第二步混流命令上加输入与链）：
 
 ```bash
-ffmpeg -i video_cfr.mp4 -i _merged.wav -i 儿歌.mp3 \
-  -filter_complex "[2:a]volume=0.32,adelay=<帧起点ms>|<帧起点ms>[r];[1:a][r]amix=inputs=2:duration=first:normalize=0[a]" \
-  -map 0:v -map "[a]" -c:v copy …
+ffmpeg -i video_cfr.mp4 -i _merged.wav -i "$SK/assets/sfx/笑.wav" -i 雷.wav \
+  -filter_complex "[2:a]volume=0.85,adelay=41400|41400[s1];[3:a]volume=0.85,adelay=62400|62400[s2];[1:a][s1][s2]amix=inputs=3:duration=first:normalize=0[a]" \
+  -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -ar 44100 -ac 2 -shortest 成片.mp4
 ```
 
-  儿歌起点 = 第 2 帧 `gstart×1000`（从 `schedule.json` 算）。别指望放映版内嵌 `<audio>` 出声（standalone 已默认剥掉）
+  adelay 毫秒按**成片时间轴**（含片头时 = 正片秒 + 7500）；音量：内容型音效 0.85（必须听清），氛围型 0.32
+- **联动**：时刻按最终采用的变速倍率时间轴计算；换倍率或换音色重合成后，音效时刻整体重测，并随最终混流重新叠加
 - QC（PSNR，须对齐同一全局时刻）：
 
 ```bash

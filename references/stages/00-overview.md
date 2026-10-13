@@ -24,7 +24,7 @@
 | 1 演讲稿 | [1-script.md](1-script.md) | 剧本格式示例、`[[n]]`、校验命令 |
 | 2 放映版 | [2-slides.md](2-slides.md) | `.stage-frame` / `.step` 结构、真照片 base64 配方、QC 循环 |
 | 3 双音色音频 | [3-audio.md](3-audio.md) | 路由 A/B 命令、平台后端表、参数、产物与 report.json schema |
-| 4 整合出片 | [4-compose.md](4-compose.md) | 4a 时轴 / 4b 截图 / 4c 合成 / 4d 片头与拼接、三种失步路径、无声版归档 |
+| 4 整合出片 | [4-compose.md](4-compose.md) | 4a 时轴 / 4b 截图 / 4c 合成（含可选音效层）/ 4d 片头与拼接、三种失步路径、无声版归档 |
 | 5 封面 | [5-cover.md](5-cover.md) | 双模板路径、1:1 裁切自查命令、截图参数 |
 | 6 切片引流（可选） | [6-clips.md](6-clips.md) | `make_clips.py` 命令与 clips.json |
 
