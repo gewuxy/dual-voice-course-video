@@ -10,7 +10,7 @@
 --timings make_sfx.py 输出的时刻表（名\t正片秒\t成片秒；成片=正片+片头时用成片秒）
 --picks   预选候选（可省略；页内随时换，点「确定·重新混音」即听）
 
-产出 <out>/试听.html：选音效 → 确定重混 → 整段/逐点试听，循环直到满意。
+产出 <out>/试听.html：选音效 → 确定重混 → 整段/进度条/逐点试听，循环直到满意。
 选定后转 48kHz wav 覆盖 assets/sfx/<名>.wav → 重跑 make_sfx.py + 混流（约 1 分钟零重合成）。
 许可：Mixkit License（免费商用、无需署名）https://mixkit.co/license/
 """
@@ -59,16 +59,10 @@ def parse_timings(path):
     moments = []
     for line in open(path, encoding="utf-8"):
         parts = line.split()
-        if len(parts) >= 3 and re.match(r"^[\d.]+$", parts[1]):
+        if len(parts) >= 2 and re.match(r"^[\d.]+$", parts[1]):
             t = float(parts[2]) if len(parts) >= 3 and re.match(r"^[\d.]+$", parts[2]) else float(parts[1])
             moments.append({"name": parts[0], "t": round(t, 2)})
-        elif len(parts) == 2 and re.match(r"^[\d.]+$", parts[1]):
-            moments.append({"name": parts[0], "t": round(float(parts[1]), 2)})
     return moments
-
-
-def mmss(t):
-    return f"{int(t // 60)}:{int(t % 60):02d}"
 
 
 def main():
@@ -107,6 +101,13 @@ def main():
                     seen.add(sid)
                     items.append({"id": sid, "title": title, "dur": dur, "cat": cat})
         chosen = picks.get(name, str(CURRENT.get(name, "")))
+        # 预选编号不在前 per 条时强制带上（保证单选按钮存在）
+        if chosen and chosen not in {i["id"] for i in items[: args.per]}:
+            full = next((i for i in items if i["id"] == chosen), None)
+            if full:
+                items = items[: args.per - 1] + [full]
+            else:
+                print(f"⚠️ {name} 预选 #{chosen} 不在 {cats_c} 分类页，忽略", file=sys.stderr)
         for it in items[: args.per]:
             if it["id"] not in audio_cache:
                 try:
@@ -137,11 +138,15 @@ h1{font-size:22px}h2{margin:24px 0 6px;border-bottom:2px solid #ffd84d;padding-b
 h2 small{color:#888;font-weight:400}
 .bar{background:#fff;border:1px solid #e5e0d5;border-radius:12px;padding:14px 16px;margin:10px 0}
 button{background:#1d2d49;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;margin:2px 4px 2px 0}
-button:hover{background:#33507a}button:disabled{opacity:.4;cursor:wait}
+button:hover{background:#33507a}
 .chip{background:#f2efe8;color:#1d2d49;font-size:12px;padding:5px 10px}
 .chip.on{background:#ffd84d}
+#seek{position:relative;height:26px;background:#e8e4da;border-radius:6px;cursor:pointer;margin-top:10px}
+#fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#b7c9e4;border-radius:6px 0 0 6px;pointer-events:none}
+.mk{position:absolute;top:-3px;bottom:-3px;width:4px;background:#e8a13c;border-radius:2px;transform:translateX(-2px)}
+.mk:hover{background:#c77f1b}
+#time{font-size:12px;color:#666;margin-top:4px;font-variant-numeric:tabular-nums}
 .row{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid #eee;flex-wrap:wrap}
-.row.playing{background:#fff7d6}
 .row input{accent-color:#1d2d49}
 .row audio{width:240px;height:28px}
 .meta{display:flex;flex-direction:column;min-width:170px}
@@ -151,7 +156,7 @@ footer{margin-top:20px;color:#888;font-size:12px}
 </style>
 <h1>🎛️ SFX 混音试听台</h1>
 <div class="bar">
-  <b>操作</b>：每类选一个候选 → 点「🔊 确定并重新混音」→ 整段听或逐点试听；不满意继续换再点确定。
+  <b>操作</b>：每类选一个候选 → 点「🔊 确定并重新混音」→ 整段听 / 点进度条任意位置跳播 / 点橙色标记逐点听；不满意继续换再点确定。
   <div id="status"></div>
 </div>
 <div class="bar" id="playerBar">
@@ -159,45 +164,21 @@ footer{margin-top:20px;color:#888;font-size:12px}
   <button id="btnStop">■ 停止</button>
   <span style="color:#888;font-size:13px">逐音效点：</span>
   <span id="momentChips"></span>
+  <div id="seek"><div id="fill"></div></div>
+  <div id="time">0:00</div>
 </div>
 <div id="sections"></div>
 <footer>素材：Mixkit（免费商用、无需署名）· 本页由 sfx_audition.py 生成 · 选定后转 48kHz wav 覆盖 assets/sfx/<名>.wav，重跑 make_sfx.py + 混流约 1 分钟零重合成</footer>
 <script>
 const DATA = __DATA__;
-const VOLUME = 0.85, ctx = new (window.AudioContext||window.webkitAudioContext)();
-const state = {};           // name -> 选中的 id
-let sources = [], playingChips = [];
+const VOLUME = 0.85;
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const state = {};                 // 类别 -> 选中 id
+let sources = [], playingChips = [], pb = null, totalDur = 0;
 
-// ---- 初始化 UI ----
-const sec = document.getElementById('sections');
-for (const [name, c] of Object.entries(DATA.cats)) {
-  state[name] = c.pick || String(c.current || '');
-  const div = document.createElement('div');
-  div.innerHTML = `<h2>${name} <small>（当前入库：#${c.current ?? '—'}）</small></h2>` +
-    c.items.map(it => `
-    <div class="row" data-row="${name}-${it.id}">
-      <input type="radio" name="${name}" value="${it.id}" ${state[name]===it.id?'checked':''}>
-      <audio controls preload="none" src="data:audio/mpeg;base64,${it.b64}"></audio>
-      <div class="meta"><span class="t">${it.title}</span><span class="d">#${it.id} · ${it.dur} · ${it.cat}</span></div>
-    </div>`).join('');
-  sec.appendChild(div);
-  div.addEventListener('change', e => { if (e.target.type==='radio') state[name]=e.target.value; });
-}
-
-// ---- 音效时刻 chips ----
-const chipsEl = document.getElementById('momentChips');
-const moments = DATA.moments;
-chipsEl.innerHTML = moments.map((m,i) =>
-  `<button class="chip" data-i="${i}">${mmss(m.t)} ${m.name}</button>`).join('');
-chipsEl.addEventListener('click', e => {
-  const b = e.target.closest('.chip'); if (!b) return;
-  const m = moments[+b.dataset.i];
-  playMix(Math.max(0, m.t - 2), 14, +b.dataset.i);
-});
-
-// ---- 解码 ----
-function b2ab(b64){ const bin=atob(b64), u=new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u.buffer; }
+function mmss(s){ s = Math.max(0, s); return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0'); }
+function b2ab(b64){ const bin = atob(b64), u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
 const bufCache = {};
 async function decode(key, b64){
   if (!bufCache[key]) bufCache[key] = await ctx.decodeAudioData(b2ab(b64));
@@ -208,42 +189,102 @@ async function ensureDialog(){
   return decode('dialog', DATA.dialog);
 }
 
-// ---- 混音播放：from 秒开始播 dur 秒，时刻表内音效按当前选择叠加 ----
-function stopAll(){
-  sources.forEach(s => { try{ s.src.stop(); }catch{} });
-  sources = []; playingChips.forEach(c=>c.classList.remove('playing')); playingChips=[];
+// ---- 初始化：候选单选 ----
+const sec = document.getElementById('sections');
+for (const [name, c] of Object.entries(DATA.cats)) {
+  state[name] = c.pick || String(c.current || '');
+  const div = document.createElement('div');
+  div.innerHTML = `<h2>${name} <small>（当前入库：#${c.current ?? '—'}）</small></h2>` +
+    c.items.map(it => `
+    <div class="row">
+      <input type="radio" name="${name}" value="${it.id}" ${state[name]===it.id?'checked':''}>
+      <audio controls preload="none" src="data:audio/mpeg;base64,${it.b64}"></audio>
+      <div class="meta"><span class="t">${it.title}</span><span class="d">#${it.id} · ${it.dur} · ${it.cat}</span></div>
+    </div>`).join('');
+  sec.appendChild(div);
+  div.addEventListener('change', e => { if (e.target.type === 'radio') state[name] = e.target.value; });
 }
-async function playMix(from, dur, focusI=-1){
-  stopAll();
-  const st = document.getElementById('status');
-  try{
-    st.textContent = '解码中…（首次约几秒）';
+
+// ---- 音效时刻 chips + 进度条标记 ----
+const moments = DATA.moments;
+const chipsEl = document.getElementById('momentChips');
+chipsEl.innerHTML = moments.map((m, i) =>
+  `<button class="chip" data-i="${i}">${mmss(m.t)} ${m.name}</button>`).join('');
+chipsEl.addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  const m = moments[+b.dataset.i];
+  playMix(Math.max(0, m.t - 2), 16, +b.dataset.i);
+});
+
+const seek = document.getElementById('seek'), fill = document.getElementById('fill'),
+      timeEl = document.getElementById('time');
+function buildMarkers(){
+  seek.querySelectorAll('.mk').forEach(x => x.remove());
+  moments.forEach((m, i) => {
+    const d = document.createElement('div');
+    d.className = 'mk'; d.style.left = (m.t / totalDur * 100) + '%'; d.title = `${mmss(m.t)} ${m.name}`;
+    d.addEventListener('click', ev => { ev.stopPropagation(); playMix(Math.max(0, m.t - 2), 16, i); });
+    seek.appendChild(d);
+  });
+}
+seek.addEventListener('click', async e => {
+  const pct = (e.clientX - seek.getBoundingClientRect().left) / seek.clientWidth;
+  try {
     const dlg = await ensureDialog();
-    const need = [...new Set(moments.map(m=>state[m.name]).filter(Boolean))];
-    await Promise.all(need.map(id => decode('sfx'+id,
-      Object.values(DATA.cats).flatMap(c=>c.items).find(i=>i.id===id).b64)));
+    playMix(pct * dlg.duration, 1e9, -2);
+  } catch (err) { status('❌ ' + err.message); }
+});
+function tick(){
+  if (!pb) return;
+  const cur = pb.from + (ctx.currentTime - pb.t0);
+  fill.style.width = Math.min(100, cur / totalDur * 100) + '%';
+  timeEl.textContent = mmss(cur) + ' / ' + mmss(totalDur);
+  requestAnimationFrame(tick);
+}
+
+// ---- 混音播放：from 秒起播 dur 秒，时刻表内音效按当前选择叠加 ----
+function status(s){ document.getElementById('status').textContent = s; }
+function stopAll(){
+  sources.forEach(s => { try { s.src.stop(); } catch {} });
+  sources = []; playingChips.forEach(c => c.classList.remove('on')); playingChips = [];
+  pb = null;
+}
+async function playMix(from, dur, focusI){
+  stopAll();
+  try {
+    status('解码中…（首次约几秒）');
+    const dlg = await ensureDialog();
+    totalDur = dlg.duration;
+    if (!seek.querySelector('.mk')) buildMarkers();
+    const need = [...new Set(moments.map(m => state[m.name]).filter(Boolean))];
+    await Promise.all(need.map(id => {
+      const it = Object.values(DATA.cats).flatMap(c => c.items).find(i => i.id === id);
+      return it ? decode('sfx' + id, it.b64) : null;
+    }));
     if (ctx.state === 'suspended') await ctx.resume();
     const t0 = ctx.currentTime + 0.06;
     const s1 = ctx.createBufferSource(); s1.buffer = dlg; s1.connect(ctx.destination);
-    s1.start(t0, from, dur); sources.push({src:s1});
+    s1.start(t0, from, dur); sources.push({src: s1});
     let n = 0;
     moments.forEach((m, i) => {
       const id = state[m.name]; if (!id) return;
-      if (m.t < from - 0.01 || m.t > from + dur) return;
+      if (m.t < from || m.t > from + dur) return;
       const g = ctx.createGain(); g.gain.value = VOLUME; g.connect(ctx.destination);
-      const s = ctx.createBufferSource(); s.buffer = bufCache['sfx'+id];
-      s.connect(g); s.start(t0 + (m.t - from)); sources.push({src:s});
+      const s = ctx.createBufferSource(); s.buffer = bufCache['sfx' + id];
+      s.connect(g); s.start(t0 + (m.t - from)); sources.push({src: s});
       n++;
-      if (i === focusI || focusI === -2) {   // focusI=-2: 全部标亮
+      if (focusI === -2 || i === focusI) {
         const chip = chipsEl.children[i];
-        chip.classList.add('playing'); playingChips.push(chip);
+        chip.classList.add('on'); playingChips.push(chip);
       }
     });
-    st.textContent = `播放中：从 ${mmss(from)} 起 ${Math.round(dur)}s，叠加 ${n} 个音效`;
-  }catch(e){ st.textContent = '❌ ' + e.message; }
+    pb = {t0, from};
+    requestAnimationFrame(tick);
+    status(`播放中：从 ${mmss(from)} 起，叠加 ${n} 个音效`);
+  } catch (e) { status('❌ ' + e.message); pb = null; }
 }
 document.getElementById('btnFull').onclick = () => playMix(0, 1e9, -2);
-document.getElementById('btnStop').onclick = () => { stopAll(); document.getElementById('status').textContent='已停止'; };
+document.getElementById('btnStop').onclick = () => { stopAll(); status('已停止'); };
 </script>"""
 
 if __name__ == "__main__":
