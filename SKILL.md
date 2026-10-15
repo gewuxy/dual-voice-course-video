@@ -45,7 +45,7 @@ agent_created: true
 
 ## 开阔地：自己判断（这些是起点不是配额）
 
-- **动效选型**：先看这帧讲什么课型，再挑——决策表在 `assets/templates/anim-snippets/README.md`「二、按课型选动效」，**必须按它走**；开工前/交付前各对一遍同文件「三、做坏方式清单」。做完效果好就把组合回流进 README 第二节。
+- **动效选型**：先看这帧讲什么课型，再挑——决策表在 `assets/anim-snippets/README.md`「二、按课型选动效」，**必须按它走**；开工前/交付前各对一遍同文件「三、做坏方式清单」。做完效果好就把组合回流进 README 第二节。
 - 视觉构图、贴纸、配色、板书呈现方式（蜡笔手绘风是基准不是牢笼）。
 - 台词的口语化与节奏、钩子和人味。
 
@@ -78,7 +78,7 @@ bash $SK/scripts/preflight.sh "$H"                   # 0) 环境自检，缺件�
 
 ### 2 · HTML 放映版【gate】
 
-基于确认稿做 `index_present.html`。**版式选型、visual 帧硬规则、排版标准、结构契约、QC 循环一律见 `references/stages/2-slides.md`**（视觉风格包配方与品牌要素见 `assets/templates/crayon/README.md` §2.1）。
+基于确认稿做 `index_present.html`。**版式选型、visual 帧硬规则、排版标准、结构契约、QC 循环一律见 `references/stages/2-slides.md`**（视觉风格包配方与品牌要素见 `assets/style-packs/crayon/README.md` §2.1）。
 
 ⛔ 呼吸感三查 + 机检（`qc_frames` 全部帧无溢出 + `verify_steps.py` + `qc_divs.py` + `qc_clear.js` 清场 vs 空间 + `qc_variety.py` 母题/动效分布）全过后停下，把 HTML 放映版呈现给用户预览 + 问「内容、排版和动效是否确认」。
 

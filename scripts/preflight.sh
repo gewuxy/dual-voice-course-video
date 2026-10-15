@@ -37,7 +37,7 @@ _sp() { python3 "$CFG_PY" --get paths.sys_py 2>/dev/null; }
 SYS_PY="${SYS_PY:-$(_sp)}"
 SYS_PY="${SYS_PY:-$(command -v python3 || echo python3)}"
 H="${1:-}"
-TPL="${TPL:-$SKILL_DIR/assets/templates/crayon/封面模板_横版课件_1920x1080.html}"
+TPL="${TPL:-$SKILL_DIR/assets/style-packs/crayon/封面模板_横版课件_1920x1080.html}"
 
 # 打印本次实际解析到的路径（路径不该靠文档记忆，靠脚本说出来）
 echo "解析到的路径："

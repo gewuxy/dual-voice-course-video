@@ -6,8 +6,8 @@
 
 | 模板 | 画布 | 文件 |
 | --- | --- | --- |
-| 横版课件封面 | 1920×1080 | `$SK/assets/templates/crayon/封面模板_横版课件_1920x1080.html` |
-| 竖版视频号封面 | 1080×1260 | `$SK/assets/templates/crayon/封面模板_竖版视频号_1080x1260.html` |
+| 横版课件封面 | 1920×1080 | `$SK/assets/style-packs/crayon/封面模板_横版课件_1920x1080.html` |
+| 竖版视频号封面 | 1080×1260 | `$SK/assets/style-packs/crayon/封面模板_竖版视频号_1080x1260.html` |
 
 **模板规则（2026-10-14 按 L8 成品比例回填）**：
 

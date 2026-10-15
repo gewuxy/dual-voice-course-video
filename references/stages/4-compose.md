@@ -126,7 +126,7 @@ bash $SK/scripts/make_intro.sh --out "$H/视频课/片头_5s.mp4" --title "第 3
 
 - 文案全走 CLI：`--brand / --claim / --lead / --k1 / --k2 / --k3 / --noplug / --title`（`--title` 里的 `<em>关键词</em>` 自动加黄色高亮胶囊）
 - 时长改 `--total`：模板内所有时间点过 `K(x)=x*TOTAL/7.5` 等比缩放，不用改 JS
-- **片头已定稿**：出片头只跑上面的命令，不要改模板与配乐参数（模板 `intro_crayon_template.html`、配乐器 `make_intro_music.py`、`logo.svg` 官网原件均在 `assets/intro/`）
+- **片头已定稿**：出片头只跑上面的命令，不要改模板与配乐参数（模板 `intro_crayon_template.html`、配乐器 `make_intro_music.py`、`logo.svg` 官网原件均在 `assets/style-packs/crayon/intro/`）
 - **竖版片头**：加 `--portrait` 出 1080×1440 片头（同一套 4 拍时间轴/令牌），**两段尺寸必须同向**——横版片头配横版正片、竖版片头配竖版正片，然后走下面同一套 concat（`-r 30 -video_track_timescale 15360 -ar 48000`）：
   ```bash
   bash $SK/scripts/make_intro.sh --portrait --out "$H/视频课/片头_竖版.mp4" --title "第 9 课 · <em>推理 · 算法</em>"

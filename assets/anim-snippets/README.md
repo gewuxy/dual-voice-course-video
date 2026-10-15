@@ -1,6 +1,6 @@
 # 动效片段库 · 使用与判断指引
 
-本目录是 `dual-voice-course-video` skill 的**动效片段库**。它解决两件事：
+本目录是 `dual-voice-course-video` skill 的**动效片段库**——**中性资产**：只按「课型 × 角色」选，**不按风格分**，蜡笔风与像素风共用同一套（`catalog.html` 直接引用 `mo.css`，换风格不影响动效）。它解决两件事：
 
 1. **复用**：制作新课的课件时，不用从上一课的 HTML 复制动效，而是从这里挑片段。
 2. **判断**：教 Agent 按"这一帧在讲什么"决定用哪种动效——**不是为差异化而差异化**，而是让每帧的运动都贴合内容语义。
@@ -106,7 +106,7 @@
 ### 方式 A：纯 CSS（静态课件 / 浏览器预览）
 在课件 HTML `<head>` 引入：
 ```html
-<link rel="stylesheet" href="$SK/assets/templates/anim-snippets/mo.css">
+<link rel="stylesheet" href="$SK/assets/anim-snippets/mo.css">
 ```
 给元素加 class 即生效：
 ```html
@@ -120,7 +120,7 @@
 ### 方式 B：GSAP 时间轴（HyperFrames 渲染成片）
 在课件 HTML 引入 GSAP 后引入：
 ```html
-<script src="$SK/assets/templates/anim-snippets/mo.gsap.js"></script>
+<script src="$SK/assets/anim-snippets/mo.gsap.js"></script>
 ```
 在构建时间轴时用：
 ```js
@@ -158,7 +158,7 @@ MO.continuous("#hero", "kenburns");                // 大图持续浏览
 ```html
 <script src="../../../assets/vendor/gsap.min.js"></script>
 <script src="../../../assets/vendor/MotionPathPlugin.min.js"></script>
-<script src="../../../assets/templates/anim-snippets/mo.gsap.js"></script>
+<script src="../../../assets/anim-snippets/mo.gsap.js"></script>
 ...
 <script id="mo-timeline">           <!-- ← 必须用这个 id：make_standalone 原样带进 standalone -->
   gsap.registerPlugin(MotionPathPlugin);

@@ -4,13 +4,13 @@
 
 把「片头卡 + 正片 + 片尾卡」三段拼成最终成片（片尾用）。
 
-定位（2026-10-10）：动态片头已由 scripts/make_intro.sh（assets/intro/）取代，
+定位（2026-10-10）：动态片头已由 scripts/make_intro.sh（assets/style-packs/crayon/intro/）取代，
 本脚本保留「片尾卡 + 告别词」用法；旧版 16:9 片头卡（introcard.png + anchor_line.wav）
 仍可用但属 legacy 资产。
 
 用法:
   python make_intro_outro.py --video <正片.mp4> --out <输出.mp4> [--speed 1.5]
-固定资产（assets/intro_outro/）: introcard.png / endcard.png / anchor_line.wav
+固定资产（assets/style-packs/crayon/intro_outro/）: introcard.png / endcard.png / anchor_line.wav
 告别词: config.voices.teacher.farewell（基于 VOICE_CLONE 拼接；可用 FAREWELL_WAV 环境变量覆盖）
 结构:
   片头 6.5s: 蜡笔风片头卡 + 锚句配音（0.25s 起，同样倍速），首尾淡入淡出
@@ -29,7 +29,7 @@ FFPROBE = os.environ.get("FFPROBE") or shutil.which("ffprobe") \
     or os.path.join(os.path.dirname(FFMPEG), "ffprobe")
 # skill 内部资源：始终相对本脚本推导（scripts/ 的上一级），clone 到任何位置都可用
 SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SKILL = os.path.join(SKILL_DIR, "assets", "intro_outro")
+SKILL = os.path.join(SKILL_DIR, "assets", "style-packs", "crayon", "intro_outro")
 
 
 def probe_wh(path):

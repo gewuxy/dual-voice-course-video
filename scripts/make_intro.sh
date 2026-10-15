@@ -78,8 +78,8 @@ echo "   时长    : ${TOTAL}s"
 echo "   取向    : $([ "$ORIENT" = "port" ] && echo 竖版 1080x1440 || echo 横版 1920x1080)   模板: $TPL"
 
 # 1) 准备 HTML（模板 + logo + 令牌替换）
-cp "$SK/assets/intro/$TPL" "$WORK/intro.html"
-cp "$SK/assets/intro/logo.svg" "$WORK/logo.svg"
+cp "$SK/assets/style-packs/crayon/intro/$TPL" "$WORK/intro.html"
+cp "$SK/assets/style-packs/crayon/intro/logo.svg" "$WORK/logo.svg"
 "$PY_SUB" - "$WORK/intro.html" <<PYEOF
 import sys
 p = sys.argv[1]

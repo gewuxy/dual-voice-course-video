@@ -4,14 +4,21 @@
 
 ```
 assets/
-  neutral/            中性层：版式语法 + 母题骨架 + 交互逻辑（不认识任何风格）
-    style-demo.html     演示页：母题 × 交互 × tokens 占位
-  style-packs/        风格层：只提供"皮肤"
-    pixel/pack.css      像素风
-    watercolor/pack.css 水彩风
-    crayon/             蜡笔风（现有，迁移可后做）
-  anim-snippets/      中性层：动效（26 条 CSS + GSAP 轨）
+  layout/                 中性层：版式语法 + 母题（visual 8 + dialog 6）+ 中性交互 demo
+    README.md               四层模型 / 硬线 / 母题库 / 风格包接口
+    style-demo.html         同一份内容换包自证（?style=pixel|crayon）
+  style-packs/            风格层：只提供"皮肤"
+    README.md               本契约
+    crayon/                 蜡笔风（正式）：皮肤 + 帧骨架参考件 + 封面模板 + intro/ 片头素材
+    pixel/                  像素风（正式）：皮肤 + preview.html
+    _wip/watercolor/        水彩风（未达标归档，勿用于正式课）
+  anim-snippets/          中性层：动效 26 条 + GSAP 轨 + catalog.html
+  interactive/            交互层（规划中）
+  vendor/                 第三方（gsap + 3 插件，离线内置 + 许可说明）
 ```
+
+**正式支持两种风格**：`crayon`（蜡笔风）、`pixel`（像素风）。两者共用同一套中性母题、动效与管线——**换风格 = 换一个 pack 目录**。
+`_wip/watercolor` 是未达标归档（对比度/字体 5 项不过），修好可复活。
 
 ## 一、分层职责
 

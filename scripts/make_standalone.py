@@ -402,7 +402,7 @@ def main():
         vendor = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "vendor", "gsap.min.js")
         vendor = os.path.normpath(vendor)
         mojs = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                             "..", "assets", "templates", "anim-snippets", "mo.gsap.js"))
+                                             "..", "assets", "anim-snippets", "mo.gsap.js"))
         # 页面自己的时间轴脚本：约定写在 <script id="mo-timeline"> 里，原样带进 standalone
         tl_blocks = re.findall(r'<script[^>]*id="mo-timeline"[^>]*>.*?</script>', _src, re.S)
         if os.path.exists(vendor) and os.path.exists(mojs):
