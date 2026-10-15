@@ -155,6 +155,10 @@ def main():
     ap.add_argument("--animate", action="store_true", help="保留入场动效（实时渲染管线用；默认冻结动画供静帧截图）")
     ap.add_argument("--keywords", default="", help="逗号分隔的关键词表，覆盖 course_config.json 的 subtitle_keywords（一般不用传）")
     ap.add_argument("--srt", default=None, help="同时输出 .srt 字幕文件路径")
+    ap.add_argument("--gsap", dest="gsap", action="store_true", default=None,
+                    help="强制内联内置的 gsap（默认自动：源页用到 mo.gsap/MO./gsap. 才内联）")
+    ap.add_argument("--no-gsap", dest="gsap", action="store_false",
+                    help="禁用 gsap 内联（纯 CSS 动效页用不到）")
     args = ap.parse_args()
 
     # 定位课程目录（course_config.json 所在的 视频课/）：report 可能在 视频课/ 或 视频课/audio/，
@@ -384,14 +388,43 @@ def main():
               "    }\n"
               "  }\n"
               + ("  applySub(t);\n" if args.subtitles else "") +
+              # GSAP 轨：每个 tick 把时间轴冻结在 t（没有 MO 时是 no-op）
+              "  if(window.MO && MO.seek) MO.seek(t);\n"
               "}\nwindow.applyTime = applyTime;\napplyTime(0);\n</script>\n")
+
+    # ---- GSAP 轨：源页用到 mo.gsap / MO. / gsap. 时，把内置的 gsap 内联进来（离线可用，不依赖 CDN）----
+    _src = open(args.present, encoding="utf-8").read()
+    uses_gsap = ("mo.gsap" in _src) or ("window.MO" in _src) or ("MO.entry" in _src) or ("gsap." in _src)
+    if args.gsap is not None:
+        uses_gsap = args.gsap
+    gsap_js = ""
+    if uses_gsap:
+        vendor = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "vendor", "gsap.min.js")
+        vendor = os.path.normpath(vendor)
+        mojs = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                             "..", "assets", "templates", "anim-snippets", "mo.gsap.js"))
+        # 页面自己的时间轴脚本：约定写在 <script id="mo-timeline"> 里，原样带进 standalone
+        tl_blocks = re.findall(r'<script[^>]*id="mo-timeline"[^>]*>.*?</script>', _src, re.S)
+        if os.path.exists(vendor) and os.path.exists(mojs):
+            def _inline(js):
+                # 内联 JS 里若出现字面量 </script（注释里也可能有），会把 <script> 提前截断 →
+                # 必须转义成 <\/script（2026-10-15 mo.gsap.js 注释实测踩到）
+                return js.replace("</script", "<\\/script")
+            gsap_js = ("<script>\n" + _inline(open(vendor, encoding="utf-8").read()) + "\n</script>\n"
+                       "<script>\n" + _inline(open(mojs, encoding="utf-8").read()) + "\n</script>\n"
+                       + "\n".join(tl_blocks))
+            print("   GSAP   : 内联 gsap + mo.gsap.js + 时间轴脚本 %d 段" % len(tl_blocks))
+            if not tl_blocks:
+                print("   ⚠️ GSAP : 源页用了 GSAP 但没有 <script id=\"mo-timeline\"> —— GSAP 动效不会进片")
+        else:
+            print("   ⚠️ GSAP : 内置件缺失（%s / %s）——该页 GSAP 动效不会进片" % (vendor, mojs))
 
     doc = ('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">'
            + '<meta name="hf-size" content="%dx%d">' % (W, H)
            + '<title>' + args.title +
            '</title><style>\n' + BASE_CSS + OVERRIDE_CSS
            + (SUB_CSS if args.subtitles else "") + '\n</style></head><body>\n<div id="root">\n'
-           + "\n".join(frames_html) + "\n</div>\n" + SUB_HTML + script + "</body></html>")
+           + "\n".join(frames_html) + "\n</div>\n" + SUB_HTML + gsap_js + script + "</body></html>")
 
     open(args.out, "w", encoding="utf-8").write(doc)
     json.dump({"total": total, "intervals": intervals}, open(args.sched, "w"), ensure_ascii=False, indent=1)

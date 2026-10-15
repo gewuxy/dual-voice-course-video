@@ -1,6 +1,6 @@
 /* ============================================================================
  * mo.gsap.js — 双音色课程视频 · 动效片段库（GSAP 时间轴版）
- * 在课件 HTML 里 <script src="mo.gsap.js"></script> 后，window.MO 提供：
+ * 在课件 HTML 里引入本文件（<script src="mo.gsap.js">）后，window.MO 提供：
  *   MO.ease       缓动预设（每条都写了"何时用"，见下方注释）
  *   MO.PULSE      脉冲节奏时长常量（快推/横移/砸入；改这里统一改节奏）
  *   MO.entrance(tl, sel, kind, at, opts)   给一条时间轴在 at 秒加一个入场
@@ -153,6 +153,39 @@
       spans.forEach((s, i) => { s.style.animation = 'mo-rise .4s ' + (i * 0.04) + 's both'; });
     }
     return spans;
+  };
+
+  // ---------- 时间轴登记 + 确定性 seek（供无头抓帧管线驱动；2026-10-15 新增）----------
+  // 为什么需要：capture_anim.js 用"虚拟时钟 + document.getAnimations()"驱动画面，
+  // 而 GSAP 默认用自己的 rAF ticker 改 inline style，不注册到 WAAPI —— getAnimations() 看不到它。
+  // 因此抓帧端必须显式 seek：每个 tick 调 MO.seek(t)，把时间冻结在 t 秒。
+  // 用法：建时间轴用 MO.timeline()（或建好后 MO.register(tl)），入场用 MO.entrance(MO.timeline(), ...)
+  MO.timelines = [];
+  MO.register = function (tl) {
+    if (tl && MO.timelines.indexOf(tl) < 0) MO.timelines.push(tl);
+    return tl;                     // 不在这里 pause：浏览器里照常自动播放
+  };
+  MO.timeline = function (vars) {
+    if (!hasGSAP) return null;
+    var v = Object.assign({}, vars || {});
+    return MO.register(window.gsap.timeline(v));
+  };
+  // 把画面冻结在 t 秒。抓帧管线每 tick 调一次；用户在 standalone 拖时间轴也走这里。
+  MO.seek = function (t) {
+    if (!hasGSAP) return false;
+    window.gsap.ticker.sleep();          // 停掉自动 rAF tick，避免与虚拟时钟打架
+    window.gsap.ticker.lagSmoothing(0);
+    if (MO.timelines.length) {
+      for (var i = 0; i < MO.timelines.length; i++) {
+        var tl = MO.timelines[i];
+        if (!tl) continue;
+        tl.pause(); tl.time(t, false);   // false = 抑制回调，保证确定性
+      }
+    } else {
+      window.gsap.globalTimeline.pause();
+      window.gsap.globalTimeline.time(t, false);
+    }
+    return true;
   };
 
   if (!hasGSAP) console.info('[MO] GSAP 未加载，已降级为 CSS class（mo.css）入场/微动。');

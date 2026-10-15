@@ -12,6 +12,12 @@
  * 用法：在课件 HTML 的 <head> 引入本文件，再给元素加对应 class：
  *   <div class="sticker anim-pop">答案</div>
  * 想重播就移除再添加 class（catalog.html 里的"重播"按钮就是这么做的）。
+ *
+ * ⚠️ 分步放映 / 分步渲染（本 skill 的默认管线）**不能直接只用这些 class**：
+ *   本文件的 animation 是无条件声明，而放映版每一步默认 opacity:0、点亮才显示——
+ *   动画会在页面加载时就播完，点亮时只剩终态（不报错、不丢内容，入场效果静默消失）。
+ *   正确做法：把需要的 keyframes 与规则复制进你自己的 CSS，并把选择器改成
+ *   `.step.on .anim-pop{...}`（可参考本 skill 的动画渲染管线与 L9 成品）。
  * ========================================================================== */
 
 /* ---------------------- 入场：缩放弹出（最常用，强调"出现"） ---------------------- */
@@ -73,11 +79,12 @@
 .anim-fly-right { animation: mo-fly-r .50s cubic-bezier(.22,1,.36,1) both; }
 
 /* 逐字上浮：标题/关键词逐字升起（需 JS 把文字拆成 <span>；见 mo.gsap.js 的 charsIn）。
-   这里给一个纯 CSS 的整块版本作退化。 */
+   纯 CSS 侧是"整块上升"的退化版（补实现：此前只有 keyframes、漏了 class）。 */
 @keyframes mo-rise {
   0%   { opacity:0; transform: translateY(18px); }
   100% { opacity:1; transform: translateY(0); }
 }
+.anim-rise { animation: mo-rise .50s cubic-bezier(.22,1,.36,1) both; }
 
 /* ---------------------- 持续微动（仅素材展示 / 装饰层，主体落定后停住） ---------------------- */
 /* Ken Burns 呼吸 + 轻平移：截图/照片"看全并像在浏览"。9s 一循环，缓慢。
@@ -103,6 +110,127 @@
   50%     { transform: translateY(-8px); }
 }
 .idle-float { animation: mo-float 4s ease-in-out infinite; }
+
+/* ---------------------- 入场 · 2026-10-14 扩容（一律"一次到位 + both 填充"，与既有一致） ---------------------- */
+
+/* 落下回弹：从上方掉到位并回弹一下。用于"放上去 / 归位"的一格、一枚贴纸。 */
+@keyframes mo-drop-in {
+  0%   { opacity:0; transform: translateY(-64px) scale(.96); }
+  62%  { opacity:1; transform: translateY(9px) scale(1.02); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
+.anim-drop-in { animation: mo-drop-in .52s cubic-bezier(.3,1.2,.5,1) both; }
+
+/* 左擦揭示：像掀纸一样从左把内容擦出来。用于展开信息板 / 揭示答案区。 */
+@keyframes mo-wipe-right {
+  0%   { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+.anim-wipe-right { animation: mo-wipe-right .55s cubic-bezier(.22,1,.36,1) both; }
+
+/* 展开：从顶边往下撑开。用于清单 / 卷轴 / 菜单。 */
+@keyframes mo-unfold {
+  0%   { opacity:0; transform: scaleY(0); }
+  100% { opacity:1; transform: scaleY(1); }
+}
+.anim-unfold { transform-origin: top center; animation: mo-unfold .45s cubic-bezier(.22,1,.36,1) both; }
+
+/* 翻面：绕 Y 轴翻出来。用于"翻出一张新卡 / 换个选项看看"。 */
+@keyframes mo-flip-y {
+  0%   { opacity:0; transform: perspective(900px) rotateY(-88deg); }
+  100% { opacity:1; transform: perspective(900px) rotateY(0deg); }
+}
+.anim-flip-y { animation: mo-flip-y .55s cubic-bezier(.22,1,.36,1) both; }
+
+/* 盖章：又快又硬地"盖"上去，带一点歪。用于 √ / 确认 / 结论落定。 */
+@keyframes mo-stamp {
+  0%   { opacity:0; transform: scale(1.65) rotate(-12deg); }
+  70%  { opacity:1; transform: scale(.96) rotate(-3deg); }
+  100% { opacity:1; transform: scale(1) rotate(-3deg); }
+}
+.anim-stamp { animation: mo-stamp .34s cubic-bezier(.2,0,0,1) both; }
+
+/* 摆动落定：挂着的贴纸 / 招牌甩两下停住。 */
+@keyframes mo-swing-in {
+  0%   { opacity:0; transform: rotate(-16deg); }
+  55%  { opacity:1; transform: rotate(5deg); }
+  80%  { transform: rotate(-2deg); }
+  100% { opacity:1; transform: rotate(0deg); }
+}
+.anim-swing-in { transform-origin: top center; animation: mo-swing-in .62s cubic-bezier(.34,1.3,.5,1) both; }
+
+/* 收拢聚焦：从偏大缩回正常，像把镜头收回来。用于强调已经在场上的元素。 */
+@keyframes mo-zoom-out {
+  0%   { opacity:0; transform: scale(1.34); }
+  100% { opacity:1; transform: scale(1); }
+}
+.anim-zoom-out { animation: mo-zoom-out .48s cubic-bezier(.22,1,.36,1) both; }
+
+/* 手写描线：SVG 线条"画出来"（笑脸的圆、路线、箭头、下划线）。
+   要求目标 path/line/polyline/circle 带 pathLength="1"（否则 dasharray 长度不对）。 */
+@keyframes mo-write {
+  0%   { stroke-dashoffset: 1; }
+  100% { stroke-dashoffset: 0; }
+}
+.anim-write path, .anim-write line, .anim-write polyline, .anim-write circle {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: mo-write .75s cubic-bezier(.4,0,.5,1) both;
+}
+
+/* 否定抖动：错了 / 不行 —— 左右晃两下。别用它表达"惊讶"。 */
+@keyframes mo-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-9px); }
+  40%     { transform: translateX(8px); }
+  60%     { transform: translateX(-5px); }
+  80%     { transform: translateX(3px); }
+}
+.anim-shake { animation: mo-shake .42s ease-in-out both; }
+
+/* 生长：从左往右长出来。用于下划线 / 连接线 / 进度条。 */
+@keyframes mo-grow-x {
+  0%   { opacity:0; transform: scaleX(0); }
+  100% { opacity:1; transform: scaleX(1); }
+}
+.anim-grow-x { transform-origin: left center; animation: mo-grow-x .5s cubic-bezier(.22,1,.36,1) both; }
+
+/* 聚拢：多个碎片从不同方向收到位（加在容器上；子元素可再用内联 animation-delay 错峰）。 */
+@keyframes mo-scatter {
+  0%   { opacity:0; transform: translate(var(--sx,0), var(--sy,0)) scale(.92); }
+  100% { opacity:1; transform: translate(0,0) scale(1); }
+}
+.anim-scatter > * { animation: mo-scatter .5s cubic-bezier(.22,1,.36,1) both; }
+.anim-scatter > *:nth-child(1) { --sx:-130px; --sy:-34px; }
+.anim-scatter > *:nth-child(2) { --sx: 120px; --sy:-52px; }
+.anim-scatter > *:nth-child(3) { --sx:-110px; --sy: 46px; }
+.anim-scatter > *:nth-child(4) { --sx: 128px; --sy: 60px; }
+
+/* ---------------------- 持续微动 · 2026-10-14 扩容（只给素材层 / 聚焦层 / 装饰层） ---------------------- */
+
+/* 呼吸：极轻微的缩放，用于待机的装饰物。主体别用（显得不稳）。 */
+@keyframes mo-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+.idle-breathe { animation: mo-breathe 3.4s ease-in-out infinite; }
+
+/* 漂浮：上下轻晃，用于飘着的贴纸 / 云 / 星星。 */
+@keyframes mo-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.idle-bob { animation: mo-bob 2.8s ease-in-out infinite; }
+
+/* 光泽扫过：一道高光扫过卡片，用于"当前项 / 推荐项"（比 glow 更含蓄）。 */
+.idle-shimmer { position: relative; overflow: hidden; }
+.idle-shimmer::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.78) 50%, transparent 62%);
+  background-size: 220% 100%; animation: mo-shimmer 2.6s ease-in-out infinite;
+}
+@keyframes mo-shimmer { 0% { background-position: 130% 0; } 100% { background-position: -30% 0; } }
+
+/* 光圈扩散：一圈一圈往外扩，用于"看这里"的聚焦提示。 */
+@keyframes mo-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(76,201,176,.55); }
+  70%  { box-shadow: 0 0 0 20px rgba(76,201,176,0); }
+  100% { box-shadow: 0 0 0 0 rgba(76,201,176,0); }
+}
+.idle-ring { animation: mo-ring 1.8s ease-out infinite; }
 
 /* ---------------------- 帧间转场（全屏覆盖层；GSAP 版见 mo.gsap.js transition()） ---------------------- */
 /* 这些 class 给一个 inset:0 的覆盖 div 用，配合 JS 控制 opacity/clip 出现与消失。 */

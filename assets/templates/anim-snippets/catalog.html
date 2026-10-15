@@ -1,126 +1,220 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<title>动效片段库 · 预览目录</title>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<title>动效片段库 · 预览目录（26 条）</title>
 <link rel="stylesheet" href="mo.css">
 <style>
-  :root{ --c-yellow:#FFD84D; --c-green:#7BC96F; --c-blue:#5AB0F5; --c-red:#FF6B6B; --c-purple:#B088F9; --ink:#3A3226; --font-title:"圆体-简","Yuanti SC",sans-serif; --font-body:"圆体-简",sans-serif; }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:var(--font-body);color:var(--ink);background:#EAE4D6;padding:40px 28px 80px}
-  h1{font-family:var(--font-title);font-size:40px;margin-bottom:6px}
-  .lead{color:#7A6E5C;margin-bottom:28px;max-width:880px;line-height:1.6}
-  .group{margin:34px 0 10px;font-family:var(--font-title);font-size:24px;border-left:6px solid var(--c-green);padding-left:14px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
-  .card{background:#FFFDF8;border-radius:20px;box-shadow:6px 8px 0 rgba(58,50,38,.10);overflow:hidden;display:flex;flex-direction:column}
-  .stage{position:relative;height:200px;background:radial-gradient(120% 90% at 12% 8%,#FFFDF6,#FFF4E0);display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .stage.dark{background:#0b0b0e}
-  .sample{font-family:var(--font-title);font-size:30px;background:var(--c-yellow);padding:14px 26px;border-radius:18px;box-shadow:4px 5px 0 rgba(58,50,38,.12)}
-  .sample.b{background:var(--c-blue)}
-  .sample.g{background:var(--c-green)}
-  .meta{padding:12px 16px 14px}
-  .name{font-family:var(--font-title);font-size:18px;margin-bottom:4px}
-  .when{font-size:13px;color:#7A6E5C;line-height:1.5;min-height:38px}
-  .replay{margin-top:8px;border:none;background:var(--c-green);color:#fff;font-family:var(--font-title);font-size:15px;padding:7px 16px;border-radius:999px;cursor:pointer}
-  .replay:hover{filter:brightness(1.05)}
-  .note{font-size:12px;color:#9a8f7c;margin-top:6px}
-  /* 转场演示：stage 里放可见"帧内容"，覆盖层扫过→淡出→露出新帧（对齐 GSAP 版语义） */
-  .stage .tf{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 12% 8%,#FFFDF6,#FFF4E0)}
-  .mo-trans.out{opacity:0;transition:opacity .3s ease}
-  /* 真实素材示意（截图） */
-  .photo{width:150px;height:110px;border-radius:14px;background:linear-gradient(135deg,#5AB0F5,#B088F9);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
-  .sticker{background:#FFFDF8;border-radius:18px;box-shadow:6px 7px 0 rgba(58,50,38,.12);padding:16px 22px;font-family:var(--font-title);font-size:22px}
-  .chip{display:inline-flex;align-items:center;gap:8px;background:rgba(123,201,111,.18);border:1px solid rgba(123,201,111,.5);border-radius:999px;padding:8px 18px;font-size:16px}
-</style>
-</head>
-<body>
+  :root{--ink:#3A3226;--ink-2:#7A6E5C;--yellow:#FFD84D;--green:#7BC96F;--red:#FF6B6B;}
+  *{box-sizing:border-box}
+  body{margin:0;padding:26px 32px 60px;color:var(--ink);font-family:"圆体-简","Yuanti SC","PingFang SC",sans-serif;
+       background:radial-gradient(120% 90% at 12% 8%,#FFFDF6,#FFF9EC 45%,#FFF4E0)}
+  h1{font-size:29px;margin:0 0 6px}
+  .lead{color:var(--ink-2);font-size:15px;line-height:1.75;margin:0 0 12px;max-width:1020px}
+  code{background:#F3EADA;border-radius:6px;padding:0 5px}
+  .toolbar{position:sticky;top:0;z-index:9;background:rgba(255,253,244,.95);padding:10px 0;border-bottom:2px dashed #E3D9C4;margin-bottom:8px}
+  .toolbar button{font:inherit;font-size:14px;padding:7px 16px;border:3px solid var(--ink);border-radius:999px;background:#FFFDF8;box-shadow:3px 4px 0 rgba(58,50,38,.16);cursor:pointer;margin-right:10px}
+  .toolbar .st{font-size:13px;color:var(--ink-2)}
+  h2{font-size:19px;margin:26px 0 10px;padding-left:12px;border-left:8px solid var(--yellow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:16px}
+  .cardbox{background:#FFFDF8;border:4px solid var(--ink);border-radius:20px;box-shadow:7px 8px 0 rgba(58,50,38,.13);overflow:hidden;display:flex;flex-direction:column}
+  .stage{height:170px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+    background:radial-gradient(circle at 22px 22px,#EFE7D6 2px,transparent 2.5px) 0 0/44px 44px,#FFFCF2}
+  .meta{padding:9px 12px 12px;border-top:3px dashed #E9DFC9;font-size:13px}
+  .meta b{font-size:15px}
+  .meta .dur{float:right;color:#8A5A2B;background:var(--yellow);border-radius:999px;padding:1px 9px;font-size:12px}
+  .meta .when{color:var(--ink-2);margin:5px 0 9px;line-height:1.5}
+  .replay{font:inherit;font-size:13px;padding:4px 13px;border:3px solid var(--ink);border-radius:999px;background:#FFFDF8;cursor:pointer;box-shadow:2px 3px 0 rgba(58,50,38,.15)}
+  .sample{display:flex;align-items:center;justify-content:center;font-weight:700}
+  .card{width:196px;height:96px;background:#FFF7E0;border:5px solid var(--ink);border-radius:18px;font-size:22px}
+  .pill{background:var(--green);border:5px solid var(--ink);border-radius:999px;padding:9px 18px;font-size:20px}
+  .sticker{background:#FFFDF8;border:5px solid var(--ink);border-radius:16px;padding:10px 16px;font-size:16px}
+  .photo{width:210px;height:118px;border:5px solid var(--ink);border-radius:14px;color:#3A3226;font-size:15px;
+    background:linear-gradient(135deg,#8ED0E8,#F6C87A 55%,#9AD98B)}
+  .bar2{width:190px;height:16px;background:var(--red);border-radius:999px;border:4px solid var(--ink)}
+  .bad{background:#FFE0E0;border:5px solid var(--red);color:#B2402F;border-radius:18px;padding:9px 18px;font-size:20px}
+  .scatter-box{display:flex;gap:9px}
+  .scatter-box .chip{width:44px;height:44px;border:4px solid var(--ink);border-radius:12px;background:var(--yellow);display:flex;align-items:center;justify-content:center;font-size:19px}
+</style></head><body>
 <h1>动效片段库 · 预览目录</h1>
-<p class="lead">每条动效按"何时用"标注。做新课某帧时，先看它属于哪类（概念 / 游戏 / 对比 / 流程 / 总结），再挑对应的片段——不是为和上一课不同而非要不同。点"重播"看效果。</p>
-
-<div class="group">入场 · 缩放弹出类</div>
+<p class="lead">26 条，全部是 <code>mo.css</code> 里真实可用的 class（做课件时复制对应片段并挂 <code>.step.on</code> 门控；直接引入 mo.css 会加载即播完）。<br>
+入场类演示该出现的时刻猛地动一下然后落定；持续类演示可以一直动的素材 / 聚焦 / 装饰层。<b>别拿它们做帧间转场</b>——4 个 <code>mo-trans-*</code> 在默认管线里没有落点（见 README §五）。</p>
+<div class="toolbar"><button id="all">全部重播</button><button id="auto">自动循环：开</button><span class="st">每 5 秒自动把全部重播一遍；点单卡重播看一次完整入场</span></div>
+<h2>入场 · 弹出 / 砸落</h2>
 <div class="grid">
-  <div class="card"><div class="stage"><div class="sample" id="s-pop">答案 B</div></div>
-    <div class="meta"><div class="name">pop · 缩放弹出</div><div class="when">答案卡、贴纸、重点词出现（带过冲）</div><button class="replay" data-cls="anim-pop" data-tgt="s-pop">重播</button></div></div>
-  <div class="card"><div class="stage"><div class="sample g" id="s-slam">特征！</div></div>
-    <div class="meta"><div class="name">slam · 砸入</div><div class="when">金句、大数字、主词落定（猛一下回弹）</div><button class="replay" data-cls="anim-slam" data-tgt="s-slam">重播</button></div></div>
-  <div class="card"><div class="stage"><div class="sticker" id="s-rise">老师：我们来看看</div></div>
-    <div class="meta"><div class="name">fadeRise · 上浮淡入</div><div class="when">要点、列表、老师/学生气泡（两端停稳）</div><button class="replay" data-cls="anim-fade-rise" data-tgt="s-rise">重播</button></div></div>
+  <div class="cardbox" data-cls="anim-pop" data-tgt="s-anim-pop">
+    <div class="stage"><div class="sample card" id="s-anim-pop">答案 B</div></div>
+    <div class="meta"><b>pop · 缩放弹出</b><span class="dur">.50s</span>
+      <div class="when">答案卡、贴纸、重点词出现（带过冲）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-slam" data-tgt="s-anim-slam">
+    <div class="stage"><div class="sample card" id="s-anim-slam">特征！</div></div>
+    <div class="meta"><b>slam · 砸入</b><span class="dur">.42s</span>
+      <div class="when">金句、大数字、主词落定（猛一下回弹）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-stamp" data-tgt="s-anim-stamp">
+    <div class="stage"><div class="sample pill" id="s-anim-stamp">√ 就这样</div></div>
+    <div class="meta"><b>stamp · 盖章</b><span class="dur">.34s</span>
+      <div class="when">√ / 确认 / 结论落定（又快又硬，带一点歪）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-drop-in" data-tgt="s-anim-drop-in">
+    <div class="stage"><div class="sample card" id="s-anim-drop-in">第 3 步</div></div>
+    <div class="meta"><b>drop-in · 落下回弹</b><span class="dur">.52s</span>
+      <div class="when">把一格或一枚贴纸放上去、归位</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-zoom-out" data-tgt="s-anim-zoom-out">
+    <div class="stage"><div class="sample card" id="s-anim-zoom-out">看这里</div></div>
+    <div class="meta"><b>zoom-out · 收拢聚焦</b><span class="dur">.48s</span>
+      <div class="when">强调已经在场上的元素（镜头收回来）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-swing-in" data-tgt="s-anim-swing-in">
+    <div class="stage"><div class="sample sticker" id="s-anim-swing-in">挂个小牌子</div></div>
+    <div class="meta"><b>swing-in · 摆动落定</b><span class="dur">.62s</span>
+      <div class="when">挂着的贴纸或招牌甩两下停住</div>
+      <button class="replay">重播</button></div>
+  </div>
 </div>
-
-<div class="group">入场 · 素材 / 聚焦类</div>
+<h2>入场 · 浮现 / 揭示</h2>
 <div class="grid">
-  <div class="card"><div class="stage"><div class="photo" id="s-blur">WorkBuddy 截图</div></div>
-    <div class="meta"><div class="name">blurIn · 模糊浮出</div><div class="when">真实截图/照片/课件大图登场（像对焦）</div><button class="replay" data-cls="anim-blur-in" data-tgt="s-blur">重播</button></div></div>
-  <div class="card"><div class="stage"><div class="sample b" id="s-iris">细节</div></div>
-    <div class="meta"><div class="name">irisIn · 向内溶解</div><div class="when">从大图钻进某细节、揭示卡片内容</div><button class="replay" data-cls="anim-iris-in" data-tgt="s-iris">重播</button></div></div>
-  <div class="card"><div class="stage"><div class="sample" id="s-fl" style="margin-right:auto">A</div><div class="sample b" id="s-fr" style="margin-left:auto">B</div></div>
-    <div class="meta"><div class="name">flyLeft / flyRight · 飞入</div><div class="when">对比两栏、两角色/两选项从两侧来</div><button class="replay" data-dbl="1" data-cls="anim-fly-left" data-tgt="s-fl" data-cls2="anim-fly-right" data-tgt2="s-fr">重播</button></div></div>
-  <div class="card"><div class="stage"><div class="sample g" id="s-chars">数据集</div></div>
-    <div class="meta"><div class="name">charsIn · 逐字上浮</div><div class="when">标题、关键词（需 JS 拆字）</div><button class="replay" data-chars="1" data-tgt="s-chars">重播</button></div></div>
+  <div class="cardbox" data-cls="anim-fade-rise" data-tgt="s-anim-fade-rise">
+    <div class="stage"><div class="sample sticker" id="s-anim-fade-rise">老师：我们来看看</div></div>
+    <div class="meta"><b>fade-rise · 上浮淡入</b><span class="dur">.50s</span>
+      <div class="when">要点、列表、老师或学生气泡（两端停稳）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-rise" data-tgt="s-anim-rise">
+    <div class="stage"><div class="sample card" id="s-anim-rise">单格</div></div>
+    <div class="meta"><b>rise · 位移浮现</b><span class="dur">.50s</span>
+      <div class="when">单格内容落位（比 fade-rise 更轻）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-iris-in" data-tgt="s-anim-iris-in">
+    <div class="stage"><div class="sample card" id="s-anim-iris-in">揭开</div></div>
+    <div class="meta"><b>iris-in · 中心揭开</b><span class="dur">.55s</span>
+      <div class="when">从大图钻进某处、揭开另一半</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-wipe-right" data-tgt="s-anim-wipe-right">
+    <div class="stage"><div class="sample card" id="s-anim-wipe-right">答案区</div></div>
+    <div class="meta"><b>wipe-right · 左擦揭示</b><span class="dur">.55s</span>
+      <div class="when">像掀纸一样展开信息板或答案区</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-unfold" data-tgt="s-anim-unfold">
+    <div class="stage"><div class="sample card" id="s-anim-unfold">清单</div></div>
+    <div class="meta"><b>unfold · 向下展开</b><span class="dur">.45s</span>
+      <div class="when">清单、卷轴、菜单从顶边撑开</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-blur-in" data-tgt="s-anim-blur-in">
+    <div class="stage"><div class="sample photo" id="s-anim-blur-in">真照片</div></div>
+    <div class="meta"><b>blur-in · 模糊浮出</b><span class="dur">.60s</span>
+      <div class="when">真实截图、照片、课件大图登场（像对焦）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-write" data-tgt="s-anim-write">
+    <div class="stage"><div class="anim-write" id="s-anim-write"><svg viewBox="0 0 220 120" width="196" height="107"><circle cx="70" cy="60" r="42" fill="none" stroke="#3A3226" stroke-width="7" pathLength="1"/><path d="M46 52 q10 10 20 0" fill="none" stroke="#3A3226" stroke-width="6" pathLength="1"/><path d="M78 52 q10 10 20 0" fill="none" stroke="#3A3226" stroke-width="6" pathLength="1"/><path d="M48 78 q22 20 44 0" fill="none" stroke="#FF6B6B" stroke-width="7" pathLength="1"/></svg></div></div>
+    <div class="meta"><b>write · 手写描线</b><span class="dur">.75s</span>
+      <div class="when">SVG 线条画出来：笑脸的圆、路线、箭头（需 pathLength=1）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-grow-x" data-tgt="s-anim-grow-x">
+    <div class="stage"><div class="sample bar2" id="s-anim-grow-x"></div></div>
+    <div class="meta"><b>grow-x · 从左生长</b><span class="dur">.50s</span>
+      <div class="when">下划线、连接线、进度条伸出来</div>
+      <button class="replay">重播</button></div>
+  </div>
 </div>
-
-<div class="group">持续微动（仅素材 / 装饰层）</div>
+<h2>入场 · 位移 / 方向</h2>
 <div class="grid">
-  <div class="card"><div class="stage"><div class="photo idle-kenburns" id="s-kb">课件总览</div></div>
-    <div class="meta"><div class="name">kenburns · Ken Burns</div><div class="when">大截图/课件总览"看全并浏览"（落定后仍在动）</div><div class="note">持续循环，仅素材层</div></div></div>
-  <div class="card"><div class="stage"><div class="chip idle-glow" id="s-glow">● 正在生成</div></div>
-    <div class="meta"><div class="name">glow · 闪烁渐变</div><div class="when">状态 chip / 当前激活卡 / 正在说话的一方</div><div class="note">持续循环，别满屏加</div></div></div>
-  <div class="card"><div class="stage"><div class="sticker idle-float" id="s-float">★</div></div>
-    <div class="meta"><div class="name">float · 漂浮</div><div class="when">背景装饰、环境层</div><div class="note">持续循环，非主体</div></div></div>
+  <div class="cardbox" data-cls="anim-fly-left" data-tgt="s-anim-fly-left">
+    <div class="stage"><div class="sample card" id="s-anim-fly-left">左</div></div>
+    <div class="meta"><b>fly-left · 左侧飞入</b><span class="dur">.50s</span>
+      <div class="when">两物对比的左件、从左边归位</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-fly-right" data-tgt="s-anim-fly-right">
+    <div class="stage"><div class="sample card" id="s-anim-fly-right">右</div></div>
+    <div class="meta"><b>fly-right · 右侧飞入</b><span class="dur">.50s</span>
+      <div class="when">两物对比的右件、从右边归位</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-flip-y" data-tgt="s-anim-flip-y">
+    <div class="stage"><div class="sample card" id="s-anim-flip-y">翻过来</div></div>
+    <div class="meta"><b>flip-y · 翻面</b><span class="dur">.55s</span>
+      <div class="when">翻出一张新卡、换个选项看看</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-scatter" data-tgt="s-anim-scatter">
+    <div class="stage"><div class="anim-scatter scatter-box" id="s-anim-scatter"><span class="chip">1</span><span class="chip">2</span><span class="chip">3</span><span class="chip">4</span></div></div>
+    <div class="meta"><b>scatter · 多碎片聚拢</b><span class="dur">.50s</span>
+      <div class="when">一组碎片从四个方向收到位（容器类）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="anim-shake" data-tgt="s-anim-shake">
+    <div class="stage"><div class="sample bad" id="s-anim-shake">✗ 错了</div></div>
+    <div class="meta"><b>shake · 否定抖动</b><span class="dur">.42s</span>
+      <div class="when">错了、不行（左右晃两下；别用来表达惊讶）</div>
+      <button class="replay">重播</button></div>
+  </div>
 </div>
-
-<div class="group">帧间转场（全屏覆盖层，GSAP 版见 mo.gsap.js）</div>
-<div class="grid" id="tr-grid">
-  <div class="card"><div class="stage" id="tr-iris"><div class="tf"><div class="sample">第 3 帧</div></div></div>
-    <div class="meta"><div class="name">iris · 向内溶解</div><div class="when">聚焦/进入下一步，最柔和</div><button class="replay" data-tr="mo-trans-iris" data-dur="500">重播</button></div></div>
-  <div class="card"><div class="stage" id="tr-blinds"><div class="tf"><div class="sample">第 3 帧</div></div></div>
-    <div class="meta"><div class="name">blinds · 百叶窗</div><div class="when">揭幕感、节奏明快</div><button class="replay" data-tr="mo-trans-blinds" data-strips="8" data-dur="700">重播</button></div></div>
-  <div class="card"><div class="stage" id="tr-wipe"><div class="tf"><div class="sample">第 3 帧</div></div></div>
-    <div class="meta"><div class="name">wipe · 擦除</div><div class="when">左→右推进，像翻页</div><button class="replay" data-tr="mo-trans-wipe" data-dur="450">重播</button></div></div>
-  <div class="card"><div class="stage" id="tr-fly"><div class="tf"><div class="sample">第 3 帧</div></div></div>
-    <div class="meta"><div class="name">fly · 飞入</div><div class="when">新画面从下升起</div><button class="replay" data-tr="mo-trans-fly" data-dur="500">重播</button></div></div>
+<h2>持续微动（只给素材 / 聚焦 / 装饰层）</h2>
+<div class="grid">
+  <div class="cardbox" data-cls="idle-kenburns" data-tgt="s-idle-kenburns">
+    <div class="stage"><div class="sample photo" id="s-idle-kenburns">真照片</div></div>
+    <div class="meta"><b>kenburns · 缓慢推近</b><span class="dur">9s</span>
+      <div class="when">真照片、大图（主体别用，会显得不稳）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="idle-glow" data-tgt="s-idle-glow">
+    <div class="stage"><div class="sample card" id="s-idle-glow">当前格</div></div>
+    <div class="meta"><b>glow · 呼吸发光</b><span class="dur">1.6s</span>
+      <div class="when">让视线跟着走的当前格</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="idle-ring" data-tgt="s-idle-ring">
+    <div class="stage"><div class="sample pill" id="s-idle-ring">看这里</div></div>
+    <div class="meta"><b>ring · 光圈扩散</b><span class="dur">1.8s</span>
+      <div class="when">看这里的聚焦提示（比 glow 更外扩）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="idle-shimmer" data-tgt="s-idle-shimmer">
+    <div class="stage"><div class="sample card" id="s-idle-shimmer">推荐</div></div>
+    <div class="meta"><b>shimmer · 光泽扫过</b><span class="dur">2.6s</span>
+      <div class="when">推荐项、当前项（比 glow 含蓄）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="idle-float" data-tgt="s-idle-float">
+    <div class="stage"><div class="sample sticker" id="s-idle-float">飘一下</div></div>
+    <div class="meta"><b>float · 漂浮</b><span class="dur">4s</span>
+      <div class="when">飘着的贴纸、云、星星（装饰层）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="idle-bob" data-tgt="s-idle-bob">
+    <div class="stage"><div class="sample sticker" id="s-idle-bob">晃一晃</div></div>
+    <div class="meta"><b>bob · 上下轻晃</b><span class="dur">2.8s</span>
+      <div class="when">小物件上下晃（比 float 快）</div>
+      <button class="replay">重播</button></div>
+  </div>
+  <div class="cardbox" data-cls="idle-breathe" data-tgt="s-idle-breathe">
+    <div class="stage"><div class="sample sticker" id="s-idle-breathe">待机</div></div>
+    <div class="meta"><b>breathe · 轻微呼吸</b><span class="dur">3.4s</span>
+      <div class="when">待机的装饰物（主体别用）</div>
+      <button class="replay">重播</button></div>
+  </div>
 </div>
-
-<script src="mo.gsap.js"></script>
 <script>
-function replay(cls, tgt){
-  const el = document.getElementById(tgt);
-  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
-}
-document.querySelectorAll('.replay').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    if(b.dataset.chars){
-      const el=document.getElementById(b.dataset.tgt);
-      if(window.MO && MO.charsIn) MO.charsIn(el);
-      else { el.classList.remove('anim-fade-rise'); void el.offsetWidth; el.classList.add('anim-fade-rise'); }
-      return;
-    }
-    if(b.dataset.tr){
-      const box=document.getElementById(b.dataset.tr.replace('mo-trans-','tr-'));
-      const dur=+b.dataset.dur||500;
-      box.innerHTML='';
-      // 切换底层"帧内容"，模拟帧间切换（第 3 帧 ↔ 第 4 帧）
-      const tf=document.createElement('div');tf.className='tf';
-      const smp=document.createElement('div');smp.className='sample';
-      const n=box.dataset.n==='1'?'2':'1';box.dataset.n=n;
-      smp.textContent=n==='1'?'第 3 帧':'第 4 帧';
-      tf.appendChild(smp);box.appendChild(tf);
-      const layer=document.createElement('div');
-      layer.className='mo-trans '+b.dataset.tr;
-      if(b.dataset.strips){ for(let i=0;i<+b.dataset.strips;i++){const s=document.createElement('i');s.style.animationDelay=(i*0.03)+'s';layer.appendChild(s);} }
-      box.appendChild(layer);
-      // 对齐 GSAP 版语义：覆盖完成后淡出并移除，露出新帧
-      setTimeout(()=>{layer.classList.add('out');setTimeout(()=>layer.remove(),320);}, dur);
-      return;
-    }
-    if(b.dataset.dbl){
-      replay(b.dataset.cls, b.dataset.tgt);
-      replay(b.dataset.cls2, b.dataset.tgt2);
-      return;
-    }
-    replay(b.dataset.cls, b.dataset.tgt);
-  });
-});
+const boxes=[...document.querySelectorAll('.cardbox')];
+function play(b){const cls=b.dataset.cls, el=document.getElementById(b.dataset.tgt);
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);}
+boxes.forEach(b=>{b.querySelector('.replay').onclick=()=>play(b);});
+function playAll(){boxes.forEach((b,i)=>setTimeout(()=>play(b), i*90));}
+document.getElementById('all').onclick=playAll;
+let auto=true; setInterval(()=>{ if(auto) playAll(); }, 5200);
+document.getElementById('auto').onclick=e=>{auto=!auto; e.target.textContent='自动循环：'+(auto?'开':'关');};
+setTimeout(playAll,300);
 </script>
-</body>
-</html>
+</body></html>

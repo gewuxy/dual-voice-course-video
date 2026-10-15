@@ -1,0 +1,84 @@
+/* 风格包 · 像素风（8-bit arcade）
+   契约见 ../README.md：只定义 tokens + 语义类皮肤 + 纹理装饰；不改结构、不改类名。 */
+:root{
+  --paper:#12122A; --stage:#1D1D3C;
+  --ink:#EDEDF7; --ink-2:#A0A0CC;
+  --a1:#3BF0C8; --a2:#FF4FD8; --a3:#FFE066;
+  --ok:#4BE36A; --err:#FF6B5E;
+  --radius:0px; --border-w:4px;
+  --shadow:0 6px 0 rgba(0,0,0,.6);
+  --font-title:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --font-body:ui-monospace,"SF Mono",Menlo,Consolas,"PingFang SC",monospace;
+  --font-hand:ui-monospace,"SF Mono",Menlo,monospace;
+  /* 扫描线 + 像素点阵 */
+  --texture:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
+    radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.2px);
+}
+html{background:var(--paper)}
+body{
+  background-color:var(--paper);
+  background-image:var(--texture);
+  background-size:auto, 6px 6px;
+  color:var(--ink); font-family:var(--font-body); font-size:16px; line-height:1.5;
+  image-rendering:pixelated;
+}
+/* ── 面板：切角 + 硬边 ── */
+.panel,.card,.bubble,.btn,.chip,.brand,.feedback,.pill,.progress .seg,.bubble__who{
+  background:var(--stage);
+  border:var(--border-w) solid var(--ink);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  color:var(--ink);
+}
+.panel{clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.card,.bubble,.btn{clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.title{font-family:var(--font-title); font-size:30px; font-weight:800; letter-spacing:.06em;
+  color:var(--a3); text-shadow:3px 3px 0 #000, 0 0 10px rgba(255,224,102,.35)}
+.pill{background:var(--a2); border-color:#0A0A1C; color:#12061A; font-weight:800; letter-spacing:.04em;
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.chip{font-size:13px; letter-spacing:.04em; box-shadow:0 4px 0 rgba(0,0,0,.55)}
+.chip:nth-of-type(1){border-color:var(--a1); color:var(--a1)}
+.brand{background:transparent; border-style:dashed; border-width:3px; box-shadow:none; color:var(--ink-2); font-size:13px}
+.progress .seg{background:#0C0C1E; border-width:3px; border-color:#3A3A66; width:34px; height:16px}
+.progress .seg--on{background:var(--a1); border-color:var(--a1); box-shadow:0 0 10px rgba(59,240,200,.55)}
+/* ── 任务卡 ── */
+.card{background:var(--stage)}
+.card__num{background:var(--a3); color:#1A1A08; font-weight:800; border:3px solid #0A0A1C;
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.card__label{font-family:var(--font-title); font-weight:800; font-size:22px}
+.card--sel{border-color:var(--a2); box-shadow:0 0 0 3px var(--a2) inset, 0 6px 0 rgba(0,0,0,.6)}
+.card--ghost{opacity:.45}
+.card--ok{border-color:var(--ok); background:#12301F}
+.card--ok::after{content:"OK"; position:absolute; top:-14px; right:-10px; background:var(--ok); color:#062012;
+  font-weight:800; font-size:12px; padding:2px 8px; border:3px solid #062012}
+.card--err{border-color:var(--err); background:#3A1620; animation:px-shake .32s steps(2,end) 2}
+.card--err::after{content:"XX"; position:absolute; top:-14px; right:-10px; background:var(--err); color:#2A0A06;
+  font-weight:800; font-size:12px; padding:2px 8px; border:3px solid #2A0A06}
+@keyframes px-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* ── 对话：游戏对话框 ── */
+.bubble{background:#191936}
+.bubble--t{border-color:var(--a1)}
+.bubble--s{border-color:var(--a2)}
+.bubble__who{background:#0C0C1E; border-width:3px; color:var(--a3); font-size:13px;
+  clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+.bubble--s .bubble__who{color:var(--a2)}
+.bubble__text{font-family:var(--font-title); font-size:19px; font-weight:700}
+/* ── 反馈 / 提示 ── */
+.feedback{background:#0F0F24; border-style:solid; border-width:3px; border-color:#3A3A66; box-shadow:none;
+  font-size:14px}
+.feedback--ok{border-color:var(--ok); background:#0E2A1A; color:#C8F7D2}
+.feedback--err{border-color:var(--err); background:#33121A; color:#FFD3CC}
+.hint{color:var(--ink-2); font-size:13px}
+.hint,.feedback b{font-family:var(--font-body)}
+.star{color:#2C2C52; font-size:30px; line-height:1; text-shadow:2px 2px 0 #000}
+.star--on{color:var(--a3); text-shadow:2px 2px 0 #000, 0 0 12px rgba(255,224,102,.6)}
+/* ── 按钮 ── */
+.btn{background:var(--a1); color:#062018; font-family:var(--font-title); font-weight:800; font-size:19px;
+  letter-spacing:.04em; border-color:#062018}
+.btn:active{transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,.6)}
+.btn--ghost{background:transparent; color:var(--ink-2); border-color:#4A4A7A; box-shadow:none;
+  clip-path:none; font-weight:700; font-size:15px}
+.footer{border-top:3px dashed #33335C}
+.pack-switch a{background:#1D1D3C; border:3px solid #3A3A66; color:var(--ink-2)}
+.pack-switch a:hover{border-color:var(--a1); color:var(--a1)}

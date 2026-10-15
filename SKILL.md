@@ -26,7 +26,7 @@ agent_created: true
 
 ## 门禁（硬停止，不是建议）
 
-⛔ 严禁一次连跑到底。5 个【确认 gate】：取向、阶段 1、2、3、5；阶段 4 另有 4a/4b/4c/4d 子确认点。
+⛔ 严禁一次连跑到底。6 个【确认 gate】：取向、阶段 1、2、3、**4（片头+正片完整出完后一次）**、5。
 
 1. **不得用"简短汇报一句"代替用户确认**——必须等用户明确说"继续/可以/确认"。
 2. **不得为"高效/省事"合并或跳过 gate**。
@@ -68,6 +68,8 @@ bash $SK/scripts/preflight.sh "$H"                   # 0) 环境自检，缺件�
 
 ⛔ 停下，用 `AskUserQuestion` 问「横版 / 竖版 / 横竖都要」，落 `$H/视频课/course_config.json`（orientation / teacher_display_name / gap 三字段，脚本读的权威只此一份）。用户没回前不得写剧本以外的任何产物。
 
+取向=both 时：**两版各自判空间与排版**（清场/字号/间距/片头/封面横竖各一套），不得把一版的决策直接复制到另一版；命中判据见阶段 2/4d/5。
+
 ### 1 · 演讲稿【gate】
 
 产出 `$H/视频课/script_v2_dialog.txt`（驱动 HTML 帧结构与 TTS 的唯一真相源）。格式、校验命令与判断要点（角色分配铁律、视频介质改写）见 `references/stages/1-script.md`。
@@ -78,7 +80,7 @@ bash $SK/scripts/preflight.sh "$H"                   # 0) 环境自检，缺件�
 
 基于确认稿做 `index_present.html`。**版式选型、visual 帧硬规则、排版标准、结构契约、QC 循环一律见 `references/stages/2-slides.md`**（视觉风格包配方与品牌要素见 `assets/templates/crayon/README.md` §2.1）。
 
-⛔ 呼吸感三查 + 机检（`✅ 全部帧无溢出` + `verify_steps.py` 通过）全过后停下，把 HTML 反映版呈现给用户预览 + 问「内容、排版和动效是否确认」。
+⛔ 呼吸感三查 + 机检（`qc_frames` 全部帧无溢出 + `verify_steps.py` + `qc_divs.py` + `qc_clear.js` 清场 vs 空间 + `qc_variety.py` 母题/动效分布）全过后停下，把 HTML 放映版呈现给用户预览 + 问「内容、排版和动效是否确认」。
 
 ### 3 · 双音色音频【gate】
 
@@ -86,14 +88,11 @@ bash $SK/scripts/preflight.sh "$H"                   # 0) 环境自检，缺件�
 
 ⛔ 停下，把音频文件交给用户点开听，`AskUserQuestion` 问「音频是否确认」。
 
-### 4 · 整合出片【4a 时轴 → 4b 截图 → 4c 合成 → 4d 片头拼接】
+### 4 · 整合出片【gate】
 
-命令与已知失步路径全部在 `references/stages/4-compose.md`，**勿手打 ffmpeg**。
+命令、各步自检项与已知失步路径全部在 `references/stages/4-compose.md`，**勿手打 ffmpeg**。
 
-- *4a 后*：本地打开 `standalone.html` 拖 `applyTime(t)`，确认每个 step 出现时刻与音频语义对得上。
-- *4b 后*：抽查 3–5 张（含贴纸/真照片/字幕的帧），无空白帧、无字体回退。
-- *4c 后*：用户预览成片，确认音画同步、字幕、双音色清晰。
-- ⛔ **4d 片头渲染完停下**，呈现抽 4 帧 + 请完整听一遍 + 问「片头是否定稿」——**片头定稿后再开正片渲染**（换音色/改文案会改时轴，正片重渲染要 10–15 分钟）。
+**4a → 4b → 4c → 4d 连续执行，中途不停**（各步只做自检，不过就回上一步重跑，不要带着疑问往下走）。⛔ **片头与正片拼接完成后停下**，交完整成片请用户看一遍 + `AskUserQuestion` 问「成片是否确认」。取向=both 时两版都拼片头，尺寸必须同向。
 
 ### 5 · 配套封面【gate】
 
@@ -122,6 +121,8 @@ python3 $SK/scripts/load_config.py --json                  # 完整合并结果
 ```bash
 bash  $SK/scripts/preflight.sh "$H"                 # 环境自检（缺件明确报错）
 python3 $SK/scripts/verify_steps.py "$H"            # 帧/步 vs 帧/句 一致性（exit 1 拦截）
+node    $SK/scripts/qc_clear.js "$H/视频课/"index_present*.html   # 清场决策 vs 空间（只提示）
+python3 $SK/scripts/qc_variety.py "$H/视频课/index_present.html"  # 母题/动效分布（只提示不阻断）
 node  $SK/scripts/capture_anim.js "$W/standalone.html" "$W/frames"  # 阶段 4b 动效版（默认管线）
 ```
 

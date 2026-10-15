@@ -1,0 +1,101 @@
+/* 风格包 · 水彩风（纸本 + 淡彩 + 墨线）
+   契约见 ../README.md：只定义 tokens + 语义类皮肤 + 纹理装饰；不改结构、不改类名。
+   注意：**毛边/水渍只做在形状层（伪元素背景），文字层保持清晰**——文字进位移滤镜会糊（known_pitfalls §4）。 */
+:root{
+  --paper:#F7F2E7; --stage:#FFFDF8;
+  --ink:#3B3A36; --ink-2:#7C756B;
+  --a1:#C97B4A;      /* 赭石 */
+  --a2:#6E9B8A;      /* 花青偏绿 */
+  --a3:#E0B84C;      /* 藤黄 */
+  --ok:#6E9B6B; --err:#C0603F;
+  --radius:22px; --border-w:2px;
+  --shadow:0 14px 30px -20px rgba(60,50,40,.6);
+  --font-title:"Kaiti SC","STKaiti","KaiTi","Songti SC",serif;
+  --font-body:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --font-hand:"Kaiti SC","STKaiti","KaiTi",cursive;
+  /* 纸纹 + 水渍 */
+  --texture:
+    radial-gradient(60% 40% at 12% 8%, rgba(201,123,74,.10), transparent 60%),
+    radial-gradient(50% 40% at 88% 4%, rgba(110,155,138,.12), transparent 62%),
+    radial-gradient(70% 50% at 80% 96%, rgba(224,184,76,.14), transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23g)' opacity='0.06'/></svg>");
+}
+html{background:var(--paper)}
+body{
+  background-color:var(--paper); background-image:var(--texture); background-repeat:no-repeat,no-repeat,no-repeat,repeat;
+  background-size:cover,cover,cover,160px 160px;
+  color:var(--ink); font-family:var(--font-body); font-size:17px; line-height:1.55;
+}
+/* ── 面板：不规则圆角 + 柔和投影（水彩纸片感）── */
+.panel,.card,.bubble,.btn,.chip,.brand,.feedback,.pill{
+  background:var(--stage);
+  border:var(--border-w) solid rgba(59,58,54,.55);
+  box-shadow:var(--shadow);
+  color:var(--ink);
+  position:relative;
+}
+.panel{border-radius:26px 30px 24px 32px/30px 24px 32px 26px; padding:calc(var(--sp-4) + 4px)}
+.card{border-radius:24px 20px 26px 22px/20px 26px 22px 24px}
+.bubble{border-radius:26px 26px 26px 10px/26px 26px 26px 14px; background:#FFFDF9; border-color:rgba(59,58,54,.42)}
+.bubble--s{border-radius:26px 26px 10px 26px/26px 26px 14px 26px; background:#FBF6EE}
+.bubble--t{border-left:6px solid var(--a2)}
+.bubble--s{border-right:6px solid var(--a1)}
+/* 水渍：形状层做毛边，文字层不受影响 */
+.panel::before,.card::before{
+  content:""; position:absolute; inset:-3px; z-index:0; pointer-events:none;
+  border-radius:inherit; opacity:.5;
+  background:radial-gradient(120% 90% at 20% 0%, rgba(201,123,74,.16), transparent 55%),
+             radial-gradient(110% 80% at 90% 100%, rgba(110,155,138,.16), transparent 55%);
+}
+.panel > *,.card > *{position:relative; z-index:1}
+.title{font-family:var(--font-title); font-size:34px; font-weight:700; letter-spacing:.04em; color:#4A453D; margin:0}
+.title::after{content:""; display:block; width:132px; height:9px; margin-top:6px;
+  background:linear-gradient(90deg, var(--a3), rgba(224,184,76,0)); border-radius:6px 999px 999px 6px}
+.pill{background:rgba(224,184,76,.28); border-color:rgba(201,123,74,.5); color:#6B5430;
+  font-family:var(--font-hand); font-size:16px}
+.chip{font-family:var(--font-hand); font-size:14px; color:#6B6357; background:rgba(255,253,248,.85)}
+.chip:nth-of-type(1){border-color:var(--a1); color:var(--a1)}
+.brand{background:transparent; border:none; box-shadow:none; color:var(--ink-2); font-family:var(--font-hand)}
+.progress .seg{background:rgba(59,58,54,.12); border:1px solid rgba(59,58,54,.25); border-radius:999px}
+.progress .seg--on{background:var(--a2); border-color:var(--a2)}
+/* ── 任务卡 ── */
+.card{background:#FFFDF9}
+.card:nth-child(1){transform:rotate(-.7deg)}
+.card:nth-child(2){transform:rotate(.5deg)}
+.card:nth-child(3){transform:rotate(-.4deg)}
+.card__num{background:rgba(110,155,138,.22); border:1.5px solid var(--a2); color:#3F5C52;
+  border-radius:50% 46% 52% 48%/48% 52% 46% 54%; font-family:var(--font-title); font-weight:700}
+.card__label{font-family:var(--font-title); font-size:26px; font-weight:700; color:#45423C}
+.card--sel{border-color:var(--a1); box-shadow:0 0 0 3px rgba(201,123,74,.22), var(--shadow)}
+.card--ghost{opacity:.4}
+.card--ok{border-color:var(--ok); background:#F2F8F0}
+.card--ok::after{content:"✓"; position:absolute; top:-16px; right:-12px; width:38px; height:38px;
+  display:flex; align-items:center; justify-content:center; color:#FFF; background:var(--ok); font-size:22px;
+  border-radius:50% 46% 52% 48%/48% 52% 46% 54%}
+.card--err{border-color:var(--err); background:#FBF0EA; animation:wc-wobble .5s ease-in-out 1}
+.card--err::after{content:"✗"; position:absolute; top:-16px; right:-12px; width:38px; height:38px;
+  display:flex; align-items:center; justify-content:center; color:#FFF; background:var(--err); font-size:22px;
+  border-radius:48% 52% 46% 54%/52% 48% 54% 46%}
+@keyframes wc-wobble{0%,100%{transform:rotate(0)}30%{transform:rotate(-1.6deg)}70%{transform:rotate(1.2deg)}}
+/* ── 对话 ── */
+.bubble__who{background:rgba(110,155,138,.18); border:1.5px solid rgba(110,155,138,.5); color:#3F5C52;
+  border-radius:999px; font-family:var(--font-hand); font-size:14px}
+.bubble--s .bubble__who{background:rgba(201,123,74,.16); border-color:rgba(201,123,74,.5); color:#7A4A2C}
+.bubble__text{font-family:var(--font-title); font-size:23px; line-height:1.5; color:#403D38}
+/* ── 反馈 / 提示 ── */
+.feedback{background:rgba(255,253,248,.7); border-style:dashed; border-color:rgba(59,58,54,.35); box-shadow:none;
+  border-radius:16px; color:#5C564C; font-family:var(--font-hand)}
+.feedback--ok{border-style:solid; border-color:var(--ok); background:rgba(110,155,107,.14); color:#3C5A3A}
+.feedback--err{border-style:solid; border-color:var(--err); background:rgba(192,96,63,.12); color:#7A3A22}
+.hint{color:var(--ink-2); font-family:var(--font-hand)}
+.star{color:rgba(59,58,54,.18); font-size:30px; line-height:1; text-shadow:0 2px 3px rgba(0,0,0,.10)}
+.star--on{color:var(--a3)}
+/* ── 按钮 ── */
+.btn{background:linear-gradient(180deg,#D98B57,#C97B4A); color:#FFF8F0; border-color:rgba(120,70,40,.55);
+  border-radius:999px; font-family:var(--font-title); font-size:22px; font-weight:700; letter-spacing:.03em;
+  box-shadow:0 10px 22px -14px rgba(140,80,40,.9)}
+.btn:active{transform:translateY(2px) scale(.995)}
+.btn--ghost{background:transparent; color:var(--ink-2); border-style:dashed; box-shadow:none; font-size:17px}
+.footer{border-top:2px dashed rgba(59,58,54,.25)}
+.pack-switch a{background:rgba(255,253,248,.8); border:1px solid rgba(59,58,54,.25); color:var(--ink-2); border-radius:999px}
+.pack-switch a:hover{border-color:var(--a1); color:var(--a1)}

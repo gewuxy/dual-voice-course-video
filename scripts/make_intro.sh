@@ -6,6 +6,8 @@
 #
 # 常用参数：
 #   --out <mp4>        必填，输出文件
+#   --portrait         出竖版片头（1080×1440，用 intro_crayon_portrait_template.html；
+#                      与横版同一套 4 拍时间轴/令牌；**竖版正片必须用竖版片头**，横版片头尺寸不同不能 concat）
 #   --total 6.5        片头时长（秒），基准时间轴按 7.5s（4 拍分屏）设计、等比缩放
 #   --work <dir>       工作目录（默认 /tmp/intro_<时间戳>；存 intro.html / frames / music.wav）
 #   --title <html>     课名（可含 <em>关键词</em>，em 会自动加黄色高亮胶囊）
@@ -38,7 +40,7 @@ OUT=""; TOTAL="7.5"; WORK=""; TITLE="第 3 课 · <em>事物的特征</em>"
 BRAND="小贤 AI 青少年教育"
 CLAIM='为学校、教培机构和家庭提供<b>体系化 AI 课程与实训项目</b>'
 LEAD="配套"; K1="教案"; K2="课件（PPT）"; K3="学习任务单"; NOPLUG="不插电即可开课"
-MUSIC=""; BPM="100"; BELLS="0"; KEEP="0"; FADE="2.0"; CURVE="qsin"
+MUSIC=""; BPM="100"; BELLS="0"; KEEP="0"; FADE="2.0"; CURVE="qsin"; ORIENT="land"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -53,6 +55,7 @@ while [ $# -gt 0 ]; do
     --k2) K2="$2"; shift 2;;
     --k3) K3="$2"; shift 2;;
     --noplug) NOPLUG="$2"; shift 2;;
+    --portrait) ORIENT="port"; shift;;
     --music) MUSIC="$2"; shift 2;;
     --fade) FADE="$2"; shift 2;;
     --curve) CURVE="$2"; shift 2;;
@@ -66,14 +69,16 @@ done
 [ -n "$OUT" ] || { echo "必须给 --out <输出.mp4>（--help 看用法）" >&2; exit 2; }
 [ -n "$WORK" ] || WORK="/tmp/intro_$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$WORK" "$(dirname "$OUT")"
+TPL="intro_crayon_template.html"; [ "$ORIENT" = "port" ] && TPL="intro_crayon_portrait_template.html"
 
 echo "== 片头生成 =="
 echo "   skill   : $SK"
 echo "   工作目录: $WORK"
 echo "   时长    : ${TOTAL}s"
+echo "   取向    : $([ "$ORIENT" = "port" ] && echo 竖版 1080x1440 || echo 横版 1920x1080)   模板: $TPL"
 
 # 1) 准备 HTML（模板 + logo + 令牌替换）
-cp "$SK/assets/intro/intro_crayon_template.html" "$WORK/intro.html"
+cp "$SK/assets/intro/$TPL" "$WORK/intro.html"
 cp "$SK/assets/intro/logo.svg" "$WORK/logo.svg"
 "$PY_SUB" - "$WORK/intro.html" <<PYEOF
 import sys

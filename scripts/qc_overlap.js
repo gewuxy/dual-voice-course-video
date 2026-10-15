@@ -112,7 +112,49 @@ try {
       footHit.forEach(x => console.log('   ' + x));
     }
   }
-  console.log(bad ? `⚠️ ${bad} 帧有问题` : `✅ 全帧无重叠、无品牌行侵入${tightTotal ? `（另有 ${tightTotal} 处间距过近提示）` : ''}`);
+  // ③ 主体呼吸：图形↔标注 ≥24px；主体↔气泡 ≥28px
+  //    （2026-10-14 L9 f08/f09 实测：图形按 ratio 算尺寸时溢出场景盒、压到气泡 −9px；标注只隔固定 14px）
+  let breathe = 0;
+  for (let i = 1; i <= n; i++) {
+    const issues = await page.evaluate((idx) => {
+      const fr = document.querySelectorAll('.stage-frame')[idx - 1];
+      const steps = [...fr.querySelectorAll('.step')];
+      if (!steps.some(s => s.querySelector('.fscene'))) return [];      // 只看 visual 帧
+      const out = [];
+      const R = e => e.getBoundingClientRect();
+      fr.classList.add('active');
+      steps.forEach((st, k) => {
+        steps.forEach((s, j) => { s.classList.remove('on', 'gone'); if (j === k) s.classList.add('on'); });
+        const hvs = [...st.querySelectorAll('.hero .hv')];
+        if (!hvs.length) return;
+        // 逐个"最内层 .hv"量图形↔标注（render_hero 与 hero_block 各包一层，成排时每个主体各有一层）
+        [...st.querySelectorAll('.hero .hv')].filter(e => !e.querySelector('.hv')).forEach((hv, hi) => {
+          const cap = hv.querySelector('.hcaption,.hlabel,.cap');
+          const gfx = [...hv.querySelectorAll('svg,img,.ph')].map(R).sort((a, b) => b.height - a.height)[0];
+          if (gfx && cap) {
+            const g = Math.round(R(cap).top - gfx.bottom);
+            if (g < 24) out.push(`step${k + 1} 主体${hi + 1} 图形↔标注 仅 ${g}px（目标 ≥28px）`);
+          }
+        });
+        const bub = st.querySelector('.mini,.slot');
+        if (bub) {
+          const hvB = Math.max(...hvs.map(e => R(e).bottom));
+          const g = Math.round(R(bub).top - hvB);
+          if (g < 28) out.push(`step${k + 1} 主体↔气泡 仅 ${g}px（目标 ≥28px${g < 0 ? '，负值=重叠' : ''}）`);
+        }
+      });
+      fr.classList.remove('active');
+      return out;
+    }, i);
+    if (issues.length) {
+      breathe++;
+      console.log(`f${String(i).padStart(2, '0')} 呼吸不足：`);
+      issues.forEach(x => console.log('   ' + x));
+    }
+  }
+  console.log(bad || breathe
+    ? `⚠️ ${bad} 帧重叠/侵入，${breathe} 帧呼吸不足`
+    : `✅ 全帧无重叠、无品牌行侵入、主体呼吸达标${tightTotal ? `（另有 ${tightTotal} 处间距过近提示）` : ''}`);
   console.log('DONE');
   await browser.close();
 })().catch(e => { console.error('ERR', e); process.exit(1); });

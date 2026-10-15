@@ -1,0 +1,40 @@
+GSAP 内置件 · 授权与出处说明
+================================
+
+文件：gsap.min.js（核心）
+      DrawSVGPlugin.min.js / MorphSVGPlugin.min.js / MotionPathPlugin.min.js（白板/手绘风格用）
+版本：3.15.0（UMD，供 <script src> 离线加载）
+来源：npm 包 `gsap`（https://www.npmjs.com/package/gsap）→ node_modules/gsap/dist/gsap.min.js
+内置原因：课堂放映版 / standalone 必须**离线可用**，不能依赖 CDN。
+注意：`gsap.min.js` 开头的 `/*! GSAP 3.15.0 ... */` 版权 banner **必须保留**（许可第 III.3 条：不得移除或修改专有声明与品牌）。
+
+授权：Standard "No Charge" GSAP License（Webflow）
+许可正文：https://gsap.com/standard-license
+生效日期：2025-04-30（最后修改 2025-05-30）
+版权：(C) 2025 Webflow
+
+关键条款摘录（以官网正文为准）：
+
+- 授予（II）：Webflow 授予非独占、全球范围的许可，可**使用、复制、展示与实现** GSAP 产品，
+  仅限 "Permitted Uses"——即**在任何网站、Web 应用或数字界面上使用**（含商业项目）。
+- 商用 FAQ 原文：*"Can I really use GSAP in commercial projects without paying anything?
+  Yes, really! Commercial usage is covered under the standard license. All of GSAP including the
+  plugins that were formerly members-only like SplitText and MorphSVG can be used in commercial
+  projects at no charge."*
+- 限制（III）：
+  1. 未经书面同意，不得用于 **Prohibited Uses**：把 GSAP 用在"**让用户无需代码即可搭建视觉动效、
+     且与 Webflow 的可视化动效构建能力构成竞争**"的工具里；
+  2. 不得为制造竞争性产品而反向工程；
+  3. **不得移除或修改 GSAP 的专有声明与品牌**（→ 保留文件头 banner）。
+- 终止（V）：违反条款时 Webflow 可终止许可并撤销访问。
+
+对本 skill 的适用结论（2026-10-15 评估）
+----------------------------------------
+- 用 GSAP 制作**课程视频 / 放映版 HTML**（输出是视频与课件页面）＝ Permitted Use，**可商用、免费**。
+- 三个插件（DrawSVG / MorphSVG / MotionPath）原为会员专属，2025-04-30 起同样免费商用（见上 FAQ 原文）。
+  它们的文件头 banner 同样必须保留。
+- 本 skill 是**内部生产管线**（Agent 生成、人审），不是"让终端用户可视化搭动效"的免代码构建器，
+  不落入 Prohibited Uses。
+- ⚠️ 若将来把本 skill 或模板**作为"免代码动效构建器"对外销售**，需先评估是否构成竞争性产品；
+  不确定时按许可 FAQ 建议联系 GSAP（https://gsap.com/contact）。
+- 许可可能更新：继续使用新版本即视为接受新条款；旧版本可按原条款继续使用（VI.2）。
